@@ -653,6 +653,14 @@
 
                 document.getElementById('task-table-body').addEventListener('click', event => {
                     const button = event.target.closest('button');
+                    const taskNameEl = event.target.closest('.task-edit-trigger');
+
+                    if (taskNameEl) {
+                        const taskId = parseInt(taskNameEl.dataset.taskId);
+                        uiService.openTaskModal('edit', { taskId });
+                        return;
+                    }
+
                     if (!button) return;
                     const taskId = parseInt(button.dataset.taskId); 
                     const parentId = parseInt(button.dataset.parentId);
@@ -987,11 +995,16 @@
                     const row = document.createElement('tr');
                     row.className = `border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-800 ${riskClass}`;
                     row.innerHTML = `
-                        <!-- 1. Tarefa -->
-                        <td class="p-3"><div style="padding-left: ${task.level * 20}px;" class="font-medium ${isParent ? 'font-bold' : ''} flex items-center gap-2">
-                            ${task.risk ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
-                            ${task.name}
-                        </div></td>
+                        <!-- 1. Tarefa (CLICÁVEL) -->
+                        <td class="p-3">
+                            <div class="task-edit-trigger cursor-pointer hover:underline flex items-center gap-2" 
+                                style="padding-left: ${task.level * 20}px;" 
+                                data-task-id="${task.id}"
+                                title="Clique para editar: ${task.name}">
+                                ${task.risk ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
+                                <span class="${isParent ? 'font-bold' : ''}">${task.name}</span>
+                            </div>
+                        </td>
                         <!-- 2. Duração em dias -->
                         <td class="p-3">${duration} dias</td>
                         <!-- 3. Data de Início -->
