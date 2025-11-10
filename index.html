@@ -204,7 +204,7 @@
                         <table class="w-full text-sm text-left text-gray-400">
                             <thead class="text-xs uppercase bg-gray-700 text-gray-400">
                                 <tr>
-                                    <!-- NOVA ORDEM SOLICITADA: Tarefa - Duração - Data Início - Data Término - Status - Comentários -->
+                                    <!-- ORDEM SOLICITADA: Tarefa - Duração - Data Início - Data Término - Status - Comentários - Ações -->
                                     <th class="p-3 min-w-[250px]">Tarefa</th>
                                     <th class="p-3">Duração (dias)</th>
                                     <th class="p-3">Data de Início</th>
@@ -238,7 +238,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js"; <--- REMOVIDO: CAUSAVA ERRO DE EXPORTAÇÃO
         
         // Variáveis Globais de Firebase
         let firebaseApp;
@@ -246,10 +245,20 @@
         let auth;
         let unsubscribeProjects = () => {};
         
-        // Variáveis de Configuração do Ambiente
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-project-manager';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Config de fallback */ };
+        // --- CONFIGURAÇÃO FIREBASE HARDCODADA DO UTILIZADOR ---
+        // A chave API está aqui. Para produção, isto deve ser guardado de forma segura.
+        const appId = "cronograma-85bf4"; // ID do projeto, usado no caminho de segurança
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB_q9kdQGNiLf34PPZFL2YuBDOj7XdwkA",
+            authDomain: "cronograma-85bf4.firebaseapp.com",
+            projectId: "cronograma-85bf4",
+            storageBucket: "cronograma-85bf4.firebasestorage.app",
+            messagingSenderId: "802190123207",
+            appId: "1:802190123207:web:adaf51b25010f677bbdee2"
+        };
+        // Mantemos a verificação do token para o mecanismo de autenticação do ambiente
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
 
         // dataService Interface (Definida no escopo do módulo para ser aumentada)
         const dataService = {
@@ -261,15 +270,18 @@
             // --- FIREBASE IMPLEMENTATIONS ---
             initFirebase: async () => {
                 try {
-                    // setLogLevel('Debug'); <--- REMOVIDO: CAUSAVA ERRO
-                    
                     firebaseApp = initializeApp(firebaseConfig);
                     db = getFirestore(firebaseApp);
                     auth = getAuth(firebaseApp);
 
-                    // Autenticação
+                    // Autenticação: Tenta com token personalizado, faz fallback para anónimo em caso de erro
                     if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
+                        try {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } catch (error) {
+                            console.warn("Autenticação com token personalizado falhou, usando autenticação anónima:", error.code);
+                            await signInAnonymously(auth);
+                        }
                     } else {
                         await signInAnonymously(auth);
                     }
