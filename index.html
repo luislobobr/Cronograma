@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Projetos Aprimorado</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Gerenciador de Projetos - Vinci Highways</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS (xlsx) library for Excel export -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Chart.js library for charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- html2pdf.js for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* Estilos personalizados */
@@ -40,13 +36,60 @@
     </style>
 </head>
 <body class="antialiased">
-    <!-- Tela de Carregamento -->
     <div id="loader" class="no-print"><div class="spinner"></div></div>
     
-    <!-- Toast Notification Container -->
     <div id="toast-container" class="no-print"></div>
 
-    <!-- Modals -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 modal-transition modal-visible">
+        <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl p-8 w-full max-w-md">
+            <h2 class="text-3xl font-bold mb-2 text-blue-600">Vinci Highways Projects</h2>
+            <p class="text-gray-400 mb-6">Acesso restrito ao domínio @vinci-highways.com.br</p>
+
+            <form id="auth-form" class="space-y-4">
+                <input type="email" id="auth-email" placeholder="E-mail (@vinci-highways.com.br)" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-3 bg-transparent" required>
+                <input type="password" id="auth-password" placeholder="Senha" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-3 bg-transparent" required>
+                
+                <div id="secret-code-container" class="hidden">
+                    <input type="text" id="auth-secret-code" placeholder="Código de Acesso (Apenas Gestor)" class="mt-1 block w-full border border-yellow-400 rounded-md shadow-sm p-3 bg-transparent">
+                    <p class="text-xs text-yellow-500 mt-1">Use "MASTER_GESTOR" no registro para obter o papel de Gestor.</p>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <button type="button" id="toggle-auth-mode" class="text-sm text-blue-500 hover:underline transition-colors">Precisa de uma conta? Registrar</button>
+                    <button type="button" id="toggle-secret-code" class="text-xs text-gray-500 hover:underline transition-colors">Código Secreto?</button>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 text-white px-4 py-3 rounded-md font-semibold hover:bg-blue-700 transition-colors">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="user-management-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-4xl">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Gestão de Utilizadores e Papéis</h2>
+            <div id="user-list-container" class="overflow-y-auto max-h-96">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs uppercase bg-gray-700 text-gray-400 sticky top-0">
+                        <tr>
+                            <th class="p-3">UID</th>
+                            <th class="p-3">E-mail</th>
+                            <th class="p-3">Papel Atual</th>
+                            <th class="p-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-management-table-body">
+                        </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="project-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 id="project-modal-title" class="text-2xl font-bold mb-4 text-[var(--text-color)]">Novo Projeto</h2>
@@ -54,6 +97,10 @@
                 <div class="mb-4">
                     <label for="project-name" class="block text-sm font-medium text-gray-400">Nome do Projeto</label>
                     <input type="text" id="project-name" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent" required>
+                </div>
+                <div class="mb-4">
+                    <label for="project-manager" class="block text-sm font-medium text-gray-400">Responsável (Opcional)</label>
+                    <input type="text" id="project-manager" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent">
                 </div>
                 <div class="flex justify-end gap-2">
                     <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
@@ -63,24 +110,27 @@
         </div>
     </div>
 
-    <!-- MODAL DE TAREFAS ATUALIZADO COM NOVO LAYOUT (GRID) -->
     <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-8 w-full max-w-3xl">
             <h2 id="modal-title" class="text-2xl font-bold mb-6 text-[var(--text-color)]">Adicionar Nova Tarefa</h2>
             <form id="task-form" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                <!-- Coluna Esquerda: Detalhes da Tarefa (2/3 no desktop) -->
                 <div class="lg:col-span-2 space-y-4">
                     <input type="hidden" id="task-id"><input type="hidden" id="parent-id">
                      <div class="mb-4">
                         <label for="task-name" class="block text-sm font-medium text-gray-400">Nome da Tarefa</label>
                         <input type="text" id="task-name" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required>
                     </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label for="assigned-to" class="block text-sm font-medium text-gray-400">Atribuído a</label><input type="text" id="assigned-to" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2"></div>
+                        <div>
+                            <label for="assigned-users-select" class="block text-sm font-medium text-gray-400">Atribuído a (Utilizadores)</label>
+                            <select id="assigned-users-select" multiple class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2 h-20">
+                                </select>
+                        </div>
                         <div><label for="task-priority" class="block text-sm font-medium text-gray-400">Prioridade</label><select id="task-priority" class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2"><option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option></select></div>
                     </div>
-                     <!-- Seção de Datas -->
+
                     <div id="date-section">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div><label for="start-date" class="block text-sm font-medium text-gray-400">Data de Início</label><input type="date" id="start-date" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required></div>
@@ -91,7 +141,6 @@
                         </div>
                     </div>
     
-                    <!-- Histórico de Datas -->
                     <div id="date-history-container" class="mt-4 hidden">
                         <h4 class="text-sm font-medium text-gray-400 mb-2">Histórico de Prazos</h4>
                         <div id="date-history-list" class="text-xs text-gray-500 max-h-20 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-2 rounded"></div>
@@ -119,7 +168,6 @@
                     </div>
                 </div>
 
-                <!-- Coluna Direita: Comentários (1/3 no desktop) -->
                 <div class="lg:col-span-1 border-t lg:border-t-0 lg:border-l lg:pl-6 pt-4 lg:pt-0 border-[var(--border-color)] flex flex-col space-y-4">
                     <h4 class="text-sm font-medium text-gray-400">Comentários</h4>
                     <div id="comments-list" class="flex-grow text-sm text-gray-500 max-h-64 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 rounded shadow-inner"></div>
@@ -129,7 +177,6 @@
                     </div>
                 </div>
 
-                <!-- Botões de Ação (Abaixo de ambas as colunas) -->
                 <div class="lg:col-span-3 flex justify-end gap-2 pt-4 border-t border-[var(--border-color)]">
                     <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Salvar Tarefa</button>
@@ -149,18 +196,26 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="relative min-h-screen">
         <input type="file" id="import-excel-input" class="hidden" accept=".xlsx, .xls">
-        <button id="theme-toggle" class="no-print fixed top-4 right-4 z-50 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-            <svg id="theme-icon-sun" class="h-6 w-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <svg id="theme-icon-moon" class="h-6 w-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-        </button>
+        <div id="logged-in-container" class="hidden">
+            <button id="theme-toggle" class="no-print fixed top-4 right-4 z-50 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                <svg id="theme-icon-sun" class="h-6 w-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-moon" class="h-6 w-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+            <button id="user-management-btn" class="no-print fixed top-4 right-16 z-50 p-2 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors hidden" title="Gerir Utilizadores">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.38 0 2.5 1.12 2.5 2.5S13.38 10 12 10 9.5 8.88 9.5 7.5 10.62 5 12 5zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.8 6-3.8s5.97 1.81 6 3.8c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+            </button>
+            <button id="logout-btn" class="no-print fixed top-4 right-28 z-50 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors" title="Logout">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+            </button>
+        </div>
         
-        <div id="project-view" class="container mx-auto p-4 md:p-8 no-print">
+        <div id="project-view" class="container mx-auto p-4 md:p-8 hidden">
             <header class="mb-8">
                 <h1 class="text-4xl font-bold">Meus Projetos</h1>
                 <p class="text-gray-400">Selecione um projeto para gerenciar ou crie um novo.</p>
+                <p id="user-role-display" class="text-sm font-semibold mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full inline-block">Papel: Carregando...</p>
             </header>
             <div id="main-dashboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"></div>
             <div class="mb-6"><button id="add-project-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>Novo Projeto</button></div>
@@ -207,7 +262,6 @@
                         <table class="w-full text-sm text-left text-gray-400">
                             <thead class="text-xs uppercase bg-gray-700 text-gray-400">
                                 <tr>
-                                    <!-- ORDEM SOLICITADA: Tarefa - Duração - Data Início - Data Término - Status - Comentários - Ações -->
                                     <th class="p-3 min-w-[250px]">Tarefa</th>
                                     <th class="p-3">Duração (dias)</th>
                                     <th class="p-3">Data de Início</th>
@@ -236,21 +290,24 @@
         </div>
     </div>
 
-    <!-- TODO O CÓDIGO JAVASCRIPT CONSOLIDADO EM UM ÚNICO MÓDULO -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // Variáveis Globais de Firebase
         let firebaseApp;
         let db;
         let auth;
         let unsubscribeProjects = () => {};
+        let unsubscribeUsers = () => {};
         
-        // --- CONFIGURAÇÃO FIREBASE HARDCODADA DO UTILIZADOR ---
-        // A chave API está aqui. Para produção, isto deve ser guardado de forma segura.
-        const appId = "cronograma-85bf4"; // ID do projeto, usado no caminho de segurança
+        // --- CONSTANTES E CONFIGURAÇÃO ---
+        const ALLOWED_DOMAIN = "@vinci-highways.com.br";
+        const GESTOR_SECRET_CODE = "MASTER_GESTOR";
+        
+        // SUAS CREDENCIAIS DO BANCO DE DADOS
+        const appId = "cronograma-85bf4"; 
         const firebaseConfig = {
             apiKey: "AIzaSyDB_q9kdQGNiLf34PPZFL2YuBDOj7XdwkA",
             authDomain: "cronograma-85bf4.firebaseapp.com",
@@ -259,15 +316,16 @@
             messagingSenderId: "802190123207",
             appId: "1:802190123207:web:adaf51b25010f677bbdee2"
         };
-        // Mantemos a verificação do token para o mecanismo de autenticação do ambiente
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const initialAuthToken = null; // Token inicial não é usado no fluxo de Email/Senha
 
 
-        // dataService Interface (Definida no escopo do módulo para ser aumentada)
+        // dataService Interface
         const dataService = {
             projects: [],
+            users: [], 
             currentProjectId: null,
-            userId: null, 
+            userId: null,
+            userRole: null, 
             isAuthReady: false,
             
             // --- FIREBASE IMPLEMENTATIONS ---
@@ -277,62 +335,150 @@
                     db = getFirestore(firebaseApp);
                     auth = getAuth(firebaseApp);
 
-                    // Autenticação: Tenta com token personalizado, faz fallback para anónimo em caso de erro
-                    if (initialAuthToken) {
-                        try {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } catch (error) {
-                            console.warn("Autenticação com token personalizado falhou, usando autenticação anónima:", error.code);
-                            await signInAnonymously(auth);
-                        }
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-
-                    // Listener para o estado de autenticação (garante que o userId esteja pronto)
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
+                    // Listener do estado de autenticação inicia o fluxo da UI
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user && user.email?.endsWith(ALLOWED_DOMAIN)) {
+                            // Usuário autenticado e com domínio correto
                             dataService.userId = user.uid;
                             dataService.isAuthReady = true;
-                            console.log(`Firebase: User authenticated. UID: ${dataService.userId}`);
                             
-                            // Inicia o listener de projetos após a autenticação
-                            dataService.listenToProjects();
-                        } else {
-                            console.error("Firebase: User not authenticated.");
-                            dataService.isAuthReady = false;
-                            dataService.projects = [];
-                            uiService.showToast('Erro de autenticação. Os dados não serão salvos.', 'error');
-                        }
-                        document.getElementById('loader').style.display = 'none';
-                    });
+                            await dataService.getUserProfile(user.uid); 
+                            
+                            uiService.showView('project-view');
+                            document.getElementById('logged-in-container').classList.remove('hidden');
+                            uiService.closeModal('auth-modal');
+                            document.getElementById('loader').style.display = 'none';
 
+                            dataService.listenToUsers();
+                            dataService.listenToProjects();
+
+                            uiService.updateUserRoleDisplay();
+                        } else {
+                            // Nenhuma autenticação ou domínio inválido
+                            dataService.userId = null;
+                            dataService.isAuthReady = true; 
+                            dataService.projects = [];
+                            dataService.userRole = null;
+                            
+                            document.getElementById('logged-in-container').classList.add('hidden');
+                            uiService.openModal('auth-modal');
+                            document.getElementById('loader').style.display = 'none';
+                            unsubscribeProjects();
+                            unsubscribeUsers();
+                        }
+                    });
                 } catch (error) {
                     console.error("Erro na inicialização do Firebase:", error);
-                    uiService.showToast('Erro ao conectar ao banco de dados!', 'error');
+                    uiService.showToast('Erro ao conectar ao banco de dados! Verifique a API Key e a configuração.', 'error');
                     document.getElementById('loader').style.display = 'none';
                 }
             },
-            getProjectCollectionRef: () => {
-                 // Caminho: /artifacts/{appId}/users/{userId}/projects
-                if (!dataService.userId) throw new Error("Usuário não autenticado para buscar a coleção.");
-                return collection(db, 'artifacts', appId, 'users', dataService.userId, 'projects');
-            },
-            listenToProjects: () => {
-                // Remove listener anterior se existir
-                unsubscribeProjects(); 
 
+            // --- USER MANAGEMENT ---
+            getUserProfile: async (uid) => {
+                const userDocRef = doc(db, 'users_data', uid);
+                const userSnapshot = await getDoc(userDocRef); 
+
+                if (userSnapshot.exists()) {
+                    dataService.userRole = userSnapshot.data().role;
+                } else {
+                    dataService.userRole = 'Usuario';
+                }
+            },
+            
+            listenToUsers: () => {
+                unsubscribeUsers();
+                if (!dataService.isAuthReady) return;
+
+                const usersRef = collection(db, 'users_data');
+
+                unsubscribeUsers = onSnapshot(usersRef, (snapshot) => {
+                    dataService.users = [];
+                    snapshot.forEach(doc => {
+                        if (doc.data().email && doc.data().email.endsWith(ALLOWED_DOMAIN)) {
+                           dataService.users.push({ id: doc.id, ...doc.data() });
+                        }
+                    });
+
+                    if (document.getElementById('user-management-modal').classList.contains('modal-visible') && dataService.userRole === 'Gestor') {
+                         uiService.renderUserManagementTable();
+                    }
+                    uiService.populateAssignedUsersSelect();
+                }, (error) => {
+                    console.error("Erro ao ouvir usuários:", error);
+                });
+            },
+            
+            updateUserRole: async (uid, newRole) => {
+                try {
+                    const userDocRef = doc(db, 'users_data', uid);
+                    await setDoc(userDocRef, { role: newRole }, { merge: true });
+
+                    await auth.currentUser.getIdToken(true);
+                    
+                    uiService.showToast(`Papel de ${dataService.users.find(u => u.id === uid)?.email} atualizado para ${newRole}.`);
+                } catch (error) {
+                    console.error("Erro ao atualizar papel:", error);
+                    uiService.showToast('Falha ao atualizar papel do utilizador.', 'error');
+                }
+            },
+
+            // --- PROJECT DATA ACCESS ---
+            
+            getProjectCollectionRef: (uid) => {
+                const targetUid = uid || dataService.userId;
+                if (!targetUid) throw new Error("Usuário não autenticado.");
+                return collection(db, 'artifacts', appId, 'users', targetUid, 'projects');
+            },
+
+            listenToProjects: () => {
+                unsubscribeProjects(); 
                 if (!dataService.isAuthReady) return;
                 
-                const projectsRef = dataService.getProjectCollectionRef();
-                const projectsQuery = query(projectsRef);
-
+                let projectsQuery;
+                
+                if (dataService.userRole === 'Gestor') {
+                    projectsQuery = query(collectionGroup(db, 'projects'));
+                } else {
+                    projectsQuery = query(dataService.getProjectCollectionRef());
+                }
+                
                 unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
-                    const newProjects = [];
+                    console.log("📦 Dados recebidos do Firebase:", snapshot.size, "documentos");
+                    
+                    snapshot.forEach(doc => {
+                        console.log("📄 Documento:", doc.id, doc.data());
+                    });
+
+                    let newProjects = [];
                     snapshot.forEach(doc => {
                         const projectData = doc.data();
-                        newProjects.push({ id: doc.id, ...projectData }); 
+                        const creatorId = projectData.creatorId || doc.ref.parent.parent.id; 
+                        
+                        const tasksWithDefaults = projectData.tasks?.map(t => ({
+                            ...t,
+                            assignedUsers: t.assignedUsers || [], 
+                        })) || [];
+
+                        const project = { 
+                            id: doc.id, 
+                            manager: projectData.manager || 'Não Definido', 
+                            creatorId: creatorId, 
+                            tasks: tasksWithDefaults,
+                            ...projectData 
+                        };
+                        newProjects.push(project); 
                     });
+
+                    if (dataService.userRole === 'Usuario') {
+                        newProjects = newProjects.filter(project => {
+                            const isCreator = project.creatorId === dataService.userId;
+                            const isAssigned = project.tasks.some(task => 
+                                (task.assignedUsers || []).includes(dataService.userId)
+                            );
+                            return isCreator || isAssigned;
+                        });
+                    }
 
                     dataService.projects = newProjects;
                     dataService.recalculateAllProgress();
@@ -352,39 +498,65 @@
                     uiService.showToast('Erro de sincronização em tempo real.', 'error');
                 });
             },
-            load: () => { /* Mantido para compatibilidade com a assinatura App.init */ },
             
+            getLatestDates: (task) => {
+                if (!task.dateHistory || task.dateHistory.length === 0) return { startDate: '', endDate: '' };
+                return task.dateHistory[task.dateHistory.length - 1];
+            },
+            
+            getProjectById: (id) => { return dataService.projects.find(p => p.id === id); },
+            getCurrentProject: () => { return dataService.getProjectById(dataService.currentProjectId); },
+            
+            getProjectOwnerUid: (projectId) => {
+                const project = dataService.getProjectById(projectId);
+                return project ? project.creatorId : dataService.userId;
+            },
+
+            // --- CRUD HELPERS ---
+
             addProject: async (projectData) => {
                 try {
-                    const newProjectData = { name: projectData.name, tasks: [] };
-                    await addDoc(dataService.getProjectCollectionRef(), newProjectData);
+                    const projectCollection = dataService.getProjectCollectionRef();
+                    const newProjectData = { 
+                        name: projectData.name, 
+                        manager: projectData.manager, 
+                        tasks: [],
+                        creatorId: dataService.userId
+                    };
+                    await addDoc(projectCollection, newProjectData);
                 } catch (error) {
                     console.error("Erro ao adicionar projeto:", error);
                     uiService.showToast('Falha ao adicionar projeto.', 'error');
                 }
             },
+
             deleteProject: async (projectId) => {
                 try {
-                    const projectDocRef = doc(dataService.getProjectCollectionRef(), projectId.toString());
+                    const ownerUid = dataService.getProjectOwnerUid(projectId);
+                    const projectDocRef = doc(dataService.getProjectCollectionRef(ownerUid), projectId);
                     await deleteDoc(projectDocRef);
                 } catch (error) {
                     console.error("Erro ao deletar projeto:", error);
-                    uiService.showToast('Falha ao deletar projeto.', 'error');
+                    uiService.showToast('Falha ao deletar projeto. Verifique suas permissões.', 'error');
                 }
             },
             
-            getProjectById: (id) => dataService.projects.find(p => p.id === id),
-            getCurrentProject: () => dataService.getProjectById(dataService.currentProjectId),
-
-            // Função utilitária para salvar um documento de projeto (adicionar ou editar)
             saveProjectDocument: async (project) => {
                 try {
-                    const projectId = project.id.toString(); 
-                    const projectDocRef = doc(dataService.getProjectCollectionRef(), projectId);
-                    await setDoc(projectDocRef, { name: project.name, tasks: project.tasks }, { merge: true });
+                    const projectId = project.id; 
+                    const ownerUid = project.creatorId; 
+                    const projectDocRef = doc(dataService.getProjectCollectionRef(ownerUid), projectId);
+
+                    await setDoc(projectDocRef, { 
+                        name: project.name, 
+                        manager: project.manager, 
+                        tasks: project.tasks,
+                        creatorId: ownerUid
+                    }, { merge: true });
+
                 } catch (error) {
                     console.error("Erro ao salvar projeto/tarefas:", error);
-                    uiService.showToast('Falha ao salvar dados.', 'error');
+                    uiService.showToast('Falha ao salvar dados. Verifique a conexão.', 'error');
                 }
             },
 
@@ -396,7 +568,7 @@
                 
                 let updatedTasks;
 
-                if (taskData.id) { // Editando tarefa existente
+                if (taskData.id) { 
                     updatedTasks = project.tasks.map(t => {
                         if (t.id === restOfTaskData.id) {
                             const updatedTask = { ...t, ...restOfTaskData };
@@ -410,7 +582,7 @@
                         }
                         return t;
                     });
-                } else { // Adicionando nova tarefa
+                } else { 
                     const newTask = { 
                         ...restOfTaskData, 
                         id: Date.now(), 
@@ -449,85 +621,7 @@
                 await dataService.saveProjectDocument(project);
             },
             
-            importTasksFromExcel: async (file) => {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        try {
-                            const data = new Uint8Array(e.target.result);
-                            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-                            const project = dataService.getCurrentProject();
-                            const newTasks = [];
-                            let maxId = project.tasks.reduce((max, task) => Math.max(max, task.id), 0);
-                            
-                            const createValidatedTask = (row, id) => {
-                                const taskName = (row['Tarefa'] || '').trim();
-                                if (!taskName) return null;
-                                const dateKeys = Object.keys(row).filter(k => k.toLowerCase().includes('data')).sort();
-                                const startDateRaw = row['Data Início'] || row['Data Inicio'] || row[dateKeys[0]];
-                                const endDateRaw = row['Data Término'] || row['Data Termino'] || row[dateKeys[1]];
-
-                                if (!startDateRaw || !endDateRaw) { console.warn(`Pulando tarefa "${taskName}" por data ausente.`); return null; }
-                                const parseDate = (dateRaw) => {
-                                    if (dateRaw instanceof Date) return dateRaw.toISOString().split('T')[0];
-                                    if (typeof dateRaw === 'number') {
-                                        const date = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
-                                        return date.toISOString().split('T')[0];
-                                    }
-                                    return new Date(dateRaw).toISOString().split('T')[0];
-                                };
-
-                                try {
-                                    const startDate = parseDate(startDateRaw);
-                                    const endDate = parseDate(endDateRaw);
-
-                                    return {
-                                        id: id, name: taskName, assignedTo: (row['Atribuído a'] || row['Atribuido a'] || '').trim(),
-                                        priority: (row['Prioridade'] || 'Média').trim(), dateHistory: [{ startDate: startDate, endDate: endDate }],
-                                        status: (row['Status'] || 'Não Iniciada').trim(), progress: parseInt(row['Progresso (%)'], 10) || 0,
-                                        risk: ((row['Risco (Sim/Nao)'] || '').trim()).toLowerCase() === 'sim',
-                                        parentName: (row['Tarefa Pai (Nome)'] || '').trim(), parentId: null, comments: [], dependsOn: null
-                                    };
-                                } catch (e) { console.warn(`Pulando tarefa "${taskName}" devido a erro de parsing de data:`, e); return null; }
-                            };
-
-                            const parentRows = jsonData.filter(row => !(row['Tarefa Pai (Nome)'] || '').trim());
-                            const childRows = jsonData.filter(row => !!(row['Tarefa Pai (Nome)'] || '').trim());
-                            const taskNameMap = new Map();
-                            project.tasks.forEach(t => taskNameMap.set(t.name.toLowerCase(), t.id));
-
-                            parentRows.forEach(row => {
-                                const task = createValidatedTask(row, ++maxId);
-                                if (task) { newTasks.push(task); taskNameMap.set(task.name.toLowerCase(), task.id); }
-                            });
-                            childRows.forEach(row => {
-                                const task = createValidatedTask(row, ++maxId);
-                                if (task) {
-                                    const parentNameLower = task.parentName.toLowerCase();
-                                    if (taskNameMap.has(parentNameLower)) { task.parentId = taskNameMap.get(parentNameLower); } 
-                                    newTasks.push(task);
-                                }
-                            });
-
-                            newTasks.forEach(task => { delete task.parentName; project.tasks.push(task); });
-                            
-                            dataService.recalculateAllProgress();
-                            await dataService.saveProjectDocument(project);
-                            resolve();
-                        } catch (err) { reject(err); }
-                    };
-                    reader.onerror = reject;
-                    reader.readAsArrayBuffer(file);
-                });
-            },
-
-            getLatestDates: (task) => {
-                if (!task.dateHistory || task.dateHistory.length === 0) return { startDate: '', endDate: '' };
-                return task.dateHistory[task.dateHistory.length - 1];
-            },
+            // --- CALCULATION LOGIC ---
             recalculateAllProgress: () => {
                 dataService.projects.forEach(project => {
                     const tasks = project.tasks;
@@ -564,14 +658,22 @@
             }
         };
 
-        // App Controller - Initializes and coordinates modules
+        // App Controller
         const App = {
             async init() {
+                document.getElementById('loader').style.display = 'flex';
                 await dataService.initFirebase(); 
                 uiService.initTheme();
                 this.bindEvents();
             },
             
+            async logout() {
+                document.getElementById('loader').style.display = 'flex';
+                await signOut(auth);
+                document.getElementById('loader').style.display = 'none';
+                uiService.showToast('Sessão encerrada com sucesso.', 'success');
+            },
+
             showProjectView() {
                 dataService.currentProjectId = null;
                 uiService.showView('project-view');
@@ -590,23 +692,86 @@
 
             bindEvents() {
                 document.getElementById('theme-toggle').addEventListener('click', () => uiService.toggleTheme());
+                document.getElementById('logout-btn').addEventListener('click', () => App.logout());
+                document.getElementById('user-management-btn').addEventListener('click', () => uiService.openUserManagementModal());
+
+                // --- AUTENTICAÇÃO ---
+                const authForm = document.getElementById('auth-form');
+                const authEmail = document.getElementById('auth-email');
+                const authPassword = document.getElementById('auth-password');
+                const authSecretCode = document.getElementById('auth-secret-code');
+                const authSubmitBtn = document.getElementById('auth-submit-btn');
+                const secretCodeContainer = document.getElementById('secret-code-container');
+                let isLoginMode = true;
+
+                document.getElementById('toggle-auth-mode').addEventListener('click', (e) => {
+                    isLoginMode = !isLoginMode;
+                    authSubmitBtn.textContent = isLoginMode ? 'Login' : 'Registrar';
+                    e.target.textContent = isLoginMode ? 'Precisa de uma conta? Registrar' : 'Já tenho conta. Login';
+                    secretCodeContainer.classList.add('hidden'); // Esconde o código secreto ao alternar
+                });
+                document.getElementById('toggle-secret-code').addEventListener('click', () => {
+                    if (!isLoginMode) { // Só permite ver o campo no modo Registro
+                         secretCodeContainer.classList.toggle('hidden');
+                    }
+                });
+
+                authForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = authEmail.value;
+                    const password = authPassword.value;
+                    const secretCode = authSecretCode.value;
+
+                    if (!email.endsWith(ALLOWED_DOMAIN)) {
+                        uiService.showToast(`E-mail inválido. Use o domínio ${ALLOWED_DOMAIN}.`, 'error');
+                        return;
+                    }
+
+                    document.getElementById('loader').style.display = 'flex';
+                    try {
+                        let userCredential;
+                        if (isLoginMode) {
+                            userCredential = await signInWithEmailAndPassword(auth, email, password);
+                        } else {
+                            userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                            let role = 'Usuario';
+                            if (secretCode === GESTOR_SECRET_CODE) {
+                                role = 'Gestor';
+                            }
+                            await setDoc(doc(db, 'users_data', userCredential.user.uid), {
+                                email: email,
+                                role: role,
+                                appId: appId
+                            });
+                        }
+                    } catch (error) {
+                        let errorMessage = error.message;
+                        if (error.code === 'auth/email-already-in-use') errorMessage = 'Este e-mail já está em uso.';
+                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') errorMessage = 'Credenciais inválidas.';
+                        if (error.code === 'auth/weak-password') errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
+                        uiService.showToast(`Erro de Autenticação: ${errorMessage}`, 'error');
+                        document.getElementById('loader').style.display = 'none';
+                    }
+                });
+                // --- FIM AUTENTICAÇÃO ---
+                
                 document.getElementById('add-project-btn').addEventListener('click', () => uiService.openModal('project-modal'));
                 document.getElementById('project-form').addEventListener('submit', event => {
                     event.preventDefault();
                     const name = document.getElementById('project-name').value.trim();
+                    const manager = document.getElementById('project-manager').value.trim() || 'Não Definido';
+                    
                     if (name) {
-                        dataService.addProject({ name });
+                        dataService.addProject({ name, manager });
                         uiService.closeModal('project-modal');
                         uiService.showToast('Projeto criado com sucesso! Sincronizando...', 'success');
                     }
                 });
                 
-                // --- LISTENERS ATUALIZADOS PARA CLIQUE NO CARD ---
                 document.getElementById('project-list').addEventListener('click', event => {
                     const deleteBtn = event.target.closest('.delete-project-btn');
                     
                     if (deleteBtn) {
-                        // Ação de deletar: Impede a abertura do projeto
                         event.stopPropagation();
                         const projectId = deleteBtn.dataset.projectId;
                         uiService.showConfirmModal('Excluir este projeto e todas as suas tarefas? Esta ação é permanente.', async () => {
@@ -615,7 +780,7 @@
                             document.getElementById('loader').style.display = 'none';
                             uiService.showToast('Projeto excluído. Sincronizando...', 'error');
                         });
-                        return; // Sai se o botão delete foi clicado
+                        return; 
                     }
                     
                     const card = event.target.closest('.project-card-link');
@@ -623,7 +788,6 @@
                         this.openProject(card.dataset.projectId);
                     }
                 });
-                // --- FIM DOS LISTENERS ATUALIZADOS ---
                 
                 document.getElementById('back-to-projects-btn').addEventListener('click', () => this.showProjectView());
                 document.getElementById('add-task-btn').addEventListener('click', () => uiService.openTaskModal('add'));
@@ -645,7 +809,6 @@
                     uiService.showToast('Tarefa salva! Sincronizando...');
                 });
 
-                // NOVO: Adiciona comentário com o botão (mantido)
                 document.getElementById('add-comment-btn').addEventListener('click', () => {
                     const input = document.getElementById('new-comment-input');
                     const text = input.value.trim();
@@ -655,11 +818,10 @@
                     }
                 });
                 
-                // NOVO: Adiciona comentário com a tecla ENTER e previne o submit do form
                 document.getElementById('new-comment-input').addEventListener('keypress', (event) => {
                     if (event.key === 'Enter') {
-                        event.preventDefault(); // Impede o envio do formulário principal
-                        document.getElementById('add-comment-btn').click(); // Simula o clique no botão de adicionar comentário
+                        event.preventDefault(); 
+                        document.getElementById('add-comment-btn').click(); 
                     }
                 });
 
@@ -725,6 +887,98 @@
         const uiService = {
             mainDashboardCharts: {},
 
+            // --- AUTH UI ---
+            updateUserRoleDisplay: () => {
+                const roleEl = document.getElementById('user-role-display');
+                const btn = document.getElementById('user-management-btn');
+                
+                if (dataService.userRole) {
+                    roleEl.textContent = `Papel: ${dataService.userRole}`;
+                    roleEl.classList.remove('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300', 'bg-green-100', 'dark:bg-green-900', 'text-green-700', 'dark:text-green-300');
+                    
+                    if (dataService.userRole === 'Gestor') {
+                        roleEl.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-700', 'dark:text-green-300');
+                        btn.classList.remove('hidden');
+                    } else {
+                         roleEl.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
+                         btn.classList.add('hidden');
+                    }
+                }
+            },
+            
+            // --- USER MANAGEMENT UI (Gestor) ---
+            openUserManagementModal: () => {
+                if (dataService.userRole !== 'Gestor') {
+                    uiService.showToast('Acesso negado: Apenas Gestores podem gerir utilizadores.', 'error');
+                    return;
+                }
+                uiService.renderUserManagementTable();
+                uiService.openModal('user-management-modal');
+            },
+            
+            renderUserManagementTable: () => {
+                const tbody = document.getElementById('user-management-table-body');
+                tbody.innerHTML = '';
+
+                dataService.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-[var(--border-color)]';
+                    
+                    const roleOptions = ['Usuario', 'Gestor'].map(role => 
+                        `<option value="${role}" ${user.role === role ? 'selected' : ''}>${role}</option>`
+                    ).join('');
+
+                    // Desabilita a edição do próprio papel
+                    const isSelf = user.id === dataService.userId;
+                    const isDisabled = isSelf ? 'disabled' : '';
+
+                    row.innerHTML = `
+                        <td class="p-3 text-xs font-mono">${user.id.substring(0, 8)}...</td>
+                        <td class="p-3 font-medium">${user.email}</td>
+                        <td class="p-3">
+                            <select data-user-id="${user.id}" class="user-role-select border border-[var(--border-color)] rounded-md p-1 bg-[var(--card-bg)] text-gray-800 dark:text-gray-200" ${isDisabled}>
+                                ${roleOptions}
+                            </select>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button data-user-id="${user.id}" class="save-role-btn bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${isDisabled}>Salvar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                tbody.querySelectorAll('.save-role-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const uid = btn.dataset.userId;
+                        const selectEl = tbody.querySelector(`select[data-user-id="${uid}"]`);
+                        const newRole = selectEl.value;
+                        
+                        document.getElementById('loader').style.display = 'flex';
+                        await dataService.updateUserRole(uid, newRole);
+                        document.getElementById('loader').style.display = 'none';
+                    });
+                });
+            },
+
+            // --- TASK UI HELPERS ---
+            populateAssignedUsersSelect: () => {
+                const selectEl = document.getElementById('assigned-users-select');
+                selectEl.innerHTML = '';
+                
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.textContent = "Selecione usuários...";
+                selectEl.appendChild(defaultOption);
+
+                dataService.users.filter(u => u.email).forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.email.split('@')[0]} (${user.role})`;
+                    selectEl.appendChild(option);
+                });
+            },
+
+            // --- VIEW/MODAL MANAGEMENT ---
             showView(viewId) {
                 document.getElementById('project-view').classList.add('hidden');
                 document.getElementById('dashboard-view').classList.add('hidden');
@@ -738,7 +992,10 @@
             renderProjectDashboard(project, filter = '') {
                 const filteredTasks = project.tasks.filter(t => 
                     t.name.toLowerCase().includes(filter.toLowerCase()) || 
-                    (t.assignedTo && t.assignedTo.toLowerCase().includes(filter.toLowerCase()))
+                    (t.assignedUsers && t.assignedUsers.some(uid => {
+                        const user = dataService.users.find(u => u.id === uid);
+                        return user && user.email.toLowerCase().includes(filter.toLowerCase());
+                    }))
                 );
 
                 document.getElementById('project-title').textContent = project.name;
@@ -765,10 +1022,22 @@
             },
             openTaskModal(mode, data = {}) {
                 document.getElementById('task-form').reset();
+                this.populateAssignedUsersSelect(); 
+                
                 const { parentId, taskId } = data;
                 const project = dataService.getCurrentProject();
                 const task = taskId ? project.tasks.find(t => t.id === taskId) : {};
                 const isParent = taskId ? project.tasks.some(t => t.parentId === taskId) : false;
+                
+                const assignedUsersSelect = document.getElementById('assigned-users-select');
+                assignedUsersSelect.value = null; 
+
+                if (mode === 'edit') {
+                    const assignedUsers = task.assignedUsers || [];
+                    Array.from(assignedUsersSelect.options).forEach(option => {
+                        option.selected = assignedUsers.includes(option.value);
+                    });
+                }
                 
                 const startDateInput = document.getElementById('start-date');
                 const endDateInput = document.getElementById('end-date');
@@ -783,7 +1052,6 @@
                 document.getElementById('task-id').value = task.id || '';
                 document.getElementById('parent-id').value = parentId || (task ? task.parentId : '') || '';
                 document.getElementById('task-name').value = task.name || '';
-                document.getElementById('assigned-to').value = task.assignedTo || '';
                 document.getElementById('task-priority').value = task.priority || 'Média';
                 document.getElementById('task-status').value = task.status || 'Não Iniciada';
                 document.getElementById('task-progress').value = task.progress || 0;
@@ -840,6 +1108,7 @@
             getTaskFormData() {
                 const startDateInput = document.getElementById('start-date');
                 const endDateInput = document.getElementById('end-date');
+                const assignedUsersSelect = document.getElementById('assigned-users-select');
                 
                 const commentsList = document.getElementById('comments-list');
                 const comments = Array.from(commentsList.querySelectorAll('p')).map(p => ({
@@ -847,13 +1116,20 @@
                     timestamp: p.dataset.timestamp
                 }));
 
+                const selectedUsers = Array.from(assignedUsersSelect.options)
+                                         .filter(option => option.selected)
+                                         .map(option => option.value)
+                                         .filter(uid => uid); 
+
                 const data = {
                     id: document.getElementById('task-id').value ? parseInt(document.getElementById('task-id').value) : null,
                     parentId: document.getElementById('parent-id').value ? parseInt(document.getElementById('parent-id').value) : null,
-                    name: document.getElementById('task-name').value, assignedTo: document.getElementById('assigned-to').value,
+                    name: document.getElementById('task-name').value, 
+                    assignedUsers: selectedUsers, 
                     priority: document.getElementById('task-priority').value, 
                     status: document.getElementById('task-status').value,
-                    progress: parseInt(document.getElementById('task-progress').value), risk: document.getElementById('task-risk').checked,
+                    progress: parseInt(document.getElementById('task-progress').value), 
+                    risk: document.getElementById('task-risk').checked,
                     dependsOn: document.getElementById('task-dependency').value ? parseInt(document.getElementById('task-dependency').value) : null,
                     comments: comments,
                     newStartDate: startDateInput.value,
@@ -861,6 +1137,7 @@
                 };
                 return data;
             },
+            
             showConfirmModal(body, onConfirm) {
                 document.getElementById('confirm-modal-body').textContent = body;
                 this.openModal('confirm-modal');
@@ -940,108 +1217,6 @@
                 document.getElementById('theme-icon-moon').style.display = isDark ? 'none' : 'block';
             },
 
-            renderProjectList(projects) {
-                const listEl = document.getElementById('project-list');
-                listEl.innerHTML = '';
-                if (projects.length === 0) {
-                    listEl.innerHTML = `<p class="text-gray-500 col-span-full">Nenhum projeto encontrado. Crie o seu primeiro!</p>`;
-                    return;
-                }
-                projects.forEach(project => {
-                    const progress = dataService.getProjectProgress(project.tasks);
-                    const completedTasks = project.tasks.filter(t => t.status === 'Concluída').length;
-                    const totalTasks = project.tasks.length;
-                    
-                    // --- MUDANÇA: Novo card com classe clicável e ID do projeto ---
-                    const card = document.createElement('div');
-                    card.className = 'project-card-link bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl';
-                    card.dataset.projectId = project.id; 
-                    
-                    // --- MUDANÇA: Removendo o botão "Abrir" e integrando o ícone de ação ---
-                    card.innerHTML = `
-                        <div>
-                            <h3 class="text-xl font-bold mb-2">${project.name}</h3>
-                            <p class="text-sm text-gray-400 mb-4">${completedTasks} de ${totalTasks} tarefas concluídas</p>
-                        </div>
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-semibold">Progresso</span>
-                                <span class="text-xs font-semibold">${progress}%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
-                                <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress}%"></div>
-                            </div>
-                            <div class="flex justify-end">
-                                <button class="delete-project-btn bg-red-500 bg-opacity-10 text-red-500 px-3 py-2 rounded-md hover:bg-opacity-20 transition-colors" data-project-id="${project.id}" title="Excluir Projeto">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                                </button>
-                            </div>
-                        </div>`;
-                    listEl.appendChild(card);
-                });
-            },
-            
-            renderTaskTable: function(tasks) {
-                const tableBody = document.getElementById('task-table-body');
-                tableBody.innerHTML = '';
-                const tasksToRender = [];
-                
-                const processTasks = (parentId, level) => {
-                    tasks.filter(t => t.parentId === parentId)
-                        .sort((a,b) => {
-                            const dateA = new Date(dataService.getLatestDates(a).startDate);
-                            const dateB = new Date(dataService.getLatestDates(b).startDate);
-                            return dateA - dateB;
-                        })
-                        .forEach(task => { tasksToRender.push({ ...task, level }); processTasks(task.id, level + 1); });
-                };
-                processTasks(null, 0);
-
-                tasksToRender.forEach(task => {
-                    const latestDates = dataService.getLatestDates(task);
-                    const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
-                    const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
-                    const isParent = tasks.some(t => t.parentId === task.id);
-                    const riskClass = task.risk ? 'border-l-4 border-red-500' : '';
-                    const commentCount = (task.comments || []).length;
-                    
-                    const row = document.createElement('tr');
-                    row.className = `border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-800 ${riskClass}`;
-                    row.innerHTML = `
-                        <!-- 1. Tarefa (CLICÁVEL) -->
-                        <td class="p-3">
-                            <div class="task-edit-trigger cursor-pointer hover:underline flex items-center gap-2" 
-                                style="padding-left: ${task.level * 20}px;" 
-                                data-task-id="${task.id}"
-                                title="Clique para editar: ${task.name}">
-                                ${task.risk ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
-                                <span class="${isParent ? 'font-bold' : ''}">${task.name}</span>
-                            </div>
-                        </td>
-                        <!-- 2. Duração em dias -->
-                        <td class="p-3">${duration} dias</td>
-                        <!-- 3. Data de Início -->
-                        <td class="p-3">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <!-- 4. Data de Término -->
-                        <td class="p-3">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <!-- 5. Status -->
-                        <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.badge}">${statusInfo.name}</span></td>
-                        <!-- 6. Comentários (Botão para abrir modal de edição e ver/adicionar comentários) -->
-                        <td class="p-3 text-center">
-                            <button class="edit-task-btn flex items-center justify-center gap-1 mx-auto" data-task-id="${task.id}" title="${commentCount > 0 ? commentCount + ' Comentário(s). Clique para ver/adicionar.' : 'Adicionar Comentário'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="${commentCount > 0 ? 'text-blue-500' : 'text-gray-400'}"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                ${commentCount > 0 ? `(${commentCount})` : ''}
-                            </button>
-                        </td>
-                        <!-- Ações (Botões Edit/Delete/Subtask - Removido da impressão) -->
-                        <td class="p-3 flex items-center justify-center gap-2 no-print">
-                            <button class="add-subtask-btn" data-parent-id="${task.id}" title="Adicionar Subtarefa"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"><path d="M3 10h12v8H3zM3 10V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7M18 18v-5h-5"/></svg></button>
-                            <button class="edit-task-btn" data-task-id="${task.id}" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-500"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
-                            <button class="delete-task-btn" data-task-id="${task.id}" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-                        </td>`;
-                    tableBody.appendChild(row);
-                });
-            },
             updateKpis: function(tasks) {
                 const kpiDashboard = document.getElementById('kpi-dashboard');
                 const overallProgress = dataService.getProjectProgress(tasks);
@@ -1059,10 +1234,14 @@
             },
             renderAssigneeSummary(tasks) {
                 const summaryContainer = document.getElementById('assignee-summary-list');
+                const uidToEmail = new Map(dataService.users.map(u => [u.id, u.email.split('@')[0]]));
+
                 const summary = tasks.reduce((acc, task) => {
-                    const assignee = task.assignedTo || 'Não atribuído';
-                    if (!acc[assignee]) acc[assignee] = 0;
-                    acc[assignee]++;
+                    (task.assignedUsers || []).forEach(uid => {
+                        const userIdentifier = uidToEmail.get(uid) || `UID: ${uid.substring(0, 4)}`;
+                        if (!acc[userIdentifier]) acc[userIdentifier] = 0;
+                        acc[userIdentifier]++;
+                    });
                     return acc;
                 }, {});
 
@@ -1124,6 +1303,168 @@
                     </div>
                 `;
             },
+
+            // FUNÇÕES ADICIONADAS PARA CORRIGIR OS ERROS
+            renderProjectList: function(projects) {
+                const projectListContainer = document.getElementById('project-list');
+                
+                if (!projects || projects.length === 0) {
+                    projectListContainer.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-gray-400">Nenhum projeto encontrado.</p>
+                            <p class="text-sm text-gray-500 mt-2">Crie seu primeiro projeto clicando no botão acima.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                projectListContainer.innerHTML = projects.map(project => {
+                    const progress = dataService.getProjectProgress(project.tasks);
+                    const statusInfo = reportService.getTaskStatusClass(
+                        progress === 100 ? 'Concluída' : progress > 0 ? 'Em Andamento' : 'Não Iniciada', 
+                        ''
+                    );
+                    
+                    const canDelete = dataService.userRole === 'Gestor' || project.creatorId === dataService.userId;
+                    
+                    return `
+                        <div class="project-card-link bg-[var(--card-bg)] rounded-lg shadow-md p-6 border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer" data-project-id="${project.id}">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="text-xl font-semibold text-[var(--text-color)]">${project.name}</h3>
+                                ${canDelete ? `
+                                    <button class="delete-project-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition-colors" data-project-id="${project.id}" title="Excluir projeto">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex justify-between text-sm text-gray-400 mb-1">
+                                    <span>Progresso</span>
+                                    <span>${progress}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-sm">
+                                <div class="flex items-center gap-4">
+                                    <span class="px-2 py-1 rounded-full text-xs ${statusInfo.badge}">
+                                        ${progress === 100 ? 'Concluído' : progress > 0 ? 'Em Andamento' : 'Não Iniciado'}
+                                    </span>
+                                    <span class="text-gray-400">${project.tasks?.length || 0} tarefas</span>
+                                </div>
+                                <div class="text-gray-400 text-xs">
+                                    Responsável: ${project.manager || 'Não definido'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderTaskTable: function(tasks) {
+                const tableBody = document.getElementById('task-table-body');
+                
+                if (!tasks || tasks.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="p-4 text-center text-gray-400">
+                                Nenhuma tarefa encontrada. Clique em "Nova Tarefa" para começar.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                const processTasksForTable = (parentId, level) => {
+                    let html = '';
+                    const childTasks = tasks
+                        .filter(t => t.parentId === parentId)
+                        .sort((a, b) => {
+                            const dateA = new Date(dataService.getLatestDates(a).startDate);
+                            const dateB = new Date(dataService.getLatestDates(b).startDate);
+                            return dateA - dateB;
+                        });
+
+                    childTasks.forEach(task => {
+                        const latestDates = dataService.getLatestDates(task);
+                        const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
+                        const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
+                        const isParent = tasks.some(t => t.parentId === task.id);
+                        
+                        const assignedUsersText = (task.assignedUsers || [])
+                            .map(uid => {
+                                const user = dataService.users.find(u => u.id === uid);
+                                return user ? user.email.split('@')[0] : `UID:${uid.substring(0,4)}`;
+                            })
+                            .join(', ');
+
+                        const commentsPreview = (task.comments || [])
+                            .slice(0, 2)
+                            .map(c => c.text.substring(0, 30) + (c.text.length > 30 ? '...' : ''))
+                            .join('; ');
+
+                        html += `
+                            <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <td class="p-3">
+                                    <div style="padding-left: ${level * 20}px" class="flex items-center gap-2">
+                                        ${isParent ? '<span class="text-blue-500">📁</span>' : '<span class="text-gray-400">📄</span>'}
+                                        <span class="task-edit-trigger cursor-pointer hover:text-blue-500 hover:underline" data-task-id="${task.id}">
+                                            ${task.name}
+                                        </span>
+                                        ${task.risk ? '<span class="text-red-500 text-xs" title="Tarefa em risco">⚠️</span>' : ''}
+                                    </div>
+                                </td>
+                                <td class="p-3">${duration}</td>
+                                <td class="p-3">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                <td class="p-3">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                <td class="p-3">
+                                    <span class="px-2 py-1 rounded-full text-xs ${statusInfo.badge}">
+                                        ${statusInfo.name}
+                                    </span>
+                                </td>
+                                <td class="p-3 text-xs text-gray-500 max-w-xs truncate" title="${commentsPreview}">
+                                    ${commentsPreview || '-'}
+                                </td>
+                                <td class="p-3 text-center no-print">
+                                    <div class="flex justify-center gap-1">
+                                        <button class="add-subtask-btn bg-green-500 text-white p-1 rounded hover:bg-green-600" 
+                                                data-task-id="${task.id}" data-parent-id="${task.id}" title="Adicionar subtarefa">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                        <button class="edit-task-btn bg-blue-500 text-white p-1 rounded hover:bg-blue-600" 
+                                                data-task-id="${task.id}" title="Editar tarefa">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                            </svg>
+                                        </button>
+                                        <button class="delete-task-btn bg-red-500 text-white p-1 rounded hover:bg-red-600" 
+                                                data-task-id="${task.id}" title="Excluir tarefa">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 000-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        
+                        // Processar subtarefas recursivamente
+                        html += processTasksForTable(task.id, level + 1);
+                    });
+                    
+                    return html;
+                };
+
+                tableBody.innerHTML = processTasksForTable(null, 0);
+            },
+
             renderGanttChart: function(tasks) {
                 const ganttView = document.getElementById('gantt-view');
                 if (!tasks || tasks.length === 0 || ganttView.classList.contains('hidden')) return;
@@ -1261,15 +1602,15 @@
         // Report Service - Handles PDF, Excel generation and Template
         const reportService = {
             downloadExcelTemplate() {
-                const headers = ['Tarefa', 'Duração (dias)', 'Data Início', 'Data Termino', 'Status', 'Progresso (%)', 'Prioridade', 'Atribuído a', 'Risco (Sim/Nao)', 'Tarefa Pai (Nome)'];
+                const headers = ['Tarefa', 'Duração (dias)', 'Data Início', 'Data Termino', 'Status', 'Progresso (%)', 'Prioridade', 'Atribuído a (UIDs Separados por Vírgula)', 'Risco (Sim/Nao)', 'Tarefa Pai (Nome)'];
                 const exampleData = [
-                    { 'Tarefa': 'Planejamento Geral', 'Duração (dias)': 5, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-05', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a': 'Gerente de Projeto', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': '' },
-                    { 'Tarefa': 'Definir Escopo', 'Duração (dias)': 2, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-02', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a': 'Analista', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': 'Planejamento Geral' }
+                    { 'Tarefa': 'Planejamento Geral', 'Duração (dias)': 5, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-05', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a (UIDs Separados por Vírgula)': '', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': '' },
+                    { 'Tarefa': 'Definir Escopo', 'Duração (dias)': 2, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-02', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a (UIDs Separados por Vírgula)': 'UID_EXEMPLO1,UID_EXEMPLO2', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': 'Planejamento Geral' }
                 ];
                 const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "Tarefas");
-                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 40 } ];
+                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 40 }, { wch: 15 }, { wch: 40 } ];
                 XLSX.writeFile(workbook, "template_importacao.xlsx");
             },
             calculateDuration: (start, end) => {
@@ -1313,7 +1654,7 @@
                                 'Status': statusInfo.name, 
                                 'Comentários': commentsString,
                                 'Progresso (%)': task.progress, 
-                                'Atribuído a': task.assignedTo, 
+                                'Atribuído a (UIDs)': (task.assignedUsers || []).join(', '), // Exporta UIDs
                                 'Prioridade': task.priority,
                                 'Em Risco': task.risk ? 'Sim' : 'Não'
                             });
@@ -1324,7 +1665,7 @@
                 const worksheet = XLSX.utils.json_to_sheet(dataToExport);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "Cronograma");
-                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 60 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 } ];
+                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 60 }, { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 15 } ];
                 XLSX.writeFile(workbook, `${project.name.replace(/ /g,"_")}_Relatorio.xlsx`);
             },
             generatePdf: function(project) {
