@@ -597,20 +597,31 @@
                         uiService.showToast('Projeto criado com sucesso! Sincronizando...', 'success');
                     }
                 });
+                
+                // --- LISTENERS ATUALIZADOS PARA CLIQUE NO CARD ---
                 document.getElementById('project-list').addEventListener('click', event => {
-                    const openBtn = event.target.closest('.open-project-btn');
                     const deleteBtn = event.target.closest('.delete-project-btn');
                     
-                    if (openBtn) this.openProject(openBtn.dataset.projectId);
-                    
                     if (deleteBtn) {
+                        // Ação de deletar: Impede a abertura do projeto
+                        event.stopPropagation();
                         const projectId = deleteBtn.dataset.projectId;
-                        uiService.showConfirmModal('Excluir este projeto e todas as suas tarefas? Esta ação é permanente.', () => {
-                            dataService.deleteProject(projectId);
+                        uiService.showConfirmModal('Excluir este projeto e todas as suas tarefas? Esta ação é permanente.', async () => {
+                            document.getElementById('loader').style.display = 'flex';
+                            await dataService.deleteProject(projectId);
+                            document.getElementById('loader').style.display = 'none';
                             uiService.showToast('Projeto excluído. Sincronizando...', 'error');
                         });
+                        return; // Sai se o botão delete foi clicado
+                    }
+                    
+                    const card = event.target.closest('.project-card-link');
+                    if (card) {
+                        this.openProject(card.dataset.projectId);
                     }
                 });
+                // --- FIM DOS LISTENERS ATUALIZADOS ---
+                
                 document.getElementById('back-to-projects-btn').addEventListener('click', () => this.showProjectView());
                 document.getElementById('add-task-btn').addEventListener('click', () => uiService.openTaskModal('add'));
                 
@@ -919,8 +930,13 @@
                     const progress = dataService.getProjectProgress(project.tasks);
                     const completedTasks = project.tasks.filter(t => t.status === 'Concluída').length;
                     const totalTasks = project.tasks.length;
+                    
+                    // --- MUDANÇA: Novo card com classe clicável e ID do projeto ---
                     const card = document.createElement('div');
-                    card.className = 'bg-[var(--card-bg)] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-[var(--border-color)] flex flex-col justify-between';
+                    card.className = 'project-card-link bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)] flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl';
+                    card.dataset.projectId = project.id; 
+                    
+                    // --- MUDANÇA: Removendo o botão "Abrir" e integrando o ícone de ação ---
                     card.innerHTML = `
                         <div>
                             <h3 class="text-xl font-bold mb-2">${project.name}</h3>
@@ -934,10 +950,9 @@
                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
                                 <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress}%"></div>
                             </div>
-                            <div class="flex gap-2">
-                                <button class="open-project-btn w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700" data-project-id="${project.id}">Abrir</button>
-                                <button class="delete-project-btn bg-red-500 bg-opacity-10 text-red-500 px-3 py-2 rounded-md hover:bg-opacity-20" data-project-id="${project.id}" title="Excluir Projeto">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                            <div class="flex justify-end">
+                                <button class="delete-project-btn bg-red-500 bg-opacity-10 text-red-500 px-3 py-2 rounded-md hover:bg-opacity-20 transition-colors" data-project-id="${project.id}" title="Excluir Projeto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
                                 </button>
                             </div>
                         </div>`;
