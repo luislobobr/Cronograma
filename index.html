@@ -123,7 +123,7 @@
                     <div id="comments-list" class="flex-grow text-sm text-gray-500 max-h-48 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-2 rounded mb-4"></div>
                     <div class="flex gap-2">
                         <input type="text" id="new-comment-input" class="flex-grow border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" placeholder="Adicionar comentário...">
-                        <button type="button" id="add-comment-btn" class="bg-gray-200 dark:bg-gray-600 px-3 rounded-md">&rarr;</button>
+                        <button type="button" id="add-comment-btn" class="bg-gray-200 dark:bg-gray-600 px-3 rounded-md text-[var(--text-color)] hover:bg-gray-300 dark:hover:bg-gray-500">&rarr;</button>
                     </div>
                 </div>
 
@@ -204,8 +204,14 @@
                         <table class="w-full text-sm text-left text-gray-400">
                             <thead class="text-xs uppercase bg-gray-700 text-gray-400">
                                 <tr>
-                                    <th class="p-3 w-8">Risco</th><th class="p-3 min-w-[250px]">Tarefa</th><th class="p-3">Atribuído a</th><th class="p-3">Status</th>
-                                    <th class="p-3">Progresso</th><th class="p-3">Início</th><th class="p-3">Término</th><th class="p-3">Duração</th><th class="p-3 text-center">Ações</th>
+                                    <!-- NOVA ORDEM SOLICITADA: Tarefa - Duração - Data Início - Data Término - Status - Comentários -->
+                                    <th class="p-3 min-w-[250px]">Tarefa</th>
+                                    <th class="p-3">Duração (dias)</th>
+                                    <th class="p-3">Data de Início</th>
+                                    <th class="p-3">Data de Término</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Comentários</th>
+                                    <th class="p-3 text-center no-print">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="task-table-body"></tbody>
@@ -227,950 +233,1102 @@
         </div>
     </div>
 
-    <script>
-    // App Controller - Initializes and coordinates modules
-    const App = {
-        init() {
-            uiService.initTheme();
-            dataService.load();
-            this.bindEvents();
-            App.showProjectView();
-            document.getElementById('loader').style.display = 'none';
-        },
+    <!-- TODO O CÓDIGO JAVASCRIPT CONSOLIDADO EM UM ÚNICO MÓDULO -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js"; <--- REMOVIDO: CAUSAVA ERRO DE EXPORTAÇÃO
         
-        showProjectView() {
-            dataService.currentProjectId = null;
-            uiService.showView('project-view');
-            uiService.renderProjectList(dataService.projects);
-            uiService.updateMainDashboard(dataService.projects);
-        },
+        // Variáveis Globais de Firebase
+        let firebaseApp;
+        let db;
+        let auth;
+        let unsubscribeProjects = () => {};
         
-        openProject(projectId) {
-            dataService.currentProjectId = parseInt(projectId);
-            const project = dataService.getProjectById(dataService.currentProjectId);
-            if (project) {
-                uiService.showView('dashboard-view');
-                uiService.renderProjectDashboard(project);
-            }
-        },
+        // Variáveis de Configuração do Ambiente
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-project-manager';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Config de fallback */ };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        bindEvents() {
-            // Theme Toggle
-            document.getElementById('theme-toggle').addEventListener('click', () => uiService.toggleTheme());
-            // Project Events
-            document.getElementById('add-project-btn').addEventListener('click', () => uiService.openModal('project-modal'));
-            document.getElementById('project-form').addEventListener('submit', event => {
-                event.preventDefault();
-                const name = document.getElementById('project-name').value.trim();
-                if (name) {
-                    dataService.addProject({ name });
-                    uiService.closeModal('project-modal');
-                    uiService.showToast('Projeto criado com sucesso!');
-                    this.showProjectView();
-                }
-            });
-            document.getElementById('project-list').addEventListener('click', event => {
-                const openBtn = event.target.closest('.open-project-btn');
-                const deleteBtn = event.target.closest('.delete-project-btn');
-                if (openBtn) this.openProject(openBtn.dataset.projectId);
-                if (deleteBtn) {
-                    const projectId = parseInt(deleteBtn.dataset.projectId);
-                    uiService.showConfirmModal('Excluir este projeto e todas as suas tarefas?', () => {
-                        dataService.deleteProject(projectId);
-                        uiService.showToast('Projeto excluído.', 'error');
-                        this.showProjectView();
-                    });
-                }
-            });
-            // Dashboard Events
-            document.getElementById('back-to-projects-btn').addEventListener('click', () => this.showProjectView());
-            document.getElementById('add-task-btn').addEventListener('click', () => uiService.openTaskModal('add'));
+        // dataService Interface (Definida no escopo do módulo para ser aumentada)
+        const dataService = {
+            projects: [],
+            currentProjectId: null,
+            userId: null, 
+            isAuthReady: false,
             
-            document.getElementById('task-form').addEventListener('submit', event => {
-                event.preventDefault();
-                const taskData = uiService.getTaskFormData();
-                dataService.saveTask(taskData);
-                uiService.closeModal('task-modal');
-                uiService.showToast('Tarefa salva!');
-                uiService.renderProjectDashboard(dataService.getCurrentProject());
-            });
+            // --- FIREBASE IMPLEMENTATIONS ---
+            initFirebase: async () => {
+                try {
+                    // setLogLevel('Debug'); <--- REMOVIDO: CAUSAVA ERRO
+                    
+                    firebaseApp = initializeApp(firebaseConfig);
+                    db = getFirestore(firebaseApp);
+                    auth = getAuth(firebaseApp);
 
-            document.getElementById('add-comment-btn').addEventListener('click', () => {
-                const input = document.getElementById('new-comment-input');
-                const text = input.value.trim();
-                if(text) {
-                    uiService.addComment(text);
-                    input.value = '';
-                }
-            });
-
-            document.getElementById('task-table-body').addEventListener('click', event => {
-                const button = event.target.closest('button');
-                if (!button) return;
-                const taskId = parseInt(button.dataset.taskId);
-                const parentId = parseInt(button.dataset.parentId);
-                if (button.classList.contains('add-subtask-btn')) uiService.openTaskModal('add', { parentId });
-                if (button.classList.contains('edit-task-btn')) uiService.openTaskModal('edit', { taskId });
-                if (button.classList.contains('delete-task-btn')) {
-                     uiService.showConfirmModal('Excluir esta tarefa e suas subtarefas?', () => {
-                        dataService.deleteTask(taskId);
-                        uiService.showToast('Tarefa excluída.', 'error');
-                        uiService.renderProjectDashboard(dataService.getCurrentProject());
-                    });
-                }
-            });
-
-            document.getElementById('task-filter-input').addEventListener('input', (e) => {
-                uiService.renderProjectDashboard(dataService.getCurrentProject(), e.target.value);
-            });
-
-            // View Switcher & Export/Import
-            document.getElementById('view-switcher').addEventListener('change', (e) => uiService.switchView(e.target.value));
-            document.getElementById('export-excel-btn').addEventListener('click', () => reportService.exportExcel(dataService.getCurrentProject()));
-            document.getElementById('generate-pdf-report-btn').addEventListener('click', () => reportService.generatePdf(dataService.getCurrentProject()));
-            document.getElementById('print-view-btn').addEventListener('click', () => window.print());
-            document.getElementById('download-template-btn').addEventListener('click', () => reportService.downloadExcelTemplate());
-            document.getElementById('import-excel-btn').addEventListener('click', () => document.getElementById('import-excel-input').click());
-            document.getElementById('import-excel-input').addEventListener('change', async (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    document.getElementById('loader').style.display = 'flex';
-                    try {
-                        await dataService.importTasksFromExcel(file);
-                        uiService.showToast('Tarefas importadas com sucesso!');
-                        uiService.renderProjectDashboard(dataService.getCurrentProject());
-                    } catch (error) {
-                        console.error(error);
-                        uiService.showToast('Erro ao importar o arquivo. Verifique o console.', 'error');
-                    } finally {
-                        document.getElementById('loader').style.display = 'none';
-                        event.target.value = ''; // Reset input
+                    // Autenticação
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
                     }
-                }
-            });
-            // Global Cancel Buttons
-            document.querySelectorAll('.cancel-btn').forEach(btn => btn.addEventListener('click', () => uiService.closeAllModals()));
-        }
-    };
 
-    // Data Service - Manages all application data and localStorage
-    const dataService = {
-        projects: [],
-        currentProjectId: null,
-
-        load() {
-            const data = localStorage.getItem('projectManagerData');
-            this.projects = data ? JSON.parse(data) : [{ 
-                id: 1, name: "Projeto Exemplo", 
-                tasks: [
-                    {id: 1, parentId: null, name: 'Análise de Requisitos', risk: false, assignedTo: 'Equipe A', status: 'Concluída', progress: 100, priority: 'Alta', dateHistory: [{startDate: '2025-10-20', endDate: '2025-10-22'}], comments: [], dependsOn: null},
-                    {id: 2, parentId: null, name: 'Desenvolvimento', risk: true, assignedTo: 'Equipe B', status: 'Em Andamento', progress: 50, priority: 'Alta', dateHistory: [{startDate: '2025-10-23', endDate: '2025-10-30'}], comments: [], dependsOn: 1},
-                    {id: 3, parentId: 2, name: 'Backend', risk: true, assignedTo: 'Dev 1', status: 'Em Andamento', progress: 75, priority: 'Média', dateHistory: [{startDate: '2025-10-23', endDate: '2025-10-27'}], comments: [], dependsOn: null},
-                    {id: 4, parentId: 2, name: 'Frontend', risk: false, assignedTo: 'Dev 2', status: 'Em Andamento', progress: 25, priority: 'Média', dateHistory: [{startDate: '2025-10-23', endDate: '2025-10-30'}], comments: [], dependsOn: 3}
-                ]
-            }];
-            this.recalculateAllProgress();
-        },
-        save() {
-            this.recalculateAllProgress();
-            localStorage.setItem('projectManagerData', JSON.stringify(this.projects));
-        },
-        
-        getLatestDates(task) {
-            if (!task.dateHistory || task.dateHistory.length === 0) return { startDate: '', endDate: '' };
-            return task.dateHistory[task.dateHistory.length - 1];
-        },
-
-        // Project CRUD
-        addProject(projectData) { this.projects.push({ id: Date.now(), ...projectData, tasks: [] }); this.save(); },
-        deleteProject(projectId) { this.projects = this.projects.filter(p => p.id !== projectId); this.save(); },
-        getProjectById(id) { return this.projects.find(p => p.id === id); },
-        getCurrentProject() { return this.getProjectById(this.currentProjectId); },
-
-        // Task CRUD
-        saveTask(taskData) {
-            const project = this.getCurrentProject();
-            const { newStartDate, newEndDate, ...restOfTaskData } = taskData;
-
-            if (taskData.id) { // Editing existing task
-                project.tasks = project.tasks.map(t => {
-                    if (t.id === restOfTaskData.id) {
-                        const updatedTask = { ...t, ...restOfTaskData };
-                        // Check if new dates were provided and are different
-                        if (newStartDate && newEndDate) {
-                            const latestDates = this.getLatestDates(t);
-                            if (latestDates.startDate !== newStartDate || latestDates.endDate !== newEndDate) {
-                                if(!updatedTask.dateHistory) updatedTask.dateHistory = [];
-                                updatedTask.dateHistory.push({ startDate: newStartDate, endDate: newEndDate });
-                            }
+                    // Listener para o estado de autenticação (garante que o userId esteja pronto)
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            dataService.userId = user.uid;
+                            dataService.isAuthReady = true;
+                            console.log(`Firebase: User authenticated. UID: ${dataService.userId}`);
+                            
+                            // Inicia o listener de projetos após a autenticação
+                            dataService.listenToProjects();
+                        } else {
+                            console.error("Firebase: User not authenticated.");
+                            dataService.isAuthReady = false;
+                            dataService.projects = [];
+                            uiService.showToast('Erro de autenticação. Os dados não serão salvos.', 'error');
                         }
-                        return updatedTask;
+                        document.getElementById('loader').style.display = 'none';
+                    });
+
+                } catch (error) {
+                    console.error("Erro na inicialização do Firebase:", error);
+                    uiService.showToast('Erro ao conectar ao banco de dados!', 'error');
+                    document.getElementById('loader').style.display = 'none';
+                }
+            },
+            getProjectCollectionRef: () => {
+                 // Caminho: /artifacts/{appId}/users/{userId}/projects
+                if (!dataService.userId) throw new Error("Usuário não autenticado para buscar a coleção.");
+                return collection(db, 'artifacts', appId, 'users', dataService.userId, 'projects');
+            },
+            listenToProjects: () => {
+                // Remove listener anterior se existir
+                unsubscribeProjects(); 
+
+                if (!dataService.isAuthReady) return;
+                
+                const projectsRef = dataService.getProjectCollectionRef();
+                const projectsQuery = query(projectsRef);
+
+                unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
+                    const newProjects = [];
+                    snapshot.forEach(doc => {
+                        const projectData = doc.data();
+                        newProjects.push({ id: doc.id, ...projectData }); 
+                    });
+
+                    dataService.projects = newProjects;
+                    dataService.recalculateAllProgress();
+                    
+                    if (dataService.currentProjectId) {
+                        const currentProject = dataService.getProjectById(dataService.currentProjectId);
+                        if (currentProject) {
+                            uiService.renderProjectDashboard(currentProject, document.getElementById('task-filter-input').value);
+                        } else {
+                            App.showProjectView(); 
+                        }
+                    } else {
+                        App.showProjectView();
                     }
+                }, (error) => {
+                    console.error("Erro ao ouvir projetos:", error);
+                    uiService.showToast('Erro de sincronização em tempo real.', 'error');
+                });
+            },
+            load: () => { /* Mantido para compatibilidade com a assinatura App.init */ },
+            
+            addProject: async (projectData) => {
+                try {
+                    const newProjectData = { name: projectData.name, tasks: [] };
+                    await addDoc(dataService.getProjectCollectionRef(), newProjectData);
+                } catch (error) {
+                    console.error("Erro ao adicionar projeto:", error);
+                    uiService.showToast('Falha ao adicionar projeto.', 'error');
+                }
+            },
+            deleteProject: async (projectId) => {
+                try {
+                    const projectDocRef = doc(dataService.getProjectCollectionRef(), projectId.toString());
+                    await deleteDoc(projectDocRef);
+                } catch (error) {
+                    console.error("Erro ao deletar projeto:", error);
+                    uiService.showToast('Falha ao deletar projeto.', 'error');
+                }
+            },
+            
+            getProjectById: (id) => dataService.projects.find(p => p.id === id),
+            getCurrentProject: () => dataService.getProjectById(dataService.currentProjectId),
+
+            // Função utilitária para salvar um documento de projeto (adicionar ou editar)
+            saveProjectDocument: async (project) => {
+                try {
+                    const projectId = project.id.toString(); 
+                    const projectDocRef = doc(dataService.getProjectCollectionRef(), projectId);
+                    await setDoc(projectDocRef, { name: project.name, tasks: project.tasks }, { merge: true });
+                } catch (error) {
+                    console.error("Erro ao salvar projeto/tarefas:", error);
+                    uiService.showToast('Falha ao salvar dados.', 'error');
+                }
+            },
+
+            saveTask: async (taskData) => {
+                const project = dataService.getCurrentProject();
+                if (!project) return;
+
+                const { newStartDate, newEndDate, ...restOfTaskData } = taskData;
+                
+                let updatedTasks;
+
+                if (taskData.id) { // Editando tarefa existente
+                    updatedTasks = project.tasks.map(t => {
+                        if (t.id === restOfTaskData.id) {
+                            const updatedTask = { ...t, ...restOfTaskData };
+                            if (newStartDate && newEndDate) {
+                                const latestDates = dataService.getLatestDates(t);
+                                if (latestDates.startDate !== newStartDate || latestDates.endDate !== newEndDate) {
+                                    updatedTask.dateHistory = [...(updatedTask.dateHistory || []), { startDate: newStartDate, endDate: newEndDate }];
+                                }
+                            }
+                            return updatedTask;
+                        }
+                        return t;
+                    });
+                } else { // Adicionando nova tarefa
+                    const newTask = { 
+                        ...restOfTaskData, 
+                        id: Date.now(), 
+                        dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
+                        comments: taskData.comments || [], 
+                    };
+                    updatedTasks = [...project.tasks, newTask];
+                }
+                
+                project.tasks = updatedTasks;
+                dataService.recalculateAllProgress();
+                await dataService.saveProjectDocument(project);
+            },
+
+            deleteTask: async (taskId) => {
+                const project = dataService.getCurrentProject();
+                if (!project) return;
+                
+                const idsToDelete = [taskId];
+                const findChildren = (pid) => { 
+                    project.tasks.filter(t => t.parentId === pid).forEach(c => { 
+                        idsToDelete.push(c.id); findChildren(c.id); 
+                    }); 
+                };
+                findChildren(taskId);
+                
+                let updatedTasks = project.tasks.filter(t => !idsToDelete.includes(t.id));
+                
+                updatedTasks = updatedTasks.map(t => {
+                    if (idsToDelete.includes(t.dependsOn)) { t.dependsOn = null; }
                     return t;
                 });
-            } else { // Adding new task
-                const newTask = { 
-                    ...restOfTaskData, 
-                    id: Date.now(),
-                    dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
-                    comments: [],
-                };
-                project.tasks.push(newTask);
-            }
-            this.save();
-        },
-        deleteTask(taskId) {
-            const project = this.getCurrentProject();
-            const idsToDelete = [taskId];
-            const findChildren = (pid) => { project.tasks.filter(t => t.parentId === pid).forEach(c => { idsToDelete.push(c.id); findChildren(c.id); }); };
-            findChildren(taskId);
-            // Also remove dependencies pointing to the deleted tasks
-            project.tasks.forEach(t => {
-                if (idsToDelete.includes(t.dependsOn)) {
-                    t.dependsOn = null;
-                }
-            });
-            project.tasks = project.tasks.filter(t => !idsToDelete.includes(t.id));
 
-            this.save();
-        },
-        importTasksFromExcel(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                project.tasks = updatedTasks;
+                dataService.recalculateAllProgress();
+                await dataService.saveProjectDocument(project);
+            },
+            
+            importTasksFromExcel: async (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-                        const project = this.getCurrentProject();
-                        const newTasks = [];
-                        let maxId = project.tasks.reduce((max, task) => Math.max(max, task.id), 0);
-                        
-                        const createValidatedTask = (row, id) => {
-                            const taskName = (row['Tarefa'] || '').trim();
-                            if (!taskName) return null;
+                            const project = dataService.getCurrentProject();
+                            const newTasks = [];
+                            let maxId = project.tasks.reduce((max, task) => Math.max(max, task.id), 0);
+                            
+                            const createValidatedTask = (row, id) => {
+                                const taskName = (row['Tarefa'] || '').trim();
+                                if (!taskName) return null;
+                                const dateKeys = Object.keys(row).filter(k => k.toLowerCase().includes('data')).sort();
+                                const startDateRaw = row['Data Início'] || row['Data Inicio'] || row[dateKeys[0]];
+                                const endDateRaw = row['Data Término'] || row['Data Termino'] || row[dateKeys[1]];
 
-                            const startDateRaw = row['Data Inicio'];
-                            const endDateRaw = row['Data Termino'];
-                            if (!startDateRaw || !endDateRaw || isNaN(new Date(startDateRaw).getTime()) || isNaN(new Date(endDateRaw).getTime())) {
-                                console.warn(`Pulando tarefa "${taskName}" por data inválida ou ausente.`);
-                                return null;
-                            }
-                            const startDate = new Date(startDateRaw);
-                            const endDate = new Date(endDateRaw);
+                                if (!startDateRaw || !endDateRaw) { console.warn(`Pulando tarefa "${taskName}" por data ausente.`); return null; }
+                                const parseDate = (dateRaw) => {
+                                    if (dateRaw instanceof Date) return dateRaw.toISOString().split('T')[0];
+                                    if (typeof dateRaw === 'number') {
+                                        const date = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
+                                        return date.toISOString().split('T')[0];
+                                    }
+                                    return new Date(dateRaw).toISOString().split('T')[0];
+                                };
 
-                            return {
-                                id: id,
-                                name: taskName,
-                                assignedTo: (row['Atribuido a'] || '').trim(),
-                                priority: (row['Prioridade'] || 'Média').trim(),
-                                dateHistory: [{ startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] }],
-                                status: (row['Status'] || 'Não Iniciada').trim(),
-                                progress: parseInt(row['Progresso (%)'], 10) || 0,
-                                risk: ((row['Risco (Sim/Nao)'] || '').trim()).toLowerCase() === 'sim',
-                                parentName: (row['Tarefa Pai (Nome)'] || '').trim(),
-                                parentId: null,
-                                comments: [],
-                                dependsOn: null
+                                try {
+                                    const startDate = parseDate(startDateRaw);
+                                    const endDate = parseDate(endDateRaw);
+
+                                    return {
+                                        id: id, name: taskName, assignedTo: (row['Atribuído a'] || row['Atribuido a'] || '').trim(),
+                                        priority: (row['Prioridade'] || 'Média').trim(), dateHistory: [{ startDate: startDate, endDate: endDate }],
+                                        status: (row['Status'] || 'Não Iniciada').trim(), progress: parseInt(row['Progresso (%)'], 10) || 0,
+                                        risk: ((row['Risco (Sim/Nao)'] || '').trim()).toLowerCase() === 'sim',
+                                        parentName: (row['Tarefa Pai (Nome)'] || '').trim(), parentId: null, comments: [], dependsOn: null
+                                    };
+                                } catch (e) { console.warn(`Pulando tarefa "${taskName}" devido a erro de parsing de data:`, e); return null; }
                             };
-                        };
 
-                        const parentRows = jsonData.filter(row => !(row['Tarefa Pai (Nome)'] || '').trim());
-                        const childRows = jsonData.filter(row => !!(row['Tarefa Pai (Nome)'] || '').trim());
-                        const taskNameMap = new Map();
-                        project.tasks.forEach(t => taskNameMap.set(t.name.toLowerCase(), t.id));
+                            const parentRows = jsonData.filter(row => !(row['Tarefa Pai (Nome)'] || '').trim());
+                            const childRows = jsonData.filter(row => !!(row['Tarefa Pai (Nome)'] || '').trim());
+                            const taskNameMap = new Map();
+                            project.tasks.forEach(t => taskNameMap.set(t.name.toLowerCase(), t.id));
 
-                        // Process parents first
-                        parentRows.forEach(row => {
-                            const task = createValidatedTask(row, ++maxId);
-                            if (task) {
-                                newTasks.push(task);
-                                taskNameMap.set(task.name.toLowerCase(), task.id);
-                            }
-                        });
-
-                        // Process children
-                        childRows.forEach(row => {
-                            const task = createValidatedTask(row, ++maxId);
-                            if (task) {
-                                const parentNameLower = task.parentName.toLowerCase();
-                                if (taskNameMap.has(parentNameLower)) {
-                                    task.parentId = taskNameMap.get(parentNameLower);
-                                } else {
-                                    console.warn(`Tarefa pai "${task.parentName}" não encontrada para a tarefa "${task.name}".`);
+                            parentRows.forEach(row => {
+                                const task = createValidatedTask(row, ++maxId);
+                                if (task) { newTasks.push(task); taskNameMap.set(task.name.toLowerCase(), task.id); }
+                            });
+                            childRows.forEach(row => {
+                                const task = createValidatedTask(row, ++maxId);
+                                if (task) {
+                                    const parentNameLower = task.parentName.toLowerCase();
+                                    if (taskNameMap.has(parentNameLower)) { task.parentId = taskNameMap.get(parentNameLower); } 
+                                    newTasks.push(task);
                                 }
-                                newTasks.push(task);
-                            }
-                        });
+                            });
 
-                        newTasks.forEach(task => {
-                            delete task.parentName;
-                            project.tasks.push(task);
-                        });
+                            newTasks.forEach(task => { delete task.parentName; project.tasks.push(task); });
+                            
+                            dataService.recalculateAllProgress();
+                            await dataService.saveProjectDocument(project);
+                            resolve();
+                        } catch (err) { reject(err); }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+            },
+
+            getLatestDates: (task) => {
+                if (!task.dateHistory || task.dateHistory.length === 0) return { startDate: '', endDate: '' };
+                return task.dateHistory[task.dateHistory.length - 1];
+            },
+            recalculateAllProgress: () => {
+                dataService.projects.forEach(project => {
+                    const tasks = project.tasks;
+                    if (!tasks || tasks.length === 0) return;
+                    const taskMap = new Map(tasks.map(t => [t.id, t]));
+                    const childrenMap = new Map([...taskMap.keys()].map(k => [k, []]));
+                    tasks.forEach(t => { if (t.parentId && childrenMap.has(t.parentId)) childrenMap.get(t.parentId).push(t.id); });
+
+                    const calculateTaskProgress = (taskId) => {
+                        const childrenIds = childrenMap.get(taskId);
+                        const task = taskMap.get(taskId);
+                        if (!childrenIds || childrenIds.length === 0) return task.progress;
                         
-                        this.save();
-                        resolve();
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-                reader.onerror = reject;
-                reader.readAsArrayBuffer(file);
-            });
-        },
-        // Calculation Logic
-        recalculateAllProgress() {
-            this.projects.forEach(project => {
-                const tasks = project.tasks;
-                if (!tasks || tasks.length === 0) return;
-                const taskMap = new Map(tasks.map(t => [t.id, t]));
-                const childrenMap = new Map([...taskMap.keys()].map(k => [k, []]));
-                tasks.forEach(t => { if (t.parentId && childrenMap.has(t.parentId)) childrenMap.get(t.parentId).push(t.id); });
+                        const childrenProgress = childrenIds.map(childId => calculateTaskProgress(childId));
+                        const totalProgress = childrenProgress.reduce((sum, prog) => sum + prog, 0);
+                        const averageProgress = Math.round(totalProgress / childrenIds.length);
+                        
+                        task.progress = averageProgress;
+                        if (averageProgress === 100) task.status = 'Concluída';
+                        else if (averageProgress > 0) task.status = 'Em Andamento';
+                        else task.status = 'Não Iniciada';
 
-                const calculateTaskProgress = (taskId) => {
-                    const childrenIds = childrenMap.get(taskId);
-                    const task = taskMap.get(taskId);
-                    if (!childrenIds || childrenIds.length === 0) return task.progress;
-                    
-                    const childrenProgress = childrenIds.map(childId => calculateTaskProgress(childId));
-                    const totalProgress = childrenProgress.reduce((sum, prog) => sum + prog, 0);
-                    const averageProgress = Math.round(totalProgress / childrenIds.length);
-                    
-                    task.progress = averageProgress;
-                    if (averageProgress === 100) task.status = 'Concluída';
-                    else if (averageProgress > 0) task.status = 'Em Andamento';
-                    else task.status = 'Não Iniciada';
+                        return averageProgress;
+                    };
+                    tasks.filter(t => t.parentId === null).forEach(t => calculateTaskProgress(t.id));
+                });
+            },
+            getProjectProgress: (tasks) => {
+                if (!tasks || tasks.length === 0) return 0;
+                const topLevelTasks = tasks.filter(t => t.parentId === null);
+                if (topLevelTasks.length === 0) return 0;
+                const totalProgress = topLevelTasks.reduce((sum, task) => sum + task.progress, 0);
+                return Math.round(totalProgress / topLevelTasks.length);
+            }
+        };
 
-                    return averageProgress;
-                };
-                tasks.filter(t => t.parentId === null).forEach(t => calculateTaskProgress(t.id));
-            });
-        },
-        getProjectProgress(tasks) {
-            if (!tasks || tasks.length === 0) return 0;
-            const topLevelTasks = tasks.filter(t => t.parentId === null);
-            if (topLevelTasks.length === 0) return 0;
-            const totalProgress = topLevelTasks.reduce((sum, task) => sum + task.progress, 0);
-            return Math.round(totalProgress / topLevelTasks.length);
-        }
-    };
-
-    // UI Service - Manages all DOM interactions
-    const uiService = {
-        mainDashboardCharts: {},
-
-        // View Management
-        showView(viewId) {
-            document.getElementById('project-view').classList.add('hidden');
-            document.getElementById('dashboard-view').classList.add('hidden');
-            document.getElementById(viewId).classList.remove('hidden');
-        },
-        switchView(viewName) {
-            document.getElementById('table-view').classList.toggle('hidden', viewName === 'gantt');
-            document.getElementById('gantt-view').classList.toggle('hidden', viewName === 'table');
-            if (viewName === 'gantt') this.renderGanttChart(dataService.getCurrentProject().tasks, document.getElementById('task-filter-input').value);
-        },
-        renderProjectDashboard(project, filter = '') {
-            const filteredTasks = project.tasks.filter(t => 
-                t.name.toLowerCase().includes(filter.toLowerCase()) || 
-                (t.assignedTo && t.assignedTo.toLowerCase().includes(filter.toLowerCase()))
-            );
-
-            document.getElementById('project-title').textContent = project.name;
-            this.renderTaskTable(filteredTasks);
-            this.updateKpis(project.tasks); // KPIs should reflect the whole project
-            this.renderAssigneeSummary(project.tasks);
-            this.renderGanttChart(filteredTasks);
-        },
-
-        // Modal Management
-        openModal(modalId) { 
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('modal-hidden');
-            modal.classList.add('modal-visible');
-        },
-        closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('modal-visible');
-            modal.classList.add('modal-hidden');
-        },
-        closeAllModals() {
-            document.querySelectorAll('.modal-transition').forEach(modal => this.closeModal(modal.id));
-        },
-        openTaskModal(mode, data = {}) {
-            document.getElementById('task-form').reset();
-            const { parentId, taskId } = data;
-            const project = dataService.getCurrentProject();
-            const task = taskId ? project.tasks.find(t => t.id === taskId) : {};
-            const isParent = taskId ? project.tasks.some(t => t.parentId === taskId) : false;
+        // App Controller - Initializes and coordinates modules
+        const App = {
+            async init() {
+                await dataService.initFirebase(); 
+                uiService.initTheme();
+                this.bindEvents();
+            },
             
-            const startDateInput = document.getElementById('start-date');
-            const endDateInput = document.getElementById('end-date');
-            const rescheduleBtnContainer = document.getElementById('reschedule-button-container');
-            const dateHistoryContainer = document.getElementById('date-history-container');
-            const dateHistoryList = document.getElementById('date-history-list');
-
-            document.getElementById('progress-info').classList.toggle('hidden', !isParent);
-            document.getElementById('task-progress').disabled = isParent;
-
-            document.getElementById('modal-title').textContent = mode === 'add' ? 'Adicionar Tarefa' : 'Editar Tarefa';
-            document.getElementById('task-id').value = task.id || '';
-            document.getElementById('parent-id').value = parentId || (task ? task.parentId : '') || '';
-            document.getElementById('task-name').value = task.name || '';
-            document.getElementById('assigned-to').value = task.assignedTo || '';
-            document.getElementById('task-priority').value = task.priority || 'Média';
-            document.getElementById('task-status').value = task.status || 'Não Iniciada';
-            document.getElementById('task-progress').value = task.progress || 0;
-            document.getElementById('task-risk').checked = task.risk || false;
+            showProjectView() {
+                dataService.currentProjectId = null;
+                uiService.showView('project-view');
+                uiService.renderProjectList(dataService.projects);
+                uiService.updateMainDashboard(dataService.projects);
+            },
             
-            // Populate dependency dropdown
-            const dependencySelect = document.getElementById('task-dependency');
-            dependencySelect.innerHTML = '<option value="">Nenhuma</option>';
-            project.tasks.forEach(t => {
-                if (t.id !== task.id) { // a task cannot depend on itself
-                    const option = document.createElement('option');
-                    option.value = t.id;
-                    option.textContent = t.name;
-                    dependencySelect.appendChild(option);
+            openProject(projectId) {
+                dataService.currentProjectId = projectId; 
+                const project = dataService.getProjectById(dataService.currentProjectId);
+                if (project) {
+                    uiService.showView('dashboard-view');
+                    uiService.renderProjectDashboard(project);
                 }
-            });
-            dependencySelect.value = task.dependsOn || '';
+            },
 
-            // Handle comments
-            this.renderComments(task.comments || []);
+            bindEvents() {
+                document.getElementById('theme-toggle').addEventListener('click', () => uiService.toggleTheme());
+                document.getElementById('add-project-btn').addEventListener('click', () => uiService.openModal('project-modal'));
+                document.getElementById('project-form').addEventListener('submit', event => {
+                    event.preventDefault();
+                    const name = document.getElementById('project-name').value.trim();
+                    if (name) {
+                        dataService.addProject({ name });
+                        uiService.closeModal('project-modal');
+                        uiService.showToast('Projeto criado com sucesso! Sincronizando...', 'success');
+                    }
+                });
+                document.getElementById('project-list').addEventListener('click', event => {
+                    const openBtn = event.target.closest('.open-project-btn');
+                    const deleteBtn = event.target.closest('.delete-project-btn');
+                    
+                    if (openBtn) this.openProject(openBtn.dataset.projectId);
+                    
+                    if (deleteBtn) {
+                        const projectId = deleteBtn.dataset.projectId;
+                        uiService.showConfirmModal('Excluir este projeto e todas as suas tarefas? Esta ação é permanente.', () => {
+                            dataService.deleteProject(projectId);
+                            uiService.showToast('Projeto excluído. Sincronizando...', 'error');
+                        });
+                    }
+                });
+                document.getElementById('back-to-projects-btn').addEventListener('click', () => this.showProjectView());
+                document.getElementById('add-task-btn').addEventListener('click', () => uiService.openTaskModal('add'));
+                
+                document.getElementById('task-form').addEventListener('submit', async event => {
+                    event.preventDefault();
+                    const taskData = uiService.getTaskFormData();
+                    
+                    if (new Date(taskData.newStartDate) > new Date(taskData.newEndDate)) {
+                        uiService.showToast('Data de Início não pode ser posterior à Data de Término!', 'error');
+                        return;
+                    }
+                    
+                    document.getElementById('loader').style.display = 'flex';
+                    await dataService.saveTask(taskData); 
+                    document.getElementById('loader').style.display = 'none';
 
-            if (mode === 'edit') {
-                const latestDates = dataService.getLatestDates(task);
-                startDateInput.value = latestDates.startDate;
-                endDateInput.value = latestDates.endDate;
-                startDateInput.disabled = true;
-                endDateInput.disabled = true;
-                rescheduleBtnContainer.classList.remove('hidden');
-                dateHistoryContainer.classList.remove('hidden');
+                    uiService.closeModal('task-modal');
+                    uiService.showToast('Tarefa salva! Sincronizando...');
+                });
+
+                document.getElementById('add-comment-btn').addEventListener('click', () => {
+                    const input = document.getElementById('new-comment-input');
+                    const text = input.value.trim();
+                    if(text) {
+                        uiService.addComment(text);
+                        input.value = '';
+                    }
+                });
+
+                document.getElementById('task-table-body').addEventListener('click', event => {
+                    const button = event.target.closest('button');
+                    if (!button) return;
+                    const taskId = parseInt(button.dataset.taskId); 
+                    const parentId = parseInt(button.dataset.parentId);
+                    
+                    if (button.classList.contains('add-subtask-btn')) uiService.openTaskModal('add', { parentId });
+                    if (button.classList.contains('edit-task-btn')) uiService.openTaskModal('edit', { taskId });
+                    
+                    if (button.classList.contains('delete-task-btn')) {
+                        uiService.showConfirmModal('Excluir esta tarefa e suas subtarefas?', async () => {
+                            document.getElementById('loader').style.display = 'flex';
+                            await dataService.deleteTask(taskId);
+                            document.getElementById('loader').style.display = 'none';
+                            uiService.showToast('Tarefa excluída. Sincronizando...', 'error');
+                        });
+                    }
+                });
+
+                document.getElementById('task-filter-input').addEventListener('input', (e) => {
+                    uiService.renderProjectDashboard(dataService.getCurrentProject(), e.target.value);
+                });
+
+                document.getElementById('view-switcher').addEventListener('change', (e) => uiService.switchView(e.target.value));
+                document.getElementById('export-excel-btn').addEventListener('click', () => reportService.exportExcel(dataService.getCurrentProject()));
+                document.getElementById('generate-pdf-report-btn').addEventListener('click', () => reportService.generatePdf(dataService.getCurrentProject()));
+                document.getElementById('print-view-btn').addEventListener('click', () => window.print());
+                document.getElementById('download-template-btn').addEventListener('click', () => reportService.downloadExcelTemplate());
+                document.getElementById('import-excel-btn').addEventListener('click', () => document.getElementById('import-excel-input').click());
+                document.getElementById('import-excel-input').addEventListener('change', async (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        document.getElementById('loader').style.display = 'flex';
+                        try {
+                            await dataService.importTasksFromExcel(file); 
+                            uiService.showToast('Tarefas importadas com sucesso! Sincronizando...');
+                        } catch (error) {
+                            console.error(error);
+                            uiService.showToast('Erro ao importar o arquivo. Verifique o console.', 'error');
+                        } finally {
+                            document.getElementById('loader').style.display = 'none';
+                            event.target.value = ''; 
+                        }
+                    }
+                });
+                document.querySelectorAll('.cancel-btn').forEach(btn => btn.addEventListener('click', () => uiService.closeAllModals()));
+            }
+        };
+
+        // UI Service - Manages all DOM interactions
+        const uiService = {
+            mainDashboardCharts: {},
+
+            showView(viewId) {
+                document.getElementById('project-view').classList.add('hidden');
+                document.getElementById('dashboard-view').classList.add('hidden');
+                document.getElementById(viewId).classList.remove('hidden');
+            },
+            switchView(viewName) {
+                document.getElementById('table-view').classList.toggle('hidden', viewName === 'gantt');
+                document.getElementById('gantt-view').classList.toggle('hidden', viewName === 'table');
+                if (viewName === 'gantt') this.renderGanttChart(dataService.getCurrentProject().tasks, document.getElementById('task-filter-input').value);
+            },
+            renderProjectDashboard(project, filter = '') {
+                const filteredTasks = project.tasks.filter(t => 
+                    t.name.toLowerCase().includes(filter.toLowerCase()) || 
+                    (t.assignedTo && t.assignedTo.toLowerCase().includes(filter.toLowerCase()))
+                );
+
+                document.getElementById('project-title').textContent = project.name;
+                this.renderTaskTable(filteredTasks);
+                this.updateKpis(project.tasks); 
+                this.renderAssigneeSummary(project.tasks);
+                if (document.getElementById('view-switcher').value === 'gantt') {
+                    this.renderGanttChart(filteredTasks);
+                }
+            },
+
+            openModal(modalId) { 
+                const modal = document.getElementById(modalId);
+                modal.classList.remove('modal-hidden');
+                modal.classList.add('modal-visible');
+            },
+            closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.remove('modal-visible');
+                modal.classList.add('modal-hidden');
+            },
+            closeAllModals() {
+                document.querySelectorAll('.modal-transition').forEach(modal => this.closeModal(modal.id));
+            },
+            openTaskModal(mode, data = {}) {
+                document.getElementById('task-form').reset();
+                const { parentId, taskId } = data;
+                const project = dataService.getCurrentProject();
+                const task = taskId ? project.tasks.find(t => t.id === taskId) : {};
+                const isParent = taskId ? project.tasks.some(t => t.parentId === taskId) : false;
                 
-                dateHistoryList.innerHTML = task.dateHistory.map((d, i) => 
-                    `<p>${i + 1}: ${new Date(d.startDate+'T00:00:00').toLocaleDateString('pt-BR')} - ${new Date(d.endDate+'T00:00:00').toLocaleDateString('pt-BR')}</p>`
-                ).join('');
+                const startDateInput = document.getElementById('start-date');
+                const endDateInput = document.getElementById('end-date');
+                const rescheduleBtnContainer = document.getElementById('reschedule-button-container');
+                const dateHistoryContainer = document.getElementById('date-history-container');
+                const dateHistoryList = document.getElementById('date-history-list');
+
+                document.getElementById('progress-info').classList.toggle('hidden', !isParent);
+                document.getElementById('task-progress').disabled = isParent;
+
+                document.getElementById('modal-title').textContent = mode === 'add' ? 'Adicionar Tarefa' : 'Editar Tarefa';
+                document.getElementById('task-id').value = task.id || '';
+                document.getElementById('parent-id').value = parentId || (task ? task.parentId : '') || '';
+                document.getElementById('task-name').value = task.name || '';
+                document.getElementById('assigned-to').value = task.assignedTo || '';
+                document.getElementById('task-priority').value = task.priority || 'Média';
+                document.getElementById('task-status').value = task.status || 'Não Iniciada';
+                document.getElementById('task-progress').value = task.progress || 0;
+                document.getElementById('task-risk').checked = task.risk || false;
                 
-                const rescheduleHandler = () => {
+                const dependencySelect = document.getElementById('task-dependency');
+                dependencySelect.innerHTML = '<option value="">Nenhuma</option>';
+                project?.tasks.forEach(t => {
+                    if (t.id !== task.id) { 
+                        const option = document.createElement('option');
+                        option.value = t.id;
+                        option.textContent = t.name;
+                        dependencySelect.appendChild(option);
+                    }
+                });
+                dependencySelect.value = task.dependsOn || '';
+
+                this.renderComments(task.comments || []);
+                document.getElementById('new-comment-input').value = '';
+
+                if (mode === 'edit') {
+                    const latestDates = dataService.getLatestDates(task);
+                    startDateInput.value = latestDates.startDate;
+                    endDateInput.value = latestDates.endDate;
+                    startDateInput.disabled = true;
+                    endDateInput.disabled = true;
+                    rescheduleBtnContainer.classList.remove('hidden');
+                    dateHistoryContainer.classList.remove('hidden');
+                    
+                    dateHistoryList.innerHTML = (task.dateHistory || []).map((d, i) => 
+                        `<p>${i + 1}: ${new Date(d.startDate+'T00:00:00').toLocaleDateString('pt-BR')} - ${new Date(d.endDate+'T00:00:00').toLocaleDateString('pt-BR')}</p>`
+                    ).join('');
+                    
+                    const rescheduleHandler = () => {
+                        startDateInput.disabled = false;
+                        endDateInput.disabled = false;
+                        document.getElementById('reschedule-btn').classList.add('hidden');
+                    };
+
+                    document.getElementById('reschedule-btn').classList.remove('hidden');
+                    document.getElementById('reschedule-btn').onclick = rescheduleHandler;
+
+                } else { 
                     startDateInput.disabled = false;
                     endDateInput.disabled = false;
-                    document.getElementById('reschedule-btn').classList.add('hidden');
-                };
-
-                document.getElementById('reschedule-btn').classList.remove('hidden');
-                document.getElementById('reschedule-btn').onclick = rescheduleHandler;
-
-            } else { // 'add' mode
-                startDateInput.disabled = false;
-                endDateInput.disabled = false;
-                rescheduleBtnContainer.classList.add('hidden');
-                dateHistoryContainer.classList.add('hidden');
-            }
-            
-            this.openModal('task-modal');
-        },
-        getTaskFormData() {
-            const startDateInput = document.getElementById('start-date');
-            const endDateInput = document.getElementById('end-date');
-            
-            const commentsList = document.getElementById('comments-list');
-            const comments = Array.from(commentsList.querySelectorAll('p')).map(p => ({
-                text: p.textContent.split(': ')[1],
-                timestamp: p.dataset.timestamp
-            }));
-
-            const data = {
-                id: document.getElementById('task-id').value ? parseInt(document.getElementById('task-id').value) : null,
-                parentId: document.getElementById('parent-id').value ? parseInt(document.getElementById('parent-id').value) : null,
-                name: document.getElementById('task-name').value, assignedTo: document.getElementById('assigned-to').value,
-                priority: document.getElementById('task-priority').value, 
-                status: document.getElementById('task-status').value,
-                progress: parseInt(document.getElementById('task-progress').value), risk: document.getElementById('task-risk').checked,
-                dependsOn: document.getElementById('task-dependency').value ? parseInt(document.getElementById('task-dependency').value) : null,
-                comments: comments,
-                // These are the new/current dates
-                newStartDate: startDateInput.value,
-                newEndDate: endDateInput.value,
-            };
-            return data;
-        },
-        showConfirmModal(body, onConfirm) {
-            document.getElementById('confirm-modal-body').textContent = body;
-            this.openModal('confirm-modal');
-            const confirmBtn = document.getElementById('confirm-ok-btn');
-            const cancelBtn = document.getElementById('confirm-cancel-btn');
-            
-            const confirmHandler = () => {
-                onConfirm();
-                this.closeModal('confirm-modal');
-                cleanup();
-            };
-            const cancelHandler = () => {
-                this.closeModal('confirm-modal');
-                cleanup();
-            };
-            const cleanup = () => {
-                confirmBtn.removeEventListener('click', confirmHandler);
-                cancelBtn.removeEventListener('click', cancelHandler);
-            };
-            
-            confirmBtn.addEventListener('click', confirmHandler, { once: true });
-            cancelBtn.addEventListener('click', cancelHandler, { once: true });
-        },
-        
-        // Comments UI
-        renderComments(comments) {
-            const listEl = document.getElementById('comments-list');
-            listEl.innerHTML = '';
-            comments.forEach(comment => {
-                const p = document.createElement('p');
-                p.className = "border-b border-[var(--border-color)] pb-1 mb-1";
-                p.textContent = `${new Date(comment.timestamp).toLocaleString('pt-BR')}: ${comment.text}`;
-                p.dataset.timestamp = comment.timestamp;
-                listEl.appendChild(p);
-            });
-        },
-        addComment(text) {
-            const listEl = document.getElementById('comments-list');
-            const p = document.createElement('p');
-            const timestamp = new Date().toISOString();
-            p.className = "border-b border-[var(--border-color)] pb-1 mb-1";
-            p.textContent = `${new Date(timestamp).toLocaleString('pt-BR')}: ${text}`;
-            p.dataset.timestamp = timestamp;
-            listEl.appendChild(p);
-        },
-
-        // Toast Notifications
-        showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const colors = {
-                success: 'bg-green-500',
-                error: 'bg-red-500'
-            };
-            toast.className = `toast text-white ${colors[type]}`;
-            toast.innerHTML = `<p>${message}</p>`;
-            container.appendChild(toast);
-            
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                toast.addEventListener('transitionend', () => toast.remove());
-            }, 3000);
-        },
-        
-        // Theme Management
-        initTheme() {
-            const theme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (theme === 'dark' || (!theme && prefersDark)) {
-                document.documentElement.classList.add('dark');
-            }
-            this.updateThemeIcons();
-            this.updateMainDashboard(dataService.projects);
-        },
-        toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-            this.updateThemeIcons();
-            this.updateMainDashboard(dataService.projects);
-        },
-        updateThemeIcons() {
-            const isDark = document.documentElement.classList.contains('dark');
-            document.getElementById('theme-icon-sun').style.display = isDark ? 'block' : 'none';
-            document.getElementById('theme-icon-moon').style.display = isDark ? 'none' : 'block';
-        },
-
-        // Render Functions
-        renderProjectList(projects) {
-            const listEl = document.getElementById('project-list');
-            listEl.innerHTML = '';
-            if (projects.length === 0) {
-                listEl.innerHTML = `<p class="text-gray-500 col-span-full">Nenhum projeto encontrado. Crie o seu primeiro!</p>`;
-                return;
-            }
-            projects.forEach(project => {
-                const progress = dataService.getProjectProgress(project.tasks);
-                const completedTasks = project.tasks.filter(t => t.status === 'Concluída').length;
-                const totalTasks = project.tasks.length;
-                const card = document.createElement('div');
-                card.className = 'bg-[var(--card-bg)] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-[var(--border-color)] flex flex-col justify-between';
-                card.innerHTML = `
-                    <div>
-                        <h3 class="text-xl font-bold mb-2">${project.name}</h3>
-                        <p class="text-sm text-gray-400 mb-4">${completedTasks} de ${totalTasks} tarefas concluídas</p>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-semibold">Progresso</span>
-                            <span class="text-xs font-semibold">${progress}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
-                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress}%"></div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="open-project-btn w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700" data-project-id="${project.id}">Abrir</button>
-                            <button class="delete-project-btn bg-red-500 bg-opacity-10 text-red-500 px-3 py-2 rounded-md hover:bg-opacity-20" data-project-id="${project.id}" title="Excluir Projeto">
-                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                            </button>
-                        </div>
-                    </div>`;
-                listEl.appendChild(card);
-            });
-        },
-        renderTaskTable(tasks) { /* ... implementation similar to before ... */ },
-        updateKpis(tasks) { /* ... implementation similar to before ... */ },
-        renderAssigneeSummary(tasks) {
-            const summaryContainer = document.getElementById('assignee-summary-list');
-            const summary = tasks.reduce((acc, task) => {
-                const assignee = task.assignedTo || 'Não atribuído';
-                if (!acc[assignee]) acc[assignee] = 0;
-                acc[assignee]++;
-                return acc;
-            }, {});
-
-            summaryContainer.innerHTML = Object.entries(summary).map(([name, count]) => `
-                <div class="flex justify-between items-center">
-                    <span>${name}</span>
-                    <span class="font-bold bg-gray-200 dark:bg-gray-700 text-xs px-2 py-1 rounded-full">${count}</span>
-                </div>
-            `).join('');
-        },
-        updateMainDashboard(projects) {
-            const mainDashboard = document.getElementById('main-dashboard');
-            
-            let inProgressCount = 0, overdueCount = 0, atRiskCount = 0;
-            const totalProjects = projects.length;
-
-            projects.forEach(project => {
-                const progress = dataService.getProjectProgress(project.tasks);
-                if (progress > 0 && progress < 100) inProgressCount++;
-                if (project.tasks.some(t => reportService.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada')) overdueCount++;
-                if (project.tasks.some(t => t.risk)) atRiskCount++;
-            });
-            
-            const icons = {
-                total: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`,
-                inProgress: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-                overdue: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-                atRisk: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`
-            };
-            
-            mainDashboard.innerHTML = `
-                <div class="bg-blue-100 dark:bg-blue-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-blue-200 dark:border-blue-800">
-                    <div class="bg-blue-500 p-3 rounded-full">${icons.total}</div>
-                    <div>
-                        <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">${totalProjects}</div>
-                        <div class="text-sm text-blue-600 dark:text-blue-400">Total de Projetos</div>
-                    </div>
-                </div>
-                <div class="bg-yellow-100 dark:bg-yellow-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-yellow-200 dark:border-yellow-800">
-                    <div class="bg-yellow-500 p-3 rounded-full">${icons.inProgress}</div>
-                    <div>
-                        <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-300">${inProgressCount}</div>
-                        <div class="text-sm text-yellow-600 dark:text-yellow-400">Em Andamento</div>
-                    </div>
-                </div>
-                <div class="bg-red-100 dark:bg-red-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-red-200 dark:border-red-800">
-                    <div class="bg-red-500 p-3 rounded-full">${icons.overdue}</div>
-                    <div>
-                        <div class="text-3xl font-bold text-red-700 dark:text-red-300">${overdueCount}</div>
-                        <div class="text-sm text-red-600 dark:text-red-400">Projetos Atrasados</div>
-                    </div>
-                </div>
-                <div class="bg-orange-100 dark:bg-orange-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-orange-200 dark:border-orange-800">
-                    <div class="bg-orange-500 p-3 rounded-full">${icons.atRisk}</div>
-                    <div>
-                        <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">${atRiskCount}</div>
-                        <div class="text-sm text-orange-600 dark:text-orange-400">Projetos em Risco</div>
-                    </div>
-                </div>
-            `;
-        },
-        renderGanttChart(tasks) { /* ... implementation similar to before ... */ },
-    };
-    
-    // Report Service - Handles PDF, Excel generation and Template
-    const reportService = {
-        downloadExcelTemplate() {
-            const headers = ['Tarefa', 'Atribuido a', 'Prioridade', 'Data Inicio', 'Data Termino', 'Status', 'Progresso (%)', 'Risco (Sim/Nao)', 'Tarefa Pai (Nome)'];
-            const exampleData = [
-                { 
-                    'Tarefa': 'Planejamento Geral', 'Atribuido a': 'Gerente de Projeto', 'Prioridade': 'Alta', 'Data Inicio': '2025-11-01', 'Data Termino': '2025-11-05', 
-                    'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': '' 
-                },
-                { 
-                    'Tarefa': 'Definir Escopo', 'Atribuido a': 'Analista', 'Prioridade': 'Alta', 'Data Inicio': '2025-11-01', 'Data Termino': '2025-11-02', 
-                    'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': 'Planejamento Geral' 
+                    startDateInput.value = '';
+                    endDateInput.value = '';
+                    rescheduleBtnContainer.classList.add('hidden');
+                    dateHistoryContainer.classList.add('hidden');
                 }
-            ];
-            const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Tarefas");
-            worksheet['!cols'] = [ { wch: 40 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 40 } ];
-            XLSX.writeFile(workbook, "template_importacao.xlsx");
-        },
-        exportExcel(project) { /* ... implementation similar to before ... */ },
-        generatePdf(project) { /* ... implementation similar to before ... */ },
-    };
-
-    // --- Kick off the app ---
-    document.addEventListener('DOMContentLoaded', () => App.init());
-    
-    // Re-implementing UI service methods with minor tweaks for dark mode etc.
-    // This is to keep the thought process clean, the actual code would not redeclare.
-    
-    uiService.renderTaskTable = function(tasks) {
-        const tableBody = document.getElementById('task-table-body');
-        tableBody.innerHTML = '';
-        const tasksToRender = [];
-        const processTasks = (parentId, level) => {
-            tasks.filter(t => t.parentId === parentId)
-                 .sort((a,b) => {
-                    const dateA = new Date(dataService.getLatestDates(a).startDate);
-                    const dateB = new Date(dataService.getLatestDates(b).startDate);
-                    return dateA - dateB;
-                 })
-                 .forEach(task => { tasksToRender.push({ ...task, level }); processTasks(task.id, level + 1); });
-        };
-        processTasks(null, 0);
-
-        tasksToRender.forEach(task => {
-            const latestDates = dataService.getLatestDates(task);
-            const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
-            const isParent = tasks.some(t => t.parentId === task.id);
-            const row = document.createElement('tr');
-            row.className = `border-b border-[var(--border-color)] ${task.risk ? 'border-l-4 border-red-500' : ''}`;
-            row.innerHTML = `
-                <td class="p-3 text-center">${task.risk ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500 mx-auto"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}</td>
-                <td class="p-3"><div style="padding-left: ${task.level * 20}px;" class="font-medium ${isParent ? 'font-bold' : ''}">${task.name}</div></td>
-                <td class="p-3">${task.assignedTo}</td>
-                <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.badge}">${statusInfo.name}</span></td>
-                <td class="p-3">
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5"><div class="bg-blue-600 h-2.5 rounded-full" style="width: ${task.progress}%"></div></div>
-                    <span class="text-xs">${task.progress}%</span>
-                </td>
-                <td class="p-3">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                <td class="p-3">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                <td class="p-3">${reportService.calculateDuration(latestDates.startDate, latestDates.endDate)} dias</td>
-                <td class="p-3 flex items-center justify-center gap-2 no-print">
-                    <button class="add-subtask-btn" data-parent-id="${task.id}" title="Adicionar Subtarefa"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"><path d="M3 10h12v8H3zM3 10V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7M18 18v-5h-5"/></svg></button>
-                    <button class="edit-task-btn" data-task-id="${task.id}" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-500"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
-                    <button class="delete-task-btn" data-task-id="${task.id}" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-                </td>`;
-            tableBody.appendChild(row);
-        });
-    };
-    uiService.updateKpis = function(tasks) {
-        const kpiDashboard = document.getElementById('kpi-dashboard');
-        const overallProgress = dataService.getProjectProgress(tasks);
-        const kpis = [
-            { label: 'Progresso Geral', value: `${overallProgress}%` },
-            { label: 'Total de Tarefas', value: tasks.length },
-            { label: 'Concluídas', value: tasks.filter(t => t.status === 'Concluída').length },
-            { label: 'Atrasadas', value: tasks.filter(t => reportService.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada').length },
-            { label: 'Em Risco', value: tasks.filter(t => t.risk).length },
-        ];
-        kpiDashboard.innerHTML = kpis.map(kpi => `
-            <div class="bg-[var(--card-bg)] p-4 rounded-lg shadow-md flex items-center gap-4 border border-[var(--border-color)]">
-                <div> <div class="text-3xl font-bold">${kpi.value}</div> <div class="text-sm text-gray-400">${kpi.label}</div> </div>
-            </div>`).join('');
-    };
-    uiService.renderGanttChart = function(tasks) {
-        const ganttView = document.getElementById('gantt-view');
-        if (!tasks || tasks.length === 0 || ganttView.classList.contains('hidden')) return;
-
-        const taskNamesContainer = document.getElementById('gantt-task-names');
-        const timelineBody = document.getElementById('gantt-timeline-body');
-        const ganttHeader = document.getElementById('gantt-header');
-        const dependencyLines = document.getElementById('gantt-dependency-lines');
-        taskNamesContainer.innerHTML = ''; timelineBody.innerHTML = ''; ganttHeader.innerHTML = ''; dependencyLines.innerHTML = '';
-
-        const allDates = tasks.flatMap(t => t.dateHistory.flatMap(d => [new Date(d.startDate), new Date(d.endDate)]))
-                              .filter(d => !isNaN(d.getTime()));
-        if (allDates.length === 0) return;
-
-        let minDate = new Date(Math.min.apply(null, allDates));
-        let maxDate = new Date(Math.max.apply(null, allDates));
-        minDate.setDate(minDate.getDate() - 2); maxDate.setDate(maxDate.getDate() + 2);
-
-        const totalDays = reportService.calculateDuration(minDate.toISOString().split('T')[0], maxDate.toISOString().split('T')[0]);
-        if (totalDays <= 0) return;
-        const dayWidth = 40; // Gantt bar width in px
-        
-        timelineBody.style.width = `${totalDays * dayWidth}px`;
-        ganttHeader.style.width = `${totalDays * dayWidth}px`;
-
-        let currentDate = new Date(minDate);
-        for (let i = 1; i <= totalDays; i++) {
-            const dayCell = document.createElement('div');
-            dayCell.className = 'text-center text-xs p-1 border-r border-b border-[var(--border-color)] shrink-0';
-            dayCell.style.width = `${dayWidth}px`;
-            dayCell.textContent = `${currentDate.getDate()}/${currentDate.getMonth()+1}`;
-            ganttHeader.appendChild(dayCell);
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-
-        let taskOrder = [];
-        const processGanttTasks = (parentId, level) => {
-            tasks.filter(t => t.parentId === parentId).sort((a,b) => {
-                const dateA = new Date(dataService.getLatestDates(a).startDate);
-                const dateB = new Date(dataService.getLatestDates(b).startDate);
-                return dateA - dateB;
-            }).forEach(task => { taskOrder.push({ ...task, level }); processGanttTasks(task.id, level + 1); });
-        };
-        processGanttTasks(null, 0);
-        
-        const taskPositions = new Map();
-        taskOrder.forEach((task, index) => {
-            const isParent = tasks.some(t => t.parentId === task.id);
-            const nameDiv = document.createElement('div');
-            nameDiv.className = `gantt-task-name h-10 flex items-center border-b border-[var(--border-color)] p-2 ${isParent ? 'font-bold' : ''}`;
-            nameDiv.style.paddingLeft = `${task.level * 15 + 8}px`;
-            nameDiv.textContent = task.name;
-            taskNamesContainer.appendChild(nameDiv);
-
-            const latestDates = dataService.getLatestDates(task);
-            const startDate = new Date(latestDates.startDate + 'T00:00:00');
-            const endDate = new Date(latestDates.endDate + 'T00:00:00');
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) { return; }
-
-            const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
-            const startDay = reportService.calculateDuration(minDate.toISOString().split('T')[0], latestDates.startDate);
-            const bar = document.createElement('div');
-            const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
-            
-            bar.className = `gantt-bar ${isParent ? 'gantt-bar-parent' : ''} ${statusInfo.badge}`;
-            bar.style.left = `${(startDay - 1) * dayWidth}px`;
-            bar.style.width = `${duration * dayWidth}px`;
-            bar.style.top = `${index * 40}px`;
-            bar.title = `${task.name}\nInício: ${startDate.toLocaleDateString('pt-BR')}\nTérmino: ${endDate.toLocaleDateString('pt-BR')}`;
-            timelineBody.appendChild(bar);
-            
-            taskPositions.set(task.id, {
-                x_start: (startDay - 1) * dayWidth,
-                x_end: ((startDay - 1) + duration) * dayWidth,
-                y: (index * 40) + (isParent ? 14 : 20) // mid-point of bar
-            });
-        });
-        
-        // Draw dependency lines
-        taskOrder.forEach(task => {
-            if (task.dependsOn && taskPositions.has(task.dependsOn) && taskPositions.has(task.id)) {
-                const fromTask = taskPositions.get(task.dependsOn);
-                const toTask = taskPositions.get(task.id);
                 
-                const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                const x1 = fromTask.x_end;
-                const y1 = fromTask.y;
-                const x2 = toTask.x_start;
-                const y2 = toTask.y;
-                const curve = `M ${x1} ${y1} C ${x1 + 20} ${y1} ${x2 - 20} ${y2} ${x2} ${y2}`;
+                this.openModal('task-modal');
+            },
+            getTaskFormData() {
+                const startDateInput = document.getElementById('start-date');
+                const endDateInput = document.getElementById('end-date');
                 
-                line.setAttribute("d", curve);
-                line.setAttribute("stroke", "#6b7280");
-                line.setAttribute("stroke-width", "1.5");
-                line.setAttribute("fill", "none");
-                line.setAttribute("marker-end", "url(#arrow)");
-                dependencyLines.appendChild(line);
-            }
-        });
-         if (dependencyLines.innerHTML !== '') {
-            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-            defs.innerHTML = `<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" /></marker>`;
-            dependencyLines.appendChild(defs);
-        }
-    };
+                const commentsList = document.getElementById('comments-list');
+                const comments = Array.from(commentsList.querySelectorAll('p')).map(p => ({
+                    text: p.dataset.text, 
+                    timestamp: p.dataset.timestamp
+                }));
 
-    reportService.calculateDuration = (start, end) => {
-        if (!start || !end) return 0;
-        const diffTime = new Date(end) - new Date(start);
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    };
-    reportService.getTaskStatusClass = (status, endDate) => {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const taskEndDate = new Date(endDate + 'T00:00:00');
-        if (status !== 'Concluída' && taskEndDate < today) return { badge: 'bg-red-500 text-white', name: 'Atrasada' };
-        switch (status) {
-            case 'Concluída': return { badge: 'bg-green-500 text-white', name: 'Concluída' };
-            case 'Em Andamento': return { badge: 'bg-yellow-500 text-black', name: 'Em Andamento' };
-            default: return { badge: 'bg-gray-500 text-white', name: 'Não Iniciada' };
-        }
-    };
-    reportService.exportExcel = function(project) {
-        if (!project) return;
-        const dataToExport = [];
-        const processTasksForExport = (parentId, level) => {
-            project.tasks.filter(t => t.parentId === parentId)
-                 .sort((a,b) => {
-                    const dateA = new Date(dataService.getLatestDates(a).startDate);
-                    const dateB = new Date(dataService.getLatestDates(b).startDate);
-                    return dateA - dateB;
-                 })
-                 .forEach(task => {
+                const data = {
+                    id: document.getElementById('task-id').value ? parseInt(document.getElementById('task-id').value) : null,
+                    parentId: document.getElementById('parent-id').value ? parseInt(document.getElementById('parent-id').value) : null,
+                    name: document.getElementById('task-name').value, assignedTo: document.getElementById('assigned-to').value,
+                    priority: document.getElementById('task-priority').value, 
+                    status: document.getElementById('task-status').value,
+                    progress: parseInt(document.getElementById('task-progress').value), risk: document.getElementById('task-risk').checked,
+                    dependsOn: document.getElementById('task-dependency').value ? parseInt(document.getElementById('task-dependency').value) : null,
+                    comments: comments,
+                    newStartDate: startDateInput.value,
+                    newEndDate: endDateInput.value,
+                };
+                return data;
+            },
+            showConfirmModal(body, onConfirm) {
+                document.getElementById('confirm-modal-body').textContent = body;
+                this.openModal('confirm-modal');
+                const confirmBtn = document.getElementById('confirm-ok-btn');
+                const cancelBtn = document.getElementById('confirm-cancel-btn');
+                
+                const newConfirmBtn = confirmBtn.cloneNode(true);
+                const newCancelBtn = cancelBtn.cloneNode(true);
+                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                
+                newConfirmBtn.addEventListener('click', () => { onConfirm(); this.closeModal('confirm-modal'); });
+                newCancelBtn.addEventListener('click', () => { this.closeModal('confirm-modal'); });
+            },
+            
+            renderComments(comments) {
+                const listEl = document.getElementById('comments-list');
+                listEl.innerHTML = '';
+                comments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(comment => {
+                    const p = document.createElement('p');
+                    p.className = "border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0";
+                    const dateString = new Date(comment.timestamp).toLocaleDateString('pt-BR');
+                    const timeString = new Date(comment.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    p.innerHTML = `<span class="font-semibold text-gray-500">${dateString} ${timeString}:</span> ${comment.text}`;
+                    p.dataset.timestamp = comment.timestamp;
+                    p.dataset.text = comment.text; 
+                    listEl.appendChild(p);
+                });
+            },
+            addComment(text) {
+                const listEl = document.getElementById('comments-list');
+                const p = document.createElement('p');
+                const timestamp = new Date().toISOString();
+                p.className = "border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0";
+                const dateString = new Date(timestamp).toLocaleDateString('pt-BR');
+                const timeString = new Date(timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                p.innerHTML = `<span class="font-semibold text-gray-500">${dateString} ${timeString}:</span> ${text}`;
+                p.dataset.timestamp = timestamp;
+                p.dataset.text = text; 
+                listEl.prepend(p); 
+            },
+
+            showToast(message, type = 'success') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                const colors = { success: 'bg-green-600', error: 'bg-red-600' };
+                toast.className = `toast text-white ${colors[type]}`;
+                toast.innerHTML = `<p>${message}</p>`;
+                container.appendChild(toast);
+                setTimeout(() => toast.classList.add('show'), 10);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.addEventListener('transitionend', () => toast.remove());
+                }, 3000);
+            },
+            
+            initTheme() {
+                const theme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (theme === 'dark' || (!theme && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                }
+                this.updateThemeIcons();
+            },
+            toggleTheme() {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+                this.updateThemeIcons();
+                this.updateMainDashboard(dataService.projects);
+                if (document.getElementById('view-switcher').value === 'gantt' && dataService.currentProjectId) {
+                    this.renderGanttChart(dataService.getCurrentProject().tasks, document.getElementById('task-filter-input').value);
+                }
+            },
+            updateThemeIcons() {
+                const isDark = document.documentElement.classList.contains('dark');
+                document.getElementById('theme-icon-sun').style.display = isDark ? 'block' : 'none';
+                document.getElementById('theme-icon-moon').style.display = isDark ? 'none' : 'block';
+            },
+
+            renderProjectList(projects) {
+                const listEl = document.getElementById('project-list');
+                listEl.innerHTML = '';
+                if (projects.length === 0) {
+                    listEl.innerHTML = `<p class="text-gray-500 col-span-full">Nenhum projeto encontrado. Crie o seu primeiro!</p>`;
+                    return;
+                }
+                projects.forEach(project => {
+                    const progress = dataService.getProjectProgress(project.tasks);
+                    const completedTasks = project.tasks.filter(t => t.status === 'Concluída').length;
+                    const totalTasks = project.tasks.length;
+                    const card = document.createElement('div');
+                    card.className = 'bg-[var(--card-bg)] p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-[var(--border-color)] flex flex-col justify-between';
+                    card.innerHTML = `
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">${project.name}</h3>
+                            <p class="text-sm text-gray-400 mb-4">${completedTasks} de ${totalTasks} tarefas concluídas</p>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-semibold">Progresso</span>
+                                <span class="text-xs font-semibold">${progress}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
+                                <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="open-project-btn w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700" data-project-id="${project.id}">Abrir</button>
+                                <button class="delete-project-btn bg-red-500 bg-opacity-10 text-red-500 px-3 py-2 rounded-md hover:bg-opacity-20" data-project-id="${project.id}" title="Excluir Projeto">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </div>
+                        </div>`;
+                    listEl.appendChild(card);
+                });
+            },
+            
+            renderTaskTable: function(tasks) {
+                const tableBody = document.getElementById('task-table-body');
+                tableBody.innerHTML = '';
+                const tasksToRender = [];
+                
+                const processTasks = (parentId, level) => {
+                    tasks.filter(t => t.parentId === parentId)
+                        .sort((a,b) => {
+                            const dateA = new Date(dataService.getLatestDates(a).startDate);
+                            const dateB = new Date(dataService.getLatestDates(b).startDate);
+                            return dateA - dateB;
+                        })
+                        .forEach(task => { tasksToRender.push({ ...task, level }); processTasks(task.id, level + 1); });
+                };
+                processTasks(null, 0);
+
+                tasksToRender.forEach(task => {
                     const latestDates = dataService.getLatestDates(task);
-                    const statusInfo = this.getTaskStatusClass(task.status, latestDates.endDate);
-                    dataToExport.push({
-                        'Tarefa': `${'  '.repeat(level)}${task.name}`, 'Atribuído a': task.assignedTo, 'Status': statusInfo.name, 'Progresso (%)': task.progress, 'Prioridade': task.priority,
-                        'Data de Início': new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR'), 'Data de Término': new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR'),
-                        'Duração (dias)': this.calculateDuration(latestDates.startDate, latestDates.endDate), 'Em Risco': task.risk ? 'Sim' : 'Não'
+                    const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
+                    const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
+                    const isParent = tasks.some(t => t.parentId === task.id);
+                    const riskClass = task.risk ? 'border-l-4 border-red-500' : '';
+                    const commentCount = (task.comments || []).length;
+                    
+                    const row = document.createElement('tr');
+                    row.className = `border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-800 ${riskClass}`;
+                    row.innerHTML = `
+                        <!-- 1. Tarefa -->
+                        <td class="p-3"><div style="padding-left: ${task.level * 20}px;" class="font-medium ${isParent ? 'font-bold' : ''} flex items-center gap-2">
+                            ${task.risk ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' : ''}
+                            ${task.name}
+                        </div></td>
+                        <!-- 2. Duração em dias -->
+                        <td class="p-3">${duration} dias</td>
+                        <!-- 3. Data de Início -->
+                        <td class="p-3">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <!-- 4. Data de Término -->
+                        <td class="p-3">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <!-- 5. Status -->
+                        <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.badge}">${statusInfo.name}</span></td>
+                        <!-- 6. Comentários (Botão para abrir modal de edição e ver/adicionar comentários) -->
+                        <td class="p-3 text-center">
+                            <button class="edit-task-btn flex items-center justify-center gap-1 mx-auto" data-task-id="${task.id}" title="${commentCount > 0 ? commentCount + ' Comentário(s). Clique para ver/adicionar.' : 'Adicionar Comentário'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="${commentCount > 0 ? 'text-blue-500' : 'text-gray-400'}"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                ${commentCount > 0 ? `(${commentCount})` : ''}
+                            </button>
+                        </td>
+                        <!-- Ações (Botões Edit/Delete/Subtask - Removido da impressão) -->
+                        <td class="p-3 flex items-center justify-center gap-2 no-print">
+                            <button class="add-subtask-btn" data-parent-id="${task.id}" title="Adicionar Subtarefa"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-500"><path d="M3 10h12v8H3zM3 10V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7M18 18v-5h-5"/></svg></button>
+                            <button class="edit-task-btn" data-task-id="${task.id}" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-500"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+                            <button class="delete-task-btn" data-task-id="${task.id}" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                        </td>`;
+                    tableBody.appendChild(row);
+                });
+            },
+            updateKpis: function(tasks) {
+                const kpiDashboard = document.getElementById('kpi-dashboard');
+                const overallProgress = dataService.getProjectProgress(tasks);
+                const kpis = [
+                    { label: 'Progresso Geral', value: `${overallProgress}%` },
+                    { label: 'Total de Tarefas', value: tasks.length },
+                    { label: 'Concluídas', value: tasks.filter(t => t.status === 'Concluída').length },
+                    { label: 'Atrasadas', value: tasks.filter(t => reportService.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada').length },
+                    { label: 'Em Risco', value: tasks.filter(t => t.risk).length },
+                ];
+                kpiDashboard.innerHTML = kpis.map(kpi => `
+                    <div class="bg-[var(--card-bg)] p-4 rounded-lg shadow-md flex items-center gap-4 border border-[var(--border-color)]">
+                        <div> <div class="text-3xl font-bold">${kpi.value}</div> <div class="text-sm text-gray-400">${kpi.label}</div> </div>
+                    </div>`).join('');
+            },
+            renderAssigneeSummary(tasks) {
+                const summaryContainer = document.getElementById('assignee-summary-list');
+                const summary = tasks.reduce((acc, task) => {
+                    const assignee = task.assignedTo || 'Não atribuído';
+                    if (!acc[assignee]) acc[assignee] = 0;
+                    acc[assignee]++;
+                    return acc;
+                }, {});
+
+                summaryContainer.innerHTML = Object.entries(summary).map(([name, count]) => `
+                    <div class="flex justify-between items-center">
+                        <span>${name}</span>
+                        <span class="font-bold bg-gray-200 dark:bg-gray-700 text-xs px-2 py-1 rounded-full">${count}</span>
+                    </div>
+                `).join('');
+            },
+            updateMainDashboard(projects) { 
+                const mainDashboard = document.getElementById('main-dashboard');
+                
+                let inProgressCount = 0, overdueCount = 0, atRiskCount = 0;
+                const totalProjects = projects.length;
+
+                projects.forEach(project => {
+                    const progress = dataService.getProjectProgress(project.tasks);
+                    if (progress > 0 && progress < 100) inProgressCount++;
+                    if (project.tasks.some(t => reportService.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada')) overdueCount++;
+                    if (project.tasks.some(t => t.risk)) atRiskCount++;
+                });
+                
+                const icons = {
+                    total: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`,
+                    inProgress: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+                    overdue: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+                    atRisk: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`
+                };
+                
+                mainDashboard.innerHTML = `
+                    <div class="bg-blue-100 dark:bg-blue-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-blue-200 dark:border-blue-800">
+                        <div class="bg-blue-500 p-3 rounded-full">${icons.total}</div>
+                        <div>
+                            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">${totalProjects}</div>
+                            <div class="text-sm text-blue-600 dark:text-blue-400">Total de Projetos</div>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-100 dark:bg-yellow-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-yellow-200 dark:border-yellow-800">
+                        <div class="bg-yellow-500 p-3 rounded-full">${icons.inProgress}</div>
+                        <div>
+                            <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-300">${inProgressCount}</div>
+                            <div class="text-sm text-yellow-600 dark:text-yellow-400">Em Andamento</div>
+                        </div>
+                    </div>
+                    <div class="bg-red-100 dark:bg-red-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-red-200 dark:border-red-800">
+                        <div class="bg-red-500 p-3 rounded-full">${icons.overdue}</div>
+                        <div>
+                            <div class="text-3xl font-bold text-red-700 dark:text-red-300">${overdueCount}</div>
+                            <div class="text-sm text-red-600 dark:text-red-400">Projetos Atrasados</div>
+                        </div>
+                    </div>
+                    <div class="bg-orange-100 dark:bg-orange-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-orange-200 dark:border-orange-800">
+                        <div class="bg-orange-500 p-3 rounded-full">${icons.atRisk}</div>
+                        <div>
+                            <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">${atRiskCount}</div>
+                            <div class="text-sm text-orange-600 dark:text-orange-400">Projetos em Risco</div>
+                        </div>
+                    </div>
+                `;
+            },
+            renderGanttChart: function(tasks) {
+                const ganttView = document.getElementById('gantt-view');
+                if (!tasks || tasks.length === 0 || ganttView.classList.contains('hidden')) return;
+
+                const taskNamesContainer = document.getElementById('gantt-task-names');
+                const timelineBody = document.getElementById('gantt-timeline-body');
+                const ganttHeader = document.getElementById('gantt-header');
+                const dependencyLines = document.getElementById('gantt-dependency-lines');
+                taskNamesContainer.innerHTML = ''; timelineBody.innerHTML = ''; ganttHeader.innerHTML = ''; dependencyLines.innerHTML = '';
+
+                const allDates = tasks.flatMap(t => t.dateHistory.flatMap(d => [new Date(d.startDate), new Date(d.endDate)]))
+                                        .filter(d => !isNaN(d.getTime()));
+                if (allDates.length === 0) return;
+
+                let minDate = new Date(Math.min.apply(null, allDates));
+                let maxDate = new Date(Math.max.apply(null, allDates));
+                minDate.setDate(minDate.getDate() - 2); maxDate.setDate(maxDate.getDate() + 2);
+
+                const totalDays = reportService.calculateDuration(minDate.toISOString().split('T')[0], maxDate.toISOString().split('T')[0]);
+                if (totalDays <= 0) return;
+                const dayWidth = 40; 
+                
+                timelineBody.style.width = `${totalDays * dayWidth}px`;
+                ganttHeader.style.width = `${totalDays * dayWidth}px`;
+                
+                let currentDate = new Date(minDate);
+                ganttHeader.style.display = 'flex';
+                for (let i = 1; i <= totalDays; i++) {
+                    const dayCell = document.createElement('div');
+                    const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+                    dayCell.className = `text-center text-xs p-1 border-r border-b border-[var(--border-color)] shrink-0 ${isWeekend ? 'bg-gray-300 dark:bg-gray-800 font-semibold' : ''}`;
+                    dayCell.style.width = `${dayWidth}px`;
+                    dayCell.textContent = `${currentDate.getDate()}/${currentDate.getMonth()+1}`;
+                    ganttHeader.appendChild(dayCell);
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                let taskOrder = [];
+                const processGanttTasks = (parentId, level) => {
+                    tasks.filter(t => t.parentId === parentId).sort((a,b) => {
+                        const dateA = new Date(dataService.getLatestDates(a).startDate);
+                        const dateB = new Date(dataService.getLatestDates(b).startDate);
+                        return dateA - dateB;
+                    }).forEach(task => { taskOrder.push({ ...task, level }); processGanttTasks(task.id, level + 1); });
+                };
+                processGanttTasks(null, 0);
+                
+                const taskPositions = new Map();
+                taskOrder.forEach((task, index) => {
+                    const isParent = tasks.some(t => t.parentId === task.id);
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = `gantt-task-name h-10 flex items-center border-b border-[var(--border-color)] p-2 ${isParent ? 'font-bold' : ''}`;
+                    nameDiv.style.paddingLeft = `${task.level * 15 + 8}px`;
+                    nameDiv.textContent = task.name;
+                    taskNamesContainer.appendChild(nameDiv);
+
+                    const latestDates = dataService.getLatestDates(task);
+                    const startDate = new Date(latestDates.startDate + 'T00:00:00');
+                    const endDate = new Date(latestDates.endDate + 'T00:00:00');
+                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) { return; }
+
+                    const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
+                    const startDay = reportService.calculateDuration(minDate.toISOString().split('T')[0], latestDates.startDate);
+                    const bar = document.createElement('div');
+                    const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
+                    
+                    let barColor;
+                    if (isParent) { barColor = 'bg-gray-500 dark:bg-gray-600'; 
+                    } else if (statusInfo.name === 'Atrasada') { barColor = 'bg-red-500';
+                    } else if (statusInfo.name === 'Concluída') { barColor = 'bg-green-500';
+                    } else { barColor = 'bg-blue-500'; }
+
+                    bar.className = `gantt-bar ${isParent ? 'gantt-bar-parent' : ''} ${barColor}`;
+                    bar.style.left = `${(startDay - 1) * dayWidth}px`;
+                    bar.style.width = `${duration * dayWidth}px`;
+                    bar.style.top = `${index * 40}px`;
+                    bar.title = `${task.name}\nProgresso: ${task.progress}%\nInício: ${startDate.toLocaleDateString('pt-BR')}\nTérmino: ${endDate.toLocaleDateString('pt-BR')}`;
+                    
+                    if (!isParent) {
+                        const progressOverlay = document.createElement('div');
+                        progressOverlay.style.width = `${task.progress}%`;
+                        progressOverlay.style.height = '100%';
+                        progressOverlay.className = `absolute top-0 left-0 bg-opacity-70 ${barColor}`;
+                        progressOverlay.style.backgroundColor = barColor.replace('bg-', 'bg-');
+                        const progressText = document.createElement('span');
+                        progressText.className = 'absolute inset-0 text-white flex items-center justify-center';
+                        progressText.textContent = `${task.progress}%`;
+                        
+                        bar.innerHTML = '';
+                        bar.style.backgroundColor = '#ccc'; 
+                        bar.style.color = '#1f2937'; 
+                        bar.appendChild(progressOverlay);
+                        bar.appendChild(progressText);
+                    } else {
+                        bar.textContent = task.name;
+                        bar.classList.add('text-xs');
+                    }
+
+                    timelineBody.appendChild(bar);
+                    
+                    taskPositions.set(task.id, {
+                        x_start: (startDay - 1) * dayWidth,
+                        x_end: ((startDay - 1) + duration) * dayWidth,
+                        y: (index * 40) + (isParent ? 14 : 20) 
                     });
-                    processTasksForExport(task.id, level + 1);
-                 });
+                });
+                
+                taskOrder.forEach(task => {
+                    if (task.dependsOn && taskPositions.has(task.dependsOn) && taskPositions.has(task.id)) {
+                        const fromTask = taskPositions.get(task.dependsOn);
+                        const toTask = taskPositions.get(task.id);
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        const x1 = fromTask.x_end;
+                        const y1 = fromTask.y;
+                        const x2 = toTask.x_start;
+                        const y2 = toTask.y;
+                        const curve = `M ${x1} ${y1} C ${x1 + 25} ${y1} ${x2 - 25} ${y2} ${x2} ${y2}`;
+                        
+                        line.setAttribute("d", curve);
+                        line.setAttribute("stroke", "#6b7280");
+                        line.setAttribute("stroke-width", "1.5");
+                        line.setAttribute("fill", "none");
+                        line.setAttribute("marker-end", "url(#arrow)");
+                        dependencyLines.appendChild(line);
+                    }
+                });
+                if (dependencyLines.innerHTML !== '') {
+                    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                    defs.innerHTML = `<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" /></marker>`;
+                    dependencyLines.prepend(defs); 
+                }
+            },
         };
-        processTasksForExport(null, 0);
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Cronograma");
-        worksheet['!cols'] = [ { wch: 60 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 10 } ];
-        XLSX.writeFile(workbook, `${project.name.replace(/ /g,"_")}_Relatorio.xlsx`);
-    };
-    reportService.generatePdf = function(project) {
-        const loader = document.getElementById('loader');
-        loader.style.display = 'flex';
-        if (!project) { loader.style.display = 'none'; return; }
-        const reportElement = document.createElement('div');
-        reportElement.className = 'p-8 bg-white dark:bg-gray-800';
-        reportElement.style.width = '1123px';
-        const titleHeader = document.querySelector('#dashboard-view header').cloneNode(true);
-        titleHeader.querySelector('button.no-print')?.remove();
-        const kpiDashboardClone = document.getElementById('kpi-dashboard').cloneNode(true);
-        const currentViewId = document.getElementById('view-switcher').value === 'table' ? 'table-view' : 'gantt-view';
-        const activeViewClone = document.getElementById(currentViewId).cloneNode(true);
-        activeViewClone.classList.remove('hidden');
-        activeViewClone.style.display = 'block';
-        if (currentViewId === 'table-view') {
-            activeViewClone.querySelector('thead th:last-child')?.remove();
-            activeViewClone.querySelectorAll('tbody td.no-print').forEach(cell => cell.remove());
-        }
-        const scrollableContent = activeViewClone.querySelector('.overflow-x-auto, .gantt-timeline-container');
-        if (scrollableContent) scrollableContent.style.overflow = 'visible';
         
-        reportElement.appendChild(titleHeader);
-        reportElement.appendChild(kpiDashboardClone);
-        reportElement.appendChild(activeViewClone);
+        // Report Service - Handles PDF, Excel generation and Template
+        const reportService = {
+            downloadExcelTemplate() {
+                const headers = ['Tarefa', 'Duração (dias)', 'Data Início', 'Data Termino', 'Status', 'Progresso (%)', 'Prioridade', 'Atribuído a', 'Risco (Sim/Nao)', 'Tarefa Pai (Nome)'];
+                const exampleData = [
+                    { 'Tarefa': 'Planejamento Geral', 'Duração (dias)': 5, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-05', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a': 'Gerente de Projeto', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': '' },
+                    { 'Tarefa': 'Definir Escopo', 'Duração (dias)': 2, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-02', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a': 'Analista', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': 'Planejamento Geral' }
+                ];
+                const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Tarefas");
+                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 40 } ];
+                XLSX.writeFile(workbook, "template_importacao.xlsx");
+            },
+            calculateDuration: (start, end) => {
+                if (!start || !end) return 0;
+                const diffTime = new Date(end) - new Date(start);
+                return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            },
+            getTaskStatusClass: (status, endDate) => {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const taskEndDate = new Date(endDate + 'T00:00:00');
+                if (status !== 'Concluída' && taskEndDate < today) return { badge: 'bg-red-600 text-white', name: 'Atrasada' };
+                switch (status) {
+                    case 'Concluída': return { badge: 'bg-green-600 text-white', name: 'Concluída' };
+                    case 'Em Andamento': return { badge: 'bg-yellow-500 text-black', name: 'Em Andamento' };
+                    default: return { badge: 'bg-gray-500 text-white', name: 'Não Iniciada' };
+                }
+            },
+            exportExcel: function(project) {
+                if (!project) return;
+                const dataToExport = [];
+                const processTasksForExport = (parentId, level) => {
+                    project.tasks.filter(t => t.parentId === parentId)
+                        .sort((a,b) => {
+                            const dateA = new Date(dataService.getLatestDates(a).startDate);
+                            const dateB = new Date(dataService.getLatestDates(b).startDate);
+                            return dateA - dateB;
+                        })
+                        .forEach(task => {
+                            const latestDates = dataService.getLatestDates(task);
+                            const duration = this.calculateDuration(latestDates.startDate, latestDates.endDate);
+                            const statusInfo = this.getTaskStatusClass(task.status, latestDates.endDate);
+                            const commentsString = (task.comments || [])
+                                .map(c => `${new Date(c.timestamp).toLocaleDateString('pt-BR')}: ${c.text}`)
+                                .join(' | ');
+
+                            dataToExport.push({
+                                'Tarefa': `${'  '.repeat(level)}${task.name}`, 
+                                'Duração (dias)': duration, 
+                                'Data de Início': new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR'), 
+                                'Data de Término': new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR'),
+                                'Status': statusInfo.name, 
+                                'Comentários': commentsString,
+                                'Progresso (%)': task.progress, 
+                                'Atribuído a': task.assignedTo, 
+                                'Prioridade': task.priority,
+                                'Em Risco': task.risk ? 'Sim' : 'Não'
+                            });
+                            processTasksForExport(task.id, level + 1);
+                        });
+                };
+                processTasksForExport(null, 0);
+                const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Cronograma");
+                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 60 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 } ];
+                XLSX.writeFile(workbook, `${project.name.replace(/ /g,"_")}_Relatorio.xlsx`);
+            },
+            generatePdf: function(project) {
+                const loader = document.getElementById('loader');
+                loader.style.display = 'flex';
+                if (!project) { loader.style.display = 'none'; return; }
+                const reportElement = document.createElement('div');
+                reportElement.className = 'p-8 bg-white dark:bg-gray-800';
+                reportElement.style.width = '1123px'; 
+                const titleHeader = document.querySelector('#dashboard-view header').cloneNode(true);
+                titleHeader.querySelector('button.no-print')?.remove();
+                const kpiDashboardClone = document.getElementById('kpi-dashboard').cloneNode(true);
+                const currentViewId = document.getElementById('view-switcher').value === 'table' ? 'table-view' : 'gantt-view';
+                const activeViewClone = document.getElementById(currentViewId).cloneNode(true);
+                activeViewClone.classList.remove('hidden');
+                activeViewClone.style.display = 'block';
+
+                if (currentViewId === 'table-view') {
+                    const thead = activeViewClone.querySelector('thead');
+                    thead.querySelector('th:last-child')?.remove();
+                    activeViewClone.querySelectorAll('tbody td.no-print').forEach(cell => cell.remove());
+                }
+
+                const scrollableContent = activeViewClone.querySelector('.overflow-x-auto, .gantt-timeline-container');
+                if (scrollableContent) scrollableContent.style.overflow = 'visible';
+                
+                reportElement.appendChild(titleHeader);
+                reportElement.appendChild(kpiDashboardClone);
+                reportElement.appendChild(activeViewClone);
+                
+                reportElement.style.position = 'absolute';
+                reportElement.style.left = '-9999px';
+                document.body.appendChild(reportElement);
+
+                setTimeout(() => {
+                    const opt = { 
+                        margin: 10, 
+                        filename: `${project.name.replace(/ /g,"_")}_Relatorio.pdf`, 
+                        image: { type: 'jpeg', quality: 0.98 }, 
+                        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: null }, 
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
+                    };
+                    html2pdf().from(reportElement).set(opt).save().then(() => {
+                        loader.style.display = 'none';
+                        document.body.removeChild(reportElement);
+                    }).catch(err => {
+                        console.error("Erro ao gerar PDF:", err);
+                        loader.style.display = 'none';
+                        document.body.removeChild(reportElement);
+                    });
+                }, 300);
+            }
+        };
+
+        // --- Kick off the app ---
+        document.addEventListener('DOMContentLoaded', () => App.init());
         
-        reportElement.style.position = 'absolute';
-        reportElement.style.left = '-9999px';
-        document.body.appendChild(reportElement);
-
-        setTimeout(() => {
-            const opt = { margin: 10, filename: `${project.name.replace(/ /g,"_")}_Relatorio.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: null }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
-            html2pdf().from(reportElement).set(opt).save().then(() => {
-                loader.style.display = 'none';
-                document.body.removeChild(reportElement);
-            }).catch(err => {
-                console.error("Erro ao gerar PDF:", err);
-                loader.style.display = 'none';
-                document.body.removeChild(reportElement);
-            });
-        }, 300);
-    };
-
     </script>
 </body>
 </html>
-
