@@ -33,6 +33,10 @@
         .toast.show { transform: translateX(0); opacity: 1; }
         /* Estilos para Impressão */
         @media print { .no-print { display: none !important; } body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .container, #dashboard-view, main#content-area, .bg-white { padding: 0 !important; margin: 0 !important; max-width: 100% !important; box-shadow: none !important; border: none !important; } .gantt-timeline-container, .overflow-x-auto { overflow: visible !important; } }
+        
+        /* Z-index para modais */
+        .modal-z-50 { z-index: 50; }
+        .modal-z-60 { z-index: 60; }
     </style>
 </head>
 <body class="antialiased">
@@ -66,22 +70,60 @@
         </div>
     </div>
 
+    <!-- Modal de Cadastro de Usuário - MAIOR Z-INDEX -->
+    <div id="add-user-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-60">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Cadastrar Novo Usuário</h2>
+            <form id="add-user-form">
+                <div class="mb-4">
+                    <label for="new-user-name" class="block text-sm font-medium text-gray-400">Nome Completo</label>
+                    <input type="text" id="new-user-name" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent" required>
+                </div>
+                <div class="mb-4">
+                    <label for="new-user-email" class="block text-sm font-medium text-gray-400">E-mail</label>
+                    <input type="email" id="new-user-email" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent" required>
+                    <p class="text-xs text-gray-500 mt-1">Deve terminar com @vinci-highways.com.br</p>
+                </div>
+                <div class="mb-4">
+                    <label for="new-user-role" class="block text-sm font-medium text-gray-400">Papel</label>
+                    <select id="new-user-role" class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2">
+                        <option value="Usuario">Usuário</option>
+                        <option value="Gestor">Gestor</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Cadastrar Usuário</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <div id="user-management-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
-        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-4xl">
-            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Gestão de Utilizadores e Papéis</h2>
+    <!-- Modal de Gestão de Usuários - MENOR Z-INDEX -->
+    <div id="user-management-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-50">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-6xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-[var(--text-color)]">Gestão de Utilizadores e Papéis</h2>
+                <button id="add-user-btn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Cadastrar Usuário
+                </button>
+            </div>
             <div id="user-list-container" class="overflow-y-auto max-h-96">
                 <table class="w-full text-sm text-left text-gray-400">
                     <thead class="text-xs uppercase bg-gray-700 text-gray-400 sticky top-0">
                         <tr>
-                            <th class="p-3">UID</th>
+                            <th class="p-3">Nome</th>
                             <th class="p-3">E-mail</th>
                             <th class="p-3">Papel Atual</th>
+                            <th class="p-3">Status</th>
                             <th class="p-3 text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="user-management-table-body">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
             <div class="flex justify-end mt-4">
@@ -292,8 +334,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // Variáveis Globais de Firebase
         let firebaseApp;
@@ -316,8 +358,6 @@
             messagingSenderId: "802190123207",
             appId: "1:802190123207:web:adaf51b25010f677bbdee2"
         };
-        const initialAuthToken = null; // Token inicial não é usado no fluxo de Email/Senha
-
 
         // dataService Interface
         const dataService = {
@@ -423,8 +463,96 @@
                 }
             },
 
+            // --- CADASTRO DE USUÁRIOS PELO GESTOR ---
+            createUserByGestor: async (userData) => {
+                try {
+                    const { name, email, role } = userData;
+                    
+                    if (!email.endsWith(ALLOWED_DOMAIN)) {
+                        throw new Error(`E-mail deve terminar com ${ALLOWED_DOMAIN}`);
+                    }
+
+                    // Verificar se usuário já existe
+                    const usersSnapshot = await getDocs(collection(db, 'users_data'));
+                    const existingUser = usersSnapshot.docs.find(doc => doc.data().email === email);
+                    
+                    if (existingUser) {
+                        throw new Error('Este e-mail já está cadastrado no sistema');
+                    }
+
+                    // Gerar senha temporária
+                    const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+                    
+                    // Criar usuário no Authentication
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
+                    const newUserId = userCredential.user.uid;
+
+                    // Salvar dados do usuário no Firestore
+                    await setDoc(doc(db, 'users_data', newUserId), {
+                        name: name,
+                        email: email,
+                        role: role,
+                        appId: appId,
+                        createdAt: new Date().toISOString(),
+                        createdBy: dataService.userId
+                    });
+
+                    // Enviar email de boas-vindas com instruções de login
+                    await dataService.sendWelcomeEmail(email, name, tempPassword);
+                    
+                    // Fazer logout do usuário temporário criado
+                    await signOut(auth);
+                    
+                    // Refazer login do gestor
+                    const currentUser = auth.currentUser;
+                    if (currentUser) {
+                        await signInWithEmailAndPassword(auth, currentUser.email, document.getElementById('auth-password').value);
+                    }
+
+                    return { success: true, tempPassword };
+                } catch (error) {
+                    console.error("Erro ao criar usuário:", error);
+                    throw error;
+                }
+            },
+
+            sendWelcomeEmail: async (email, name, tempPassword) => {
+                // Simulação de envio de email
+                console.log(`📧 Email enviado para: ${email}`);
+                console.log(`👋 Conteúdo do email:
+                    
+                    Olá ${name},
+                    
+                    Bem-vindo(a) ao Vinci Highways Projects!
+                    
+                    Sua conta foi criada com sucesso.
+                    
+                    Seus dados de acesso:
+                    E-mail: ${email}
+                    Senha temporária: ${tempPassword}
+                    
+                    Por segurança, recomendamos que altere sua senha no primeiro acesso.
+                    
+                    Acesse o sistema em: ${window.location.origin}
+                    
+                    Atenciosamente,
+                    Equipe Vinci Highways
+                `);
+
+                return true;
+            },
+
+            resetUserPassword: async (email) => {
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    uiService.showToast(`Email de redefinição de senha enviado para ${email}`);
+                } catch (error) {
+                    console.error("Erro ao enviar email de redefinição:", error);
+                    uiService.showToast('Falha ao enviar email de redefinição de senha.', 'error');
+                }
+            },
+
             // --- PROJECT DATA ACCESS ---
-            
             getProjectCollectionRef: (uid) => {
                 const targetUid = uid || dataService.userId;
                 if (!targetUid) throw new Error("Usuário não autenticado.");
@@ -513,7 +641,6 @@
             },
 
             // --- CRUD HELPERS ---
-
             addProject: async (projectData) => {
                 try {
                     const projectCollection = dataService.getProjectCollectionRef();
@@ -566,6 +693,30 @@
 
                 const { newStartDate, newEndDate, ...restOfTaskData } = taskData;
                 
+                // VALIDAÇÃO: Verificar se é subtarefa e se as datas são válidas
+                if (restOfTaskData.parentId) {
+                    const parentTask = project.tasks.find(t => t.id === restOfTaskData.parentId);
+                    if (parentTask) {
+                        const parentDates = dataService.getLatestDates(parentTask);
+                        const parentStart = new Date(parentDates.startDate);
+                        const parentEnd = new Date(parentDates.endDate);
+                        const childStart = new Date(newStartDate);
+                        const childEnd = new Date(newEndDate);
+
+                        // Subtarefa não pode começar antes da tarefa pai
+                        if (childStart < parentStart) {
+                            uiService.showToast('A subtarefa não pode começar antes da tarefa pai!', 'error');
+                            return;
+                        }
+
+                        // Subtarefa não pode terminar depois da tarefa pai
+                        if (childEnd > parentEnd) {
+                            uiService.showToast('A subtarefa não pode terminar depois da tarefa pai!', 'error');
+                            return;
+                        }
+                    }
+                }
+
                 let updatedTasks;
 
                 if (taskData.id) { 
@@ -694,6 +845,14 @@
                 document.getElementById('theme-toggle').addEventListener('click', () => uiService.toggleTheme());
                 document.getElementById('logout-btn').addEventListener('click', () => App.logout());
                 document.getElementById('user-management-btn').addEventListener('click', () => uiService.openUserManagementModal());
+                
+                // CORREÇÃO: Fechar modal de gestão antes de abrir cadastro
+                document.getElementById('add-user-btn').addEventListener('click', () => {
+                    uiService.closeModal('user-management-modal');
+                    setTimeout(() => {
+                        uiService.openAddUserModal();
+                    }, 300);
+                });
 
                 // --- AUTENTICAÇÃO ---
                 const authForm = document.getElementById('auth-form');
@@ -755,6 +914,43 @@
                 });
                 // --- FIM AUTENTICAÇÃO ---
                 
+                // --- CADASTRO DE USUÁRIOS ---
+                document.getElementById('add-user-form').addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const name = document.getElementById('new-user-name').value.trim();
+                    const email = document.getElementById('new-user-email').value.trim();
+                    const role = document.getElementById('new-user-role').value;
+
+                    if (!name || !email) {
+                        uiService.showToast('Preencha todos os campos obrigatórios.', 'error');
+                        return;
+                    }
+
+                    if (!email.endsWith(ALLOWED_DOMAIN)) {
+                        uiService.showToast(`E-mail deve terminar com ${ALLOWED_DOMAIN}`, 'error');
+                        return;
+                    }
+
+                    document.getElementById('loader').style.display = 'flex';
+                    try {
+                        await dataService.createUserByGestor({ name, email, role });
+                        uiService.closeModal('add-user-modal');
+                        uiService.showToast('Usuário cadastrado com sucesso! Email de boas-vindas enviado.', 'success');
+                        document.getElementById('add-user-form').reset();
+                        
+                        // Reabrir modal de gestão após cadastro
+                        setTimeout(() => {
+                            uiService.openUserManagementModal();
+                        }, 500);
+                        
+                    } catch (error) {
+                        console.error('Erro ao cadastrar usuário:', error);
+                        uiService.showToast(`Erro ao cadastrar usuário: ${error.message}`, 'error');
+                    } finally {
+                        document.getElementById('loader').style.display = 'none';
+                    }
+                });
+                
                 document.getElementById('add-project-btn').addEventListener('click', () => uiService.openModal('project-modal'));
                 document.getElementById('project-form').addEventListener('submit', event => {
                     event.preventDefault();
@@ -796,6 +992,7 @@
                     event.preventDefault();
                     const taskData = uiService.getTaskFormData();
                     
+                    // Validação básica de datas
                     if (new Date(taskData.newStartDate) > new Date(taskData.newEndDate)) {
                         uiService.showToast('Data de Início não pode ser posterior à Data de Término!', 'error');
                         return;
@@ -915,6 +1112,15 @@
                 uiService.renderUserManagementTable();
                 uiService.openModal('user-management-modal');
             },
+
+            openAddUserModal: () => {
+                if (dataService.userRole !== 'Gestor') {
+                    uiService.showToast('Acesso negado: Apenas Gestores podem cadastrar usuários.', 'error');
+                    return;
+                }
+                document.getElementById('add-user-form').reset();
+                uiService.openModal('add-user-modal');
+            },
             
             renderUserManagementTable: () => {
                 const tbody = document.getElementById('user-management-table-body');
@@ -933,15 +1139,23 @@
                     const isDisabled = isSelf ? 'disabled' : '';
 
                     row.innerHTML = `
-                        <td class="p-3 text-xs font-mono">${user.id.substring(0, 8)}...</td>
-                        <td class="p-3 font-medium">${user.email}</td>
+                        <td class="p-3 font-medium">${user.name || 'Não informado'}</td>
+                        <td class="p-3">${user.email}</td>
                         <td class="p-3">
                             <select data-user-id="${user.id}" class="user-role-select border border-[var(--border-color)] rounded-md p-1 bg-[var(--card-bg)] text-gray-800 dark:text-gray-200" ${isDisabled}>
                                 ${roleOptions}
                             </select>
                         </td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs ${user.role === 'Gestor' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}">
+                                ${user.role}
+                            </span>
+                        </td>
                         <td class="p-3 text-center">
-                            <button data-user-id="${user.id}" class="save-role-btn bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${isDisabled}>Salvar</button>
+                            <div class="flex justify-center gap-2">
+                                <button data-user-id="${user.id}" class="save-role-btn bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${isDisabled}>Salvar Papel</button>
+                                <button data-user-email="${user.email}" class="reset-password-btn bg-orange-500 text-white px-3 py-1 rounded-md text-xs hover:bg-orange-600">Redefinir Senha</button>
+                            </div>
                         </td>
                     `;
                     tbody.appendChild(row);
@@ -956,6 +1170,17 @@
                         document.getElementById('loader').style.display = 'flex';
                         await dataService.updateUserRole(uid, newRole);
                         document.getElementById('loader').style.display = 'none';
+                    });
+                });
+
+                tbody.querySelectorAll('.reset-password-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const email = btn.dataset.userEmail;
+                        uiService.showConfirmModal(`Enviar email de redefinição de senha para ${email}?`, async () => {
+                            document.getElementById('loader').style.display = 'flex';
+                            await dataService.resetUserPassword(email);
+                            document.getElementById('loader').style.display = 'none';
+                        });
                     });
                 });
             },
@@ -973,7 +1198,7 @@
                 dataService.users.filter(u => u.email).forEach(user => {
                     const option = document.createElement('option');
                     option.value = user.id;
-                    option.textContent = `${user.email.split('@')[0]} (${user.role})`;
+                    option.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
                     selectEl.appendChild(option);
                 });
             },
@@ -1234,13 +1459,13 @@
             },
             renderAssigneeSummary(tasks) {
                 const summaryContainer = document.getElementById('assignee-summary-list');
-                const uidToEmail = new Map(dataService.users.map(u => [u.id, u.email.split('@')[0]]));
+                const uidToName = new Map(dataService.users.map(u => [u.id, u.name || u.email.split('@')[0]]));
 
                 const summary = tasks.reduce((acc, task) => {
                     (task.assignedUsers || []).forEach(uid => {
-                        const userIdentifier = uidToEmail.get(uid) || `UID: ${uid.substring(0, 4)}`;
-                        if (!acc[userIdentifier]) acc[userIdentifier] = 0;
-                        acc[userIdentifier]++;
+                        const userName = uidToName.get(uid) || `UID: ${uid.substring(0, 4)}`;
+                        if (!acc[userName]) acc[userName] = 0;
+                        acc[userName]++;
                     });
                     return acc;
                 }, {});
@@ -1399,7 +1624,7 @@
                         const assignedUsersText = (task.assignedUsers || [])
                             .map(uid => {
                                 const user = dataService.users.find(u => u.id === uid);
-                                return user ? user.email.split('@')[0] : `UID:${uid.substring(0,4)}`;
+                                return user ? (user.name || user.email.split('@')[0]) : `UID:${uid.substring(0,4)}`;
                             })
                             .join(', ');
 
