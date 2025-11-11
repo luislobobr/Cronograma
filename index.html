@@ -37,6 +37,12 @@
         /* Z-index para modais */
         .modal-z-50 { z-index: 50; }
         .modal-z-60 { z-index: 60; }
+        
+        /* Estilos para comentários editáveis */
+        .comment-item { position: relative; }
+        .comment-actions { position: absolute; right: 0; top: 0; display: none; }
+        .comment-item:hover .comment-actions { display: flex; }
+        .edit-comment-input { width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; }
     </style>
 </head>
 <body class="antialiased">
@@ -77,7 +83,8 @@
             <form id="add-user-form">
                 <div class="mb-4">
                     <label for="new-user-name" class="block text-sm font-medium text-gray-400">Nome Completo</label>
-                    <input type="text" id="new-user-name" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent" required>
+                    <input type="text" id="new-user-name" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Opcional - será preenchido automaticamente com o nome do e-mail</p>
                 </div>
                 <div class="mb-4">
                     <label for="new-user-email" class="block text-sm font-medium text-gray-400">E-mail</label>
@@ -483,6 +490,9 @@
                         throw new Error('Este e-mail já está cadastrado no sistema');
                     }
 
+                    // MELHORIA 02: Usar nome do e-mail se nome não for fornecido
+                    const userName = name || email.split('@')[0];
+                    
                     // Gerar senha temporária
                     const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
                     
@@ -492,7 +502,7 @@
 
                     // Salvar dados do usuário no Firestore
                     await setDoc(doc(db, 'users_data', newUserId), {
-                        name: name,
+                        name: userName,
                         email: email,
                         role: role,
                         appId: appId,
@@ -501,7 +511,7 @@
                     });
 
                     // Enviar email de boas-vindas com instruções de login
-                    await dataService.sendWelcomeEmail(email, name, tempPassword);
+                    await dataService.sendWelcomeEmail(email, userName, tempPassword);
                     
                     // Fazer logout do usuário temporário criado
                     await signOut(auth);
@@ -756,8 +766,79 @@
                 }
                 
                 project.tasks = updatedTasks;
+                
+                // MELHORIA 01: Atualizar datas da tarefa pai automaticamente
+                if (restOfTaskData.parentId) {
+                    dataService.updateParentTaskDates(restOfTaskData.parentId);
+                }
+                
                 dataService.recalculateAllProgress();
                 await dataService.saveProjectDocument(project);
+            },
+
+            // MELHORIA 01: Função para atualizar datas da tarefa pai
+            updateParentTaskDates: function(parentTaskId) {
+                const project = dataService.getCurrentProject();
+                if (!project) return;
+
+                const parentTask = project.tasks.find(t => t.id === parentTaskId);
+                if (!parentTask) return;
+
+                const childTasks = project.tasks.filter(t => t.parentId === parentTaskId);
+                if (childTasks.length === 0) return;
+
+                // Encontrar a data de início mais antiga e data de término mais recente entre as subtarefas
+                let earliestStartDate = null;
+                let latestEndDate = null;
+
+                childTasks.forEach(child => {
+                    const childDates = dataService.getLatestDates(child);
+                    const childStart = new Date(childDates.startDate);
+                    const childEnd = new Date(childDates.endDate);
+
+                    if (!earliestStartDate || childStart < earliestStartDate) {
+                        earliestStartDate = childStart;
+                    }
+                    if (!latestEndDate || childEnd > latestEndDate) {
+                        latestEndDate = childEnd;
+                    }
+                });
+
+                if (earliestStartDate && latestEndDate) {
+                    const parentDates = dataService.getLatestDates(parentTask);
+                    const parentStart = new Date(parentDates.startDate);
+                    const parentEnd = new Date(parentDates.endDate);
+
+                    // Atualizar apenas se as datas forem diferentes
+                    if (earliestStartDate.getTime() !== parentStart.getTime() || 
+                        latestEndDate.getTime() !== parentEnd.getTime()) {
+                        
+                        const newStartDate = earliestStartDate.toISOString().split('T')[0];
+                        const newEndDate = latestEndDate.toISOString().split('T')[0];
+
+                        // Atualizar a tarefa pai
+                        const updatedTasks = project.tasks.map(t => {
+                            if (t.id === parentTaskId) {
+                                const updatedTask = { ...t };
+                                if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
+                                    const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
+                                    if (latestDates.startDate !== newStartDate || latestDates.endDate !== newEndDate) {
+                                        updatedTask.dateHistory = [
+                                            ...updatedTask.dateHistory,
+                                            { startDate: newStartDate, endDate: newEndDate }
+                                        ];
+                                    }
+                                } else {
+                                    updatedTask.dateHistory = [{ startDate: newStartDate, endDate: newEndDate }];
+                                }
+                                return updatedTask;
+                            }
+                            return t;
+                        });
+
+                        project.tasks = updatedTasks;
+                    }
+                }
             },
 
             deleteTask: async (taskId) => {
@@ -949,8 +1030,8 @@
                     const email = document.getElementById('new-user-email').value.trim();
                     const role = document.getElementById('new-user-role').value;
 
-                    if (!name || !email) {
-                        uiService.showToast('Preencha todos os campos obrigatórios.', 'error');
+                    if (!email) {
+                        uiService.showToast('Preencha o e-mail.', 'error');
                         return;
                     }
 
@@ -976,6 +1057,19 @@
                         uiService.showToast(`Erro ao cadastrar usuário: ${error.message}`, 'error');
                     } finally {
                         document.getElementById('loader').style.display = 'none';
+                    }
+                });
+
+                // MELHORIA 02: Preencher automaticamente o nome do e-mail
+                document.getElementById('new-user-email').addEventListener('blur', function() {
+                    const email = this.value.trim();
+                    const nameInput = document.getElementById('new-user-name');
+                    
+                    if (email && email.endsWith(ALLOWED_DOMAIN) && (!nameInput.value || nameInput.value === '')) {
+                        const nameFromEmail = email.split('@')[0];
+                        // Capitalizar primeira letra
+                        const capitalizedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+                        nameInput.value = capitalizedName;
                     }
                 });
                 
@@ -1030,6 +1124,22 @@
                     if (new Date(taskData.newStartDate) > new Date(taskData.newEndDate)) {
                         uiService.showToast('Data de Início não pode ser posterior à Data de Término!', 'error');
                         return;
+                    }
+
+                    // MELHORIA 01: Validação adicional para subtarefas
+                    if (taskData.parentId) {
+                        const project = dataService.getCurrentProject();
+                        const parentTask = project.tasks.find(t => t.id === taskData.parentId);
+                        if (parentTask) {
+                            const parentDates = dataService.getLatestDates(parentTask);
+                            const parentStart = new Date(parentDates.startDate);
+                            const childStart = new Date(taskData.newStartDate);
+
+                            if (childStart < parentStart) {
+                                uiService.showToast('A subtarefa não pode começar antes da tarefa pai!', 'error');
+                                return;
+                            }
+                        }
                     }
                     
                     document.getElementById('loader').style.display = 'flex';
@@ -1117,6 +1227,7 @@
         // UI Service - Manages all DOM interactions
         const uiService = {
             mainDashboardCharts: {},
+            editingCommentId: null, // Para controle de edição de comentários
 
             // --- AUTH UI ---
             updateUserRoleDisplay: () => {
@@ -1383,9 +1494,10 @@
                 const assignedUsersSelect = document.getElementById('assigned-users-select');
                 
                 const commentsList = document.getElementById('comments-list');
-                const comments = Array.from(commentsList.querySelectorAll('p')).map(p => ({
-                    text: p.dataset.text, 
-                    timestamp: p.dataset.timestamp
+                const comments = Array.from(commentsList.querySelectorAll('.comment-item')).map(item => ({
+                    id: item.dataset.commentId,
+                    text: item.dataset.text, 
+                    timestamp: item.dataset.timestamp
                 }));
 
                 const selectedUsers = Array.from(assignedUsersSelect.options)
@@ -1425,31 +1537,196 @@
                 newCancelBtn.addEventListener('click', () => { this.closeModal('confirm-modal'); });
             },
             
-            renderComments(comments) {
+            // MELHORIA 03: Função melhorada para renderizar comentários com edição
+            renderComments: function(comments) {
                 const listEl = document.getElementById('comments-list');
                 listEl.innerHTML = '';
-                comments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(comment => {
-                    const p = document.createElement('p');
-                    p.className = "border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0";
+                
+                // Ordenar comentários do mais recente para o mais antigo
+                comments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                        .forEach(comment => {
+                    const commentItem = document.createElement('div');
+                    commentItem.className = "comment-item border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0 relative";
+                    commentItem.dataset.commentId = comment.id || Date.now() + Math.random();
+                    commentItem.dataset.timestamp = comment.timestamp;
+                    commentItem.dataset.text = comment.text;
+                    
                     const dateString = new Date(comment.timestamp).toLocaleDateString('pt-BR');
                     const timeString = new Date(comment.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    p.innerHTML = `<span class="font-semibold text-gray-500">${dateString} ${timeString}:</span> ${comment.text}`;
-                    p.dataset.timestamp = comment.timestamp;
-                    p.dataset.text = comment.text; 
-                    listEl.appendChild(p);
+                    
+                    commentItem.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <span class="font-semibold text-gray-500">${dateString} ${timeString}:</span>
+                                <span class="comment-text">${comment.text}</span>
+                            </div>
+                            <div class="comment-actions flex gap-1 ml-2">
+                                <button class="edit-comment-btn text-blue-500 hover:text-blue-700" title="Editar comentário">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                </button>
+                                <button class="delete-comment-btn text-red-500 hover:text-red-700" title="Excluir comentário">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 000-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    listEl.appendChild(commentItem);
+                });
+
+                // Adicionar event listeners para os botões de edição e exclusão
+                listEl.querySelectorAll('.edit-comment-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const commentItem = e.target.closest('.comment-item');
+                        this.editComment(commentItem);
+                    });
+                });
+
+                listEl.querySelectorAll('.delete-comment-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const commentItem = e.target.closest('.comment-item');
+                        this.deleteComment(commentItem);
+                    });
                 });
             },
-            addComment(text) {
+
+            // MELHORIA 03: Função para editar comentário
+            editComment: function(commentItem) {
+                const commentText = commentItem.querySelector('.comment-text');
+                const currentText = commentText.textContent;
+                
+                // Criar input de edição
+                const editInput = document.createElement('input');
+                editInput.type = 'text';
+                editInput.className = 'edit-comment-input';
+                editInput.value = currentText;
+                
+                // Substituir texto pelo input
+                commentText.replaceWith(editInput);
+                editInput.focus();
+                
+                // Adicionar botões de confirmação/cancelamento
+                const actionButtons = commentItem.querySelector('.comment-actions');
+                actionButtons.innerHTML = `
+                    <button class="save-comment-btn text-green-500 hover:text-green-700" title="Salvar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button class="cancel-edit-comment-btn text-gray-500 hover:text-gray-700" title="Cancelar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `;
+                
+                // Event listeners para os novos botões
+                commentItem.querySelector('.save-comment-btn').addEventListener('click', () => {
+                    const newText = editInput.value.trim();
+                    if (newText) {
+                        commentItem.dataset.text = newText;
+                        const newCommentText = document.createElement('span');
+                        newCommentText.className = 'comment-text';
+                        newCommentText.textContent = newText;
+                        editInput.replaceWith(newCommentText);
+                        this.restoreCommentButtons(commentItem);
+                    }
+                });
+                
+                commentItem.querySelector('.cancel-edit-comment-btn').addEventListener('click', () => {
+                    const originalCommentText = document.createElement('span');
+                    originalCommentText.className = 'comment-text';
+                    originalCommentText.textContent = currentText;
+                    editInput.replaceWith(originalCommentText);
+                    this.restoreCommentButtons(commentItem);
+                });
+                
+                // Salvar ao pressionar Enter
+                editInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        commentItem.querySelector('.save-comment-btn').click();
+                    }
+                });
+            },
+
+            // MELHORIA 03: Restaurar botões padrão do comentário
+            restoreCommentButtons: function(commentItem) {
+                const actionButtons = commentItem.querySelector('.comment-actions');
+                actionButtons.innerHTML = `
+                    <button class="edit-comment-btn text-blue-500 hover:text-blue-700" title="Editar comentário">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                    </button>
+                    <button class="delete-comment-btn text-red-500 hover:text-red-700" title="Excluir comentário">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 000-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `;
+                
+                // Re-adicionar event listeners
+                actionButtons.querySelector('.edit-comment-btn').addEventListener('click', (e) => {
+                    this.editComment(commentItem);
+                });
+                actionButtons.querySelector('.delete-comment-btn').addEventListener('click', (e) => {
+                    this.deleteComment(commentItem);
+                });
+            },
+
+            // MELHORIA 03: Função para excluir comentário
+            deleteComment: function(commentItem) {
+                commentItem.remove();
+            },
+
+            // MELHORIA 03: Função para adicionar comentário (atualizada)
+            addComment: function(text) {
                 const listEl = document.getElementById('comments-list');
-                const p = document.createElement('p');
+                const commentItem = document.createElement('div');
+                const commentId = Date.now() + Math.random();
                 const timestamp = new Date().toISOString();
-                p.className = "border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0";
+                
+                commentItem.className = "comment-item border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0 relative";
+                commentItem.dataset.commentId = commentId;
+                commentItem.dataset.timestamp = timestamp;
+                commentItem.dataset.text = text;
+                
                 const dateString = new Date(timestamp).toLocaleDateString('pt-BR');
                 const timeString = new Date(timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                p.innerHTML = `<span class="font-semibold text-gray-500">${dateString} ${timeString}:</span> ${text}`;
-                p.dataset.timestamp = timestamp;
-                p.dataset.text = text; 
-                listEl.prepend(p); 
+                
+                commentItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <span class="font-semibold text-gray-500">${dateString} ${timeString}:</span>
+                            <span class="comment-text">${text}</span>
+                        </div>
+                        <div class="comment-actions flex gap-1 ml-2">
+                            <button class="edit-comment-btn text-blue-500 hover:text-blue-700" title="Editar comentário">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                            </button>
+                            <button class="delete-comment-btn text-red-500 hover:text-red-700" title="Excluir comentário">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 000-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                listEl.prepend(commentItem);
+                
+                // Adicionar event listeners para os novos botões
+                commentItem.querySelector('.edit-comment-btn').addEventListener('click', (e) => {
+                    this.editComment(commentItem);
+                });
+                commentItem.querySelector('.delete-comment-btn').addEventListener('click', (e) => {
+                    this.deleteComment(commentItem);
+                });
             },
 
             showToast(message, type = 'success') {
