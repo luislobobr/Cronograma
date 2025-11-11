@@ -141,8 +141,10 @@
                     <input type="text" id="project-name" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent" required>
                 </div>
                 <div class="mb-4">
-                    <label for="project-manager" class="block text-sm font-medium text-gray-400">Responsável (Opcional)</label>
-                    <input type="text" id="project-manager" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent">
+                    <label for="project-manager" class="block text-sm font-medium text-gray-400">Responsável</label>
+                    <select id="project-manager" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent" required>
+                        <option value="">Selecione um responsável</option>
+                    </select>
                 </div>
                 <div class="flex justify-end gap-2">
                     <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
@@ -255,7 +257,7 @@
         
         <div id="project-view" class="container mx-auto p-4 md:p-8 hidden">
             <header class="mb-8">
-                <h1 class="text-4xl font-bold">Meus Projetos</h1>
+                <h1 class="text-4xl font-bold">Cronogramas</h1>
                 <p class="text-gray-400">Selecione um projeto para gerenciar ou crie um novo.</p>
                 <p id="user-role-display" class="text-sm font-semibold mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full inline-block">Papel: Carregando...</p>
             </header>
@@ -268,7 +270,7 @@
              <header class="mb-8">
                 <button id="back-to-projects-btn" class="text-sm text-blue-500 hover:underline mb-2 flex items-center gap-1 no-print">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                    Voltar para Projetos
+                   Voltar para Cronogramas
                 </button>
                 <h1 id="project-title" class="text-4xl font-bold">Nome do Projeto</h1>
                 <p class="text-gray-400">Painel de controle com o cronograma de execução.</p>
@@ -309,6 +311,7 @@
                                     <th class="p-3">Data de Início</th>
                                     <th class="p-3">Data de Término</th>
                                     <th class="p-3">Status</th>
+                                    <th class="p-3">Responsável</th>
                                     <th class="p-3">Comentários</th>
                                     <th class="p-3 text-center no-print">Ações</th>
                                 </tr>
@@ -691,25 +694,28 @@
                 const project = dataService.getCurrentProject();
                 if (!project) return;
 
-                const { newStartDate, newEndDate, ...restOfTaskData } = taskData;
+                const { newStartDate, newEndDate, dependsOn, ...restOfTaskData } = taskData;
                 
-                // VALIDAÇÃO: Verificar se é subtarefa e se as datas são válidas
-                if (restOfTaskData.parentId) {
-                    const parentTask = project.tasks.find(t => t.id === restOfTaskData.parentId);
+                // CORREÇÃO: Se houver dependência, define a tarefa pai
+                if (dependsOn) {
+                    // Encontra a tarefa da qual esta depende
+                    const parentTask = project.tasks.find(t => t.id === dependsOn);
                     if (parentTask) {
+                        // Define esta tarefa como filha da tarefa pai
+                        restOfTaskData.parentId = dependsOn;
+                        
+                        // Validação de datas conforme já existe
                         const parentDates = dataService.getLatestDates(parentTask);
                         const parentStart = new Date(parentDates.startDate);
                         const parentEnd = new Date(parentDates.endDate);
                         const childStart = new Date(newStartDate);
                         const childEnd = new Date(newEndDate);
 
-                        // Subtarefa não pode começar antes da tarefa pai
                         if (childStart < parentStart) {
                             uiService.showToast('A subtarefa não pode começar antes da tarefa pai!', 'error');
                             return;
                         }
 
-                        // Subtarefa não pode terminar depois da tarefa pai
                         if (childEnd > parentEnd) {
                             uiService.showToast('A subtarefa não pode terminar depois da tarefa pai!', 'error');
                             return;
@@ -723,6 +729,10 @@
                     updatedTasks = project.tasks.map(t => {
                         if (t.id === restOfTaskData.id) {
                             const updatedTask = { ...t, ...restOfTaskData };
+                            // Remove dependsOn se agora é uma subtarefa
+                            if (updatedTask.parentId) {
+                                updatedTask.dependsOn = null;
+                            }
                             if (newStartDate && newEndDate) {
                                 const latestDates = dataService.getLatestDates(t);
                                 if (latestDates.startDate !== newStartDate || latestDates.endDate !== newEndDate) {
@@ -738,7 +748,9 @@
                         ...restOfTaskData, 
                         id: Date.now(), 
                         dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
-                        comments: taskData.comments || [], 
+                        comments: taskData.comments || [],
+                        // Garante que dependsOn seja limpo se é uma subtarefa
+                        dependsOn: restOfTaskData.parentId ? null : dependsOn
                     };
                     updatedTasks = [...project.tasks, newTask];
                 }
@@ -806,6 +818,22 @@
                 if (topLevelTasks.length === 0) return 0;
                 const totalProgress = topLevelTasks.reduce((sum, task) => sum + task.progress, 0);
                 return Math.round(totalProgress / topLevelTasks.length);
+            },
+
+            // NOVA FUNÇÃO: Obter nome do responsável pelo UID
+            getManagerName: (managerUid) => {
+                if (!managerUid) return 'Não definido';
+                const user = dataService.users.find(u => u.id === managerUid);
+                return user ? (user.name || user.email.split('@')[0]) : `UID:${managerUid.substring(0,4)}`;
+            },
+
+            // NOVA FUNÇÃO: Obter nomes dos usuários atribuídos
+            getAssignedUserNames: (assignedUsers) => {
+                if (!assignedUsers || assignedUsers.length === 0) return '-';
+                return assignedUsers.map(uid => {
+                    const user = dataService.users.find(u => u.id === uid);
+                    return user ? (user.name || user.email.split('@')[0]) : `UID:${uid.substring(0,4)}`;
+                }).join(', ');
             }
         };
 
@@ -951,16 +979,22 @@
                     }
                 });
                 
-                document.getElementById('add-project-btn').addEventListener('click', () => uiService.openModal('project-modal'));
+                document.getElementById('add-project-btn').addEventListener('click', () => {
+                    uiService.populateProjectManagerSelect(); // NOVA LINHA - Popula o select de responsáveis
+                    uiService.openModal('project-modal');
+                });
+                
                 document.getElementById('project-form').addEventListener('submit', event => {
                     event.preventDefault();
                     const name = document.getElementById('project-name').value.trim();
-                    const manager = document.getElementById('project-manager').value.trim() || 'Não Definido';
+                    const manager = document.getElementById('project-manager').value;
                     
-                    if (name) {
+                    if (name && manager) {
                         dataService.addProject({ name, manager });
                         uiService.closeModal('project-modal');
                         uiService.showToast('Projeto criado com sucesso! Sincronizando...', 'success');
+                    } else {
+                        uiService.showToast('Preencha todos os campos obrigatórios.', 'error');
                     }
                 });
                 
@@ -1196,6 +1230,19 @@
                 selectEl.appendChild(defaultOption);
 
                 dataService.users.filter(u => u.email).forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
+                    selectEl.appendChild(option);
+                });
+            },
+
+            // NOVA FUNÇÃO: Popula o select de responsáveis do projeto
+            populateProjectManagerSelect: function() {
+                const selectEl = document.getElementById('project-manager');
+                selectEl.innerHTML = '<option value="">Selecione um responsável</option>';
+                
+                dataService.users.forEach(user => {
                     const option = document.createElement('option');
                     option.value = user.id;
                     option.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
@@ -1493,7 +1540,7 @@
                 const icons = {
                     total: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`,
                     inProgress: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-                    overdue: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+                    overdue: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-8 0 9 9 0 018 0z" /></svg>`,
                     atRisk: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`
                 };
                 
@@ -1552,6 +1599,9 @@
                     
                     const canDelete = dataService.userRole === 'Gestor' || project.creatorId === dataService.userId;
                     
+                    // CORREÇÃO: Usar nome do responsável em vez de UID
+                    const managerName = dataService.getManagerName(project.manager);
+                    
                     return `
                         <div class="project-card-link bg-[var(--card-bg)] rounded-lg shadow-md p-6 border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer" data-project-id="${project.id}">
                             <div class="flex justify-between items-start mb-4">
@@ -1583,7 +1633,7 @@
                                     <span class="text-gray-400">${project.tasks?.length || 0} tarefas</span>
                                 </div>
                                 <div class="text-gray-400 text-xs">
-                                    Responsável: ${project.manager || 'Não definido'}
+                                    Responsável: ${managerName}
                                 </div>
                             </div>
                         </div>
@@ -1597,7 +1647,7 @@
                 if (!tasks || tasks.length === 0) {
                     tableBody.innerHTML = `
                         <tr>
-                            <td colspan="7" class="p-4 text-center text-gray-400">
+                            <td colspan="8" class="p-4 text-center text-gray-400">
                                 Nenhuma tarefa encontrada. Clique em "Nova Tarefa" para começar.
                             </td>
                         </tr>
@@ -1621,12 +1671,8 @@
                         const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
                         const isParent = tasks.some(t => t.parentId === task.id);
                         
-                        const assignedUsersText = (task.assignedUsers || [])
-                            .map(uid => {
-                                const user = dataService.users.find(u => u.id === uid);
-                                return user ? (user.name || user.email.split('@')[0]) : `UID:${uid.substring(0,4)}`;
-                            })
-                            .join(', ');
+                        // CORREÇÃO: Usar nomes em vez de UIDs
+                        const assignedUsersText = dataService.getAssignedUserNames(task.assignedUsers);
 
                         const commentsPreview = (task.comments || [])
                             .slice(0, 2)
@@ -1651,6 +1697,9 @@
                                     <span class="px-2 py-1 rounded-full text-xs ${statusInfo.badge}">
                                         ${statusInfo.name}
                                     </span>
+                                </td>
+                                <td class="p-3 text-xs text-gray-500 max-w-xs truncate" title="${assignedUsersText}">
+                                    ${assignedUsersText}
                                 </td>
                                 <td class="p-3 text-xs text-gray-500 max-w-xs truncate" title="${commentsPreview}">
                                     ${commentsPreview || '-'}
@@ -1827,22 +1876,99 @@
         // Report Service - Handles PDF, Excel generation and Template
         const reportService = {
             downloadExcelTemplate() {
-                const headers = ['Tarefa', 'Duração (dias)', 'Data Início', 'Data Termino', 'Status', 'Progresso (%)', 'Prioridade', 'Atribuído a (UIDs Separados por Vírgula)', 'Risco (Sim/Nao)', 'Tarefa Pai (Nome)'];
+                const headers = ['Tarefa', 'Duração (dias)', 'Data Início', 'Data Termino', 'Status', 'Progresso (%)', 'Prioridade', 'Atribuído a (Nomes Separados por Vírgula)', 'Risco (Sim/Nao)', 'Tarefa Pai (Nome)'];
                 const exampleData = [
-                    { 'Tarefa': 'Planejamento Geral', 'Duração (dias)': 5, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-05', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a (UIDs Separados por Vírgula)': '', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': '' },
-                    { 'Tarefa': 'Definir Escopo', 'Duração (dias)': 2, 'Data Início': '2025-11-01', 'Data Termino': '2025-11-02', 'Status': 'Não Iniciada', 'Progresso (%)': 0, 'Prioridade': 'Alta', 'Atribuído a (UIDs Separados por Vírgula)': 'UID_EXEMPLO1,UID_EXEMPLO2', 'Risco (Sim/Nao)': 'Nao', 'Tarefa Pai (Nome)': 'Planejamento Geral' }
+                    { 
+                        'Tarefa': 'Planejamento Geral', 
+                        'Duração (dias)': 5, 
+                        'Data Início': '2025-11-01', 
+                        'Data Termino': '2025-11-05', 
+                        'Status': 'Não Iniciada', 
+                        'Progresso (%)': 0, 
+                        'Prioridade': 'Alta', 
+                        'Atribuído a (Nomes Separados por Vírgula)': 'João Silva, Maria Santos', 
+                        'Risco (Sim/Nao)': 'Nao', 
+                        'Tarefa Pai (Nome)': '' 
+                    },
+                    { 
+                        'Tarefa': 'Definir Escopo', 
+                        'Duração (dias)': 2, 
+                        'Data Início': '2025-11-01', 
+                        'Data Termino': '2025-11-02', 
+                        'Status': 'Não Iniciada', 
+                        'Progresso (%)': 0, 
+                        'Prioridade': 'Alta', 
+                        'Atribuído a (Nomes Separados por Vírgula)': 'João Silva', 
+                        'Risco (Sim/Nao)': 'Nao', 
+                        'Tarefa Pai (Nome)': 'Planejamento Geral' 
+                    }
                 ];
-                const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
+                
                 const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Tarefas");
-                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 40 }, { wch: 15 }, { wch: 40 } ];
-                XLSX.writeFile(workbook, "template_importacao.xlsx");
+                
+                // Criar worksheet com dados de exemplo
+                const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
+                
+                // Aplicar formatação e estilo
+                worksheet['!cols'] = [
+                    { wch: 40 }, // Tarefa
+                    { wch: 15 }, // Duração
+                    { wch: 15 }, // Data Início
+                    { wch: 15 }, // Data Término
+                    { wch: 15 }, // Status
+                    { wch: 15 }, // Progresso
+                    { wch: 15 }, // Prioridade
+                    { wch: 40 }, // Atribuído a
+                    { wch: 15 }, // Risco
+                    { wch: 40 }  // Tarefa Pai
+                ];
+                
+                // Adicionar cabeçalho com estilo
+                if (!worksheet['!merges']) worksheet['!merges'] = [];
+                worksheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } });
+                
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Template Importação");
+                
+                // Adicionar uma aba de instruções
+                const instructions = [
+                    ['INSTRUÇÕES DE PREENCHIMENTO'],
+                    [''],
+                    ['Campo', 'Descrição', 'Exemplo'],
+                    ['Tarefa', 'Nome completo da tarefa', 'Planejamento Geral'],
+                    ['Duração (dias)', 'Número de dias da tarefa', '5'],
+                    ['Data Início', 'Data de início (YYYY-MM-DD)', '2025-11-01'],
+                    ['Data Termino', 'Data de término (YYYY-MM-DD)', '2025-11-05'],
+                    ['Status', 'Não Iniciada, Em Andamento ou Concluída', 'Não Iniciada'],
+                    ['Progresso (%)', '0 a 100', '0'],
+                    ['Prioridade', 'Baixa, Média ou Alta', 'Alta'],
+                    ['Atribuído a', 'Nomes separados por vírgula', 'João Silva, Maria Santos'],
+                    ['Risco', 'Sim ou Nao', 'Nao'],
+                    ['Tarefa Pai', 'Nome da tarefa pai (deixe vazio para tarefas de nível superior)', 'Planejamento Geral'],
+                    [''],
+                    ['IMPORTANTE:'],
+                    ['- Use o formato YYYY-MM-DD para datas'],
+                    ['- Para tarefas subtarefas, preencha o nome da tarefa pai na última coluna'],
+                    ['- Os nomes dos responsáveis devem corresponder exatamente aos cadastrados no sistema']
+                ];
+                
+                const instructionSheet = XLSX.utils.aoa_to_sheet(instructions);
+                instructionSheet['!cols'] = [
+                    { wch: 25 },
+                    { wch: 50 },
+                    { wch: 30 }
+                ];
+                
+                XLSX.utils.book_append_sheet(workbook, instructionSheet, "Instruções");
+                
+                XLSX.writeFile(workbook, "template_importacao_formatado.xlsx");
             },
+            
             calculateDuration: (start, end) => {
                 if (!start || !end) return 0;
                 const diffTime = new Date(end) - new Date(start);
                 return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
             },
+            
             getTaskStatusClass: (status, endDate) => {
                 const today = new Date(); today.setHours(0,0,0,0);
                 const taskEndDate = new Date(endDate + 'T00:00:00');
@@ -1853,8 +1979,13 @@
                     default: return { badge: 'bg-gray-500 text-white', name: 'Não Iniciada' };
                 }
             },
+            
             exportExcel: function(project) {
                 if (!project) return;
+                
+                const workbook = XLSX.utils.book_new();
+                
+                // Dados para exportação
                 const dataToExport = [];
                 const processTasksForExport = (parentId, level) => {
                     project.tasks.filter(t => t.parentId === parentId)
@@ -1871,28 +2002,71 @@
                                 .map(c => `${new Date(c.timestamp).toLocaleDateString('pt-BR')}: ${c.text}`)
                                 .join(' | ');
 
+                            // CORREÇÃO: Usar nomes em vez de UIDs
+                            const assignedUserNames = dataService.getAssignedUserNames(task.assignedUsers);
+
                             dataToExport.push({
                                 'Tarefa': `${'  '.repeat(level)}${task.name}`, 
                                 'Duração (dias)': duration, 
                                 'Data de Início': new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR'), 
                                 'Data de Término': new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR'),
                                 'Status': statusInfo.name, 
-                                'Comentários': commentsString,
-                                'Progresso (%)': task.progress, 
-                                'Atribuído a (UIDs)': (task.assignedUsers || []).join(', '), // Exporta UIDs
+                                'Progresso (%)': task.progress,
                                 'Prioridade': task.priority,
-                                'Em Risco': task.risk ? 'Sim' : 'Não'
+                                'Responsáveis': assignedUserNames, // Nomes em vez de UIDs
+                                'Em Risco': task.risk ? 'Sim' : 'Não',
+                                'Comentários': commentsString
                             });
                             processTasksForExport(task.id, level + 1);
                         });
                 };
                 processTasksForExport(null, 0);
+                
+                // Criar worksheet principal
                 const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-                const workbook = XLSX.utils.book_new();
+                
+                // Aplicar formatação
+                worksheet['!cols'] = [
+                    { wch: 40 }, // Tarefa
+                    { wch: 15 }, // Duração
+                    { wch: 15 }, // Data Início
+                    { wch: 15 }, // Data Término
+                    { wch: 15 }, // Status
+                    { wch: 15 }, // Progresso
+                    { wch: 15 }, // Prioridade
+                    { wch: 30 }, // Responsáveis
+                    { wch: 15 }, // Em Risco
+                    { wch: 50 }  // Comentários
+                ];
+                
                 XLSX.utils.book_append_sheet(workbook, worksheet, "Cronograma");
-                worksheet['!cols'] = [ { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 60 }, { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 15 } ];
-                XLSX.writeFile(workbook, `${project.name.replace(/ /g,"_")}_Relatorio.xlsx`);
+                
+                // Adicionar resumo do projeto
+                const summaryData = [
+                    ['RELATÓRIO DO PROJETO'],
+                    [''],
+                    ['Nome do Projeto:', project.name],
+                    ['Responsável:', dataService.getManagerName(project.manager)],
+                    ['Progresso Geral:', `${dataService.getProjectProgress(project.tasks)}%`],
+                    ['Total de Tarefas:', project.tasks.length],
+                    ['Tarefas Concluídas:', project.tasks.filter(t => t.status === 'Concluída').length],
+                    ['Tarefas Atrasadas:', project.tasks.filter(t => this.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada').length],
+                    ['Tarefas em Risco:', project.tasks.filter(t => t.risk).length],
+                    [''],
+                    ['Gerado em:', new Date().toLocaleDateString('pt-BR')]
+                ];
+                
+                const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+                summarySheet['!cols'] = [
+                    { wch: 25 },
+                    { wch: 30 }
+                ];
+                
+                XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumo");
+                
+                XLSX.writeFile(workbook, `${project.name.replace(/ /g,"_")}_Relatorio_Formatado.xlsx`);
             },
+            
             generatePdf: function(project) {
                 const loader = document.getElementById('loader');
                 loader.style.display = 'flex';
