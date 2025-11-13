@@ -11,7 +11,7 @@
     <style>
         /* Estilos personalizados */
         :root { --background-color: #f3f4f6; --text-color: #374151; --card-bg: #ffffff; --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --border-color: #e5e7eb; }
-        html.dark { --background-color: #111827; --text-color: #d1d5db; --card-bg: #1f2937; --card-shadow: 0 4px 6px -1p-1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2); --border-color: #374151; }
+        html.dark { --background-color: #111827; --text-color: #d1d5db; --card-bg: #1f2937; --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2); --border-color: #374151; }
         body { background-color: var(--background-color); color: var(--text-color); font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
         @import url('https://rsms.me/inter/inter.css');
         .gantt-chart-container { display: grid; grid-template-columns: 250px 1fr; overflow-x: auto; position: relative; }
@@ -65,6 +65,86 @@
         .assigned-users-container { max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; }
         .user-checkbox-item { display: flex; align-items: center; padding: 4px 0; }
         .user-checkbox-item input { margin-right: 8px; }
+
+        /* NOVOS ESTILOS PARA DRAG AND DROP */
+        .draggable-subtask {
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+
+        .draggable-subtask:active {
+            cursor: grabbing;
+        }
+
+        .draggable-subtask.dragging {
+            opacity: 0.5;
+            background-color: #f0f9ff;
+        }
+
+        .draggable-subtask.drag-over {
+            background-color: #e0f2fe;
+            border-top: 2px solid #0ea5e9;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: #6b7280;
+            font-size: 12px;
+            margin-right: 8px;
+            user-select: none;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .drag-handle:hover {
+            background-color: #e5e7eb;
+        }
+
+        html.dark .drag-handle:hover {
+            background-color: #4b5563;
+        }
+
+        /* Melhorar a visualização durante o drag */
+        tr.dragging {
+            opacity: 0.4;
+            background-color: #f3f4f6;
+        }
+
+        tr.drag-over {
+            background-color: #dbeafe;
+            border-top: 2px solid #3b82f6;
+        }
+
+        /* Estilo para as subtarefas */
+        .subtask-row {
+            background-color: #f9fafb;
+        }
+
+        html.dark .subtask-row {
+            background-color: #374151;
+        }
+
+        html.dark .draggable-subtask.drag-over {
+            background-color: #1e3a8a;
+        }
+
+        html.dark .draggable-subtask.dragging {
+            background-color: #1e40af;
+        }
+
+        /* Indicador visual de arrastável */
+        .drag-indicator {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -72,6 +152,7 @@
     
     <div id="toast-container" class="no-print"></div>
 
+    <!-- Modal de Autenticação -->
     <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 modal-transition modal-visible">
         <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl p-8 w-full max-w-md">
             <h2 class="text-3xl font-bold mb-2 text-blue-600">Vinci Highways Projects</h2>
@@ -98,7 +179,7 @@
         </div>
     </div>
 
-    <!-- Modal de Cadastro de Usuário - MAIOR Z-INDEX -->
+    <!-- Modal de Cadastro de Usuário -->
     <div id="add-user-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-60">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Cadastrar Novo Usuário</h2>
@@ -128,7 +209,7 @@
         </div>
     </div>
 
-    <!-- Modal de Gestão de Usuários - MENOR Z-INDEX -->
+    <!-- Modal de Gestão de Usuários -->
     <div id="user-management-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-50">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-6xl">
             <div class="flex justify-between items-center mb-4">
@@ -208,6 +289,7 @@
         </div>
     </div>
 
+    <!-- Modal de Projeto -->
     <div id="project-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 id="project-modal-title" class="text-2xl font-bold mb-4 text-[var(--text-color)]">Novo Projeto</h2>
@@ -230,6 +312,7 @@
         </div>
     </div>
 
+    <!-- Modal de Tarefa -->
     <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-8 w-full max-w-3xl">
             <h2 id="modal-title" class="text-2xl font-bold mb-6 text-[var(--text-color)]">Adicionar Nova Tarefa</h2>
@@ -306,6 +389,7 @@
         </div>
     </div>
     
+    <!-- Modal de Confirmação -->
     <div id="confirm-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-sm">
             <h2 id="confirm-modal-title" class="text-xl font-bold mb-4 text-[var(--text-color)]">Confirmar Ação</h2>
@@ -317,6 +401,7 @@
         </div>
     </div>
 
+    <!-- Conteúdo Principal -->
     <div class="relative min-h-screen">
         <input type="file" id="import-excel-input" class="hidden" accept=".xlsx, .xls">
         <div id="logged-in-container" class="hidden">
@@ -332,6 +417,7 @@
             </button>
         </div>
         
+        <!-- Vista de Projetos -->
         <div id="project-view" class="container mx-auto p-4 md:p-8 hidden">
             <header class="mb-8">
                 <h1 class="text-4xl font-bold">Cronogramas</h1>
@@ -348,6 +434,7 @@
             <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
+        <!-- Vista do Dashboard do Projeto -->
         <div id="dashboard-view" class="container mx-auto p-4 md:p-8 hidden">
              <header class="mb-8">
                 <button id="back-to-projects-btn" class="text-sm text-blue-500 hover:underline mb-2 flex items-center gap-1 no-print">
@@ -808,6 +895,93 @@
                     }
                 }
 
+                // NOVA FUNCIONALIDADE 1: Validação inteligente para subtarefas
+                if (restOfTaskData.parentId) {
+                    const parentTask = project.tasks.find(t => t.id === restOfTaskData.parentId);
+                    if (parentTask) {
+                        const parentDates = dataService.getLatestDates(parentTask);
+                        const parentStart = new Date(parentDates.startDate);
+                        const childStart = new Date(newStartDate);
+                        const childEnd = new Date(newEndDate);
+
+                        // Se a subtarefa começa antes da tarefa pai, perguntar ao usuário
+                        if (childStart < parentStart) {
+                            const shouldUpdateParent = await uiService.showConfirmModalPromise(
+                                `A subtarefa "${restOfTaskData.name}" começa antes da tarefa pai. Deseja ajustar a data de início da tarefa pai para ${newStartDate}?`,
+                                'Ajustar Datas da Tarefa Pai'
+                            );
+                            
+                            if (shouldUpdateParent) {
+                                // Atualizar a tarefa pai para começar na mesma data da subtarefa
+                                const updatedTasks = project.tasks.map(t => {
+                                    if (t.id === restOfTaskData.parentId) {
+                                        const updatedTask = { ...t };
+                                        const newParentEnd = new Date(Math.max(
+                                            new Date(parentDates.endDate).getTime(),
+                                            childEnd.getTime()
+                                        )).toISOString().split('T')[0];
+                                        
+                                        if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
+                                            const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
+                                            if (latestDates.startDate !== newStartDate || latestDates.endDate !== newParentEnd) {
+                                                updatedTask.dateHistory = [
+                                                    ...updatedTask.dateHistory,
+                                                    { startDate: newStartDate, endDate: newParentEnd }
+                                                ];
+                                            }
+                                        } else {
+                                            updatedTask.dateHistory = [{ startDate: newStartDate, endDate: newParentEnd }];
+                                        }
+                                        return updatedTask;
+                                    }
+                                    return t;
+                                });
+                                project.tasks = updatedTasks;
+                            } else {
+                                return; // Não salvar se o usuário cancelar
+                            }
+                        }
+
+                        // Se a subtarefa termina depois da tarefa pai, perguntar ao usuário
+                        if (childEnd > new Date(parentDates.endDate)) {
+                            const shouldUpdateParent = await uiService.showConfirmModalPromise(
+                                `A subtarefa "${restOfTaskData.name}" termina depois da tarefa pai. Deseja ajustar a data de término da tarefa pai para ${newEndDate}?`,
+                                'Ajustar Datas da Tarefa Pai'
+                            );
+                            
+                            if (shouldUpdateParent) {
+                                // Atualizar a tarefa pai para terminar na mesma data da subtarefa
+                                const updatedTasks = project.tasks.map(t => {
+                                    if (t.id === restOfTaskData.parentId) {
+                                        const updatedTask = { ...t };
+                                        const newParentStart = new Date(Math.min(
+                                            new Date(parentDates.startDate).getTime(),
+                                            childStart.getTime()
+                                        )).toISOString().split('T')[0];
+                                        
+                                        if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
+                                            const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
+                                            if (latestDates.startDate !== newParentStart || latestDates.endDate !== newEndDate) {
+                                                updatedTask.dateHistory = [
+                                                    ...updatedTask.dateHistory,
+                                                    { startDate: newParentStart, endDate: newEndDate }
+                                                ];
+                                            }
+                                        } else {
+                                            updatedTask.dateHistory = [{ startDate: newParentStart, endDate: newEndDate }];
+                                        }
+                                        return updatedTask;
+                                    }
+                                    return t;
+                                });
+                                project.tasks = updatedTasks;
+                            } else {
+                                return; // Não salvar se o usuário cancelar
+                            }
+                        }
+                    }
+                }
+
                 let updatedTasks;
 
                 if (taskData.id) { 
@@ -831,11 +1005,13 @@
                 } else { 
                     const newTask = { 
                         ...restOfTaskData, 
-                        id: Date.now() + Math.random(), // CORREÇÃO: Usar Math.random() para evitar IDs duplicados
+                        id: Date.now() + Math.random(),
                         dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
                         comments: taskData.comments || [],
                         // Garante que dependsOn seja limpo se é uma subtarefa
-                        dependsOn: restOfTaskData.parentId ? null : dependsOn
+                        dependsOn: restOfTaskData.parentId ? null : dependsOn,
+                        // NOVO: Adicionar ordem para drag and drop
+                        order: project.tasks.filter(t => t.parentId === restOfTaskData.parentId).length
                     };
                     updatedTasks = [...project.tasks, newTask];
                 }
@@ -849,6 +1025,28 @@
                 
                 dataService.recalculateAllProgress();
                 await dataService.saveProjectDocument(project);
+            },
+
+            // NOVA FUNÇÃO: Reordenar subtarefas via drag and drop
+            reorderSubtasks: async function(parentTaskId, subtaskIdsInOrder) {
+                const project = dataService.getCurrentProject();
+                if (!project) return;
+
+                const updatedTasks = project.tasks.map(task => {
+                    if (task.parentId === parentTaskId) {
+                        const newOrder = subtaskIdsInOrder.indexOf(task.id);
+                        if (newOrder !== -1) {
+                            return { ...task, order: newOrder };
+                        }
+                    }
+                    return task;
+                });
+
+                project.tasks = updatedTasks;
+                await dataService.saveProjectDocument(project);
+                
+                // Atualizar a UI
+                uiService.renderProjectDashboard(project, document.getElementById('task-filter-input').value);
             },
 
             // MELHORIA 01: Função para atualizar datas da tarefa pai
@@ -1866,6 +2064,208 @@
                 }
             },
 
+            // NOVA FUNÇÃO: Modal de confirmação que retorna uma Promise
+            showConfirmModalPromise: function(message, title = 'Confirmar Ação') {
+                return new Promise((resolve) => {
+                    const modal = document.getElementById('confirm-modal');
+                    const titleEl = document.getElementById('confirm-modal-title');
+                    const bodyEl = document.getElementById('confirm-modal-body');
+                    const okBtn = document.getElementById('confirm-ok-btn');
+                    const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+                    titleEl.textContent = title;
+                    bodyEl.textContent = message;
+
+                    // Remover event listeners anteriores
+                    const newOkBtn = okBtn.cloneNode(true);
+                    const newCancelBtn = cancelBtn.cloneNode(true);
+                    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+                    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+                    const cleanup = () => {
+                        newOkBtn.removeEventListener('click', onConfirm);
+                        newCancelBtn.removeEventListener('click', onCancel);
+                        this.closeModal('confirm-modal');
+                    };
+
+                    const onConfirm = () => {
+                        cleanup();
+                        resolve(true);
+                    };
+
+                    const onCancel = () => {
+                        cleanup();
+                        resolve(false);
+                    };
+
+                    newOkBtn.addEventListener('click', onConfirm);
+                    newCancelBtn.addEventListener('click', onCancel);
+
+                    this.openModal('confirm-modal');
+                });
+            },
+
+            // NOVA FUNÇÃO: Configurar drag and drop para subtarefas
+            setupSubtasksDragAndDrop: function() {
+                const tableBody = document.getElementById('task-table-body');
+                
+                // Remover event listeners anteriores
+                tableBody.querySelectorAll('[draggable="true"]').forEach(row => {
+                    row.removeEventListener('dragstart', this.handleDragStart);
+                    row.removeEventListener('dragover', this.handleDragOver);
+                    row.removeEventListener('drop', this.handleDrop);
+                    row.removeEventListener('dragend', this.handleDragEnd);
+                });
+
+                // Encontrar todas as linhas que são subtarefas (com padding-left > 0)
+                const subtaskRows = Array.from(tableBody.querySelectorAll('tr')).filter(row => {
+                    const taskNameCell = row.querySelector('td:first-child');
+                    if (!taskNameCell) return false;
+                    
+                    const paddingLeft = parseInt(window.getComputedStyle(taskNameCell.querySelector('div')).paddingLeft);
+                    return paddingLeft > 20; // Subtarefas têm padding maior que 20px
+                });
+
+                // Configurar drag and drop para cada subtarefa
+                subtaskRows.forEach(row => {
+                    row.setAttribute('draggable', 'true');
+                    row.addEventListener('dragstart', this.handleDragStart.bind(this));
+                    row.addEventListener('dragover', this.handleDragOver.bind(this));
+                    row.addEventListener('drop', this.handleDrop.bind(this));
+                    row.addEventListener('dragend', this.handleDragEnd.bind(this));
+                });
+            },
+
+            // Handlers para drag and drop
+            handleDragStart: function(e) {
+                const row = e.target.closest('tr');
+                if (!row) return;
+
+                // Encontrar o ID da tarefa
+                const taskNameElement = row.querySelector('.task-edit-trigger');
+                if (!taskNameElement) return;
+
+                const taskId = parseFloat(taskNameElement.dataset.taskId);
+                e.dataTransfer.setData('text/plain', taskId.toString());
+                e.dataTransfer.effectAllowed = 'move';
+                
+                row.classList.add('dragging');
+                
+                // Adicionar estilo visual
+                setTimeout(() => {
+                    row.style.opacity = '0.4';
+                }, 0);
+            },
+
+            handleDragOver: function(e) {
+                e.preventDefault();
+                const row = e.target.closest('tr');
+                if (!row) return;
+
+                // Verificar se é uma subtarefa do mesmo grupo
+                const draggingTaskId = parseFloat(e.dataTransfer.getData('text/plain'));
+                const targetTaskId = this.getTaskIdFromRow(row);
+                
+                if (this.canReorder(draggingTaskId, targetTaskId)) {
+                    e.dataTransfer.dropEffect = 'move';
+                    row.classList.add('drag-over');
+                } else {
+                    e.dataTransfer.dropEffect = 'none';
+                }
+            },
+
+            handleDrop: function(e) {
+                e.preventDefault();
+                const targetRow = e.target.closest('tr');
+                if (!targetRow) return;
+
+                const draggingTaskId = parseFloat(e.dataTransfer.getData('text/plain'));
+                const targetTaskId = this.getTaskIdFromRow(targetRow);
+                
+                if (!this.canReorder(draggingTaskId, targetTaskId)) {
+                    this.cleanupDragState();
+                    return;
+                }
+
+                // Reordenar as subtarefas
+                this.reorderSubtasks(draggingTaskId, targetTaskId);
+                this.cleanupDragState();
+            },
+
+            handleDragEnd: function(e) {
+                this.cleanupDragState();
+            },
+
+            cleanupDragState: function() {
+                const tableBody = document.getElementById('task-table-body');
+                tableBody.querySelectorAll('tr').forEach(row => {
+                    row.classList.remove('dragging', 'drag-over');
+                    row.style.opacity = '';
+                });
+            },
+
+            getTaskIdFromRow: function(row) {
+                const taskNameElement = row.querySelector('.task-edit-trigger');
+                return taskNameElement ? parseFloat(taskNameElement.dataset.taskId) : null;
+            },
+
+            canReorder: function(draggingTaskId, targetTaskId) {
+                if (!draggingTaskId || !targetTaskId) return false;
+                if (draggingTaskId === targetTaskId) return false;
+
+                const project = dataService.getCurrentProject();
+                if (!project) return false;
+
+                const draggingTask = project.tasks.find(t => t.id === draggingTaskId);
+                const targetTask = project.tasks.find(t => t.id === targetTaskId);
+
+                if (!draggingTask || !targetTask) return false;
+
+                // Só pode reordenar se ambas as tarefas tiverem o mesmo pai
+                return draggingTask.parentId === targetTask.parentId;
+            },
+
+            reorderSubtasks: async function(draggingTaskId, targetTaskId) {
+                const project = dataService.getCurrentProject();
+                if (!project) return;
+
+                const draggingTask = project.tasks.find(t => t.id === draggingTaskId);
+                const targetTask = project.tasks.find(t => t.id === targetTaskId);
+
+                if (!draggingTask || !targetTask || draggingTask.parentId !== targetTask.parentId) {
+                    return;
+                }
+
+                const parentTaskId = draggingTask.parentId;
+                const subtasks = project.tasks
+                    .filter(t => t.parentId === parentTaskId)
+                    .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                // Remover a tarefa que está sendo arrastada
+                const filteredSubtasks = subtasks.filter(t => t.id !== draggingTaskId);
+                
+                // Encontrar a posição da tarefa alvo
+                const targetIndex = filteredSubtasks.findIndex(t => t.id === targetTaskId);
+                
+                if (targetIndex === -1) return;
+
+                // Inserir a tarefa arrastada na nova posição
+                const reorderedSubtasks = [
+                    ...filteredSubtasks.slice(0, targetIndex),
+                    draggingTask,
+                    ...filteredSubtasks.slice(targetIndex)
+                ];
+
+                // Atualizar a ordem
+                const subtaskIdsInOrder = reorderedSubtasks.map(task => task.id);
+                
+                document.getElementById('loader').style.display = 'flex';
+                await dataService.reorderSubtasks(parentTaskId, subtaskIdsInOrder);
+                document.getElementById('loader').style.display = 'none';
+                
+                uiService.showToast('Subtarefas reordenadas com sucesso!');
+            },
+
             // --- VIEW/MODAL MANAGEMENT ---
             showView(viewId) {
                 document.getElementById('project-view').classList.add('hidden');
@@ -2544,9 +2944,16 @@
 
                 const processTasksForTable = (parentId, level) => {
                     let html = '';
+                    
+                    // Ordenar tarefas pela ordem definida
                     const childTasks = tasks
                         .filter(t => t.parentId === parentId)
                         .sort((a, b) => {
+                            // Primeiro pela ordem, depois pela data de início
+                            const orderA = a.order || 0;
+                            const orderB = b.order || 0;
+                            if (orderA !== orderB) return orderA - orderB;
+                            
                             const dateA = new Date(dataService.getLatestDates(a).startDate);
                             const dateB = new Date(dataService.getLatestDates(b).startDate);
                             return dateA - dateB;
@@ -2566,10 +2973,15 @@
                             .map(c => `${c.author || 'Utilizador'}: ${c.text.substring(0, 30)}${c.text.length > 30 ? '...' : ''}`)
                             .join('; ');
 
+                        // NOVO: Adicionar classes CSS para drag and drop
+                        const rowClass = level > 0 ? 'subtask-row draggable-subtask' : '';
+                        const dragHandle = level > 0 ? '<span class="drag-handle" title="Arrastar para reordenar">⋮⋮</span>' : '';
+
                         html += `
-                            <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700 ${rowClass}" data-task-id="${task.id}">
                                 <td class="p-3">
                                     <div style="padding-left: ${level * 20}px" class="flex items-center gap-2">
+                                        ${dragHandle}
                                         ${isParent ? '<span class="text-blue-500">📁</span>' : '<span class="text-gray-400">📄</span>'}
                                         <span class="task-edit-trigger cursor-pointer hover:text-blue-500 hover:underline" data-task-id="${task.id}">
                                             ${task.name}
@@ -2624,6 +3036,11 @@
                 };
 
                 tableBody.innerHTML = processTasksForTable(null, 0);
+                
+                // NOVO: Configurar drag and drop após renderizar a tabela
+                setTimeout(() => {
+                    this.setupSubtasksDragAndDrop();
+                }, 100);
             },
 
             renderGanttChart: function(tasks) {
