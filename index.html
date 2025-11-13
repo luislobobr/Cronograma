@@ -53,6 +53,18 @@
         .comment-actions { position: absolute; right: 0; top: 0; display: none; }
         .comment-item:hover .comment-actions { display: flex; }
         .edit-comment-input { width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; }
+        
+        /* Estilos para ajuste de importação */
+        .import-error-row { background-color: #fef2f2 !important; }
+        .import-valid-row { background-color: #f0fdf4 !important; }
+
+        /* Estilos para tooltip dos gráficos */
+        .chart-tooltip { position: absolute; background: rgba(0, 0, 0, 0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 1000; max-width: 300px; }
+        
+        /* Estilos para caixa de seleção de usuários */
+        .assigned-users-container { max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; }
+        .user-checkbox-item { display: flex; align-items: center; padding: 4px 0; }
+        .user-checkbox-item input { margin-right: 8px; }
     </style>
 </head>
 <body class="antialiased">
@@ -149,6 +161,53 @@
         </div>
     </div>
 
+    <!-- Modal de Ajustes de Importação -->
+    <div id="import-adjustment-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Ajustar Tarefas Importadas</h2>
+            
+            <div class="mb-4 p-4 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                <h3 class="font-bold text-yellow-800 dark:text-yellow-200 mb-2">Problemas Encontrados:</h3>
+                <div id="import-errors-list" class="text-sm text-yellow-700 dark:text-yellow-300"></div>
+            </div>
+            
+            <div class="overflow-y-auto max-h-96 mb-4">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs uppercase bg-gray-700 text-gray-400 sticky top-0">
+                        <tr>
+                            <th class="p-2">Linha</th>
+                            <th class="p-2">Tarefa</th>
+                            <th class="p-2">Data Início</th>
+                            <th class="p-2">Data Término</th>
+                            <th class="p-2">Status</th>
+                            <th class="p-2">Responsáveis</th>
+                            <th class="p-2">Tarefa Pai</th>
+                            <th class="p-2">Problemas</th>
+                            <th class="p-2 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="import-adjustment-table-body">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-400">
+                    <span id="import-valid-count">0</span> tarefas válidas de 
+                    <span id="import-total-count">0</span> total
+                </div>
+                <div class="flex gap-2">
+                    <button id="cancel-import-btn" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                        Cancelar
+                    </button>
+                    <button id="confirm-import-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Importar Tarefas Válidas (<span id="confirm-count">0</span>)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="project-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 id="project-modal-title" class="text-2xl font-bold mb-4 text-[var(--text-color)]">Novo Projeto</h2>
@@ -185,9 +244,10 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="assigned-users-select" class="block text-sm font-medium text-gray-400">Atribuído a (Utilizadores)</label>
-                            <select id="assigned-users-select" multiple class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2 h-20">
-                                </select>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Atribuído a (Utilizadores)</label>
+                            <div id="assigned-users-container" class="assigned-users-container">
+                                <!-- Checkboxes serão inseridos aqui dinamicamente -->
+                            </div>
                         </div>
                         <div><label for="task-priority" class="block text-sm font-medium text-gray-400">Prioridade</label><select id="task-priority" class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2"><option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option></select></div>
                     </div>
@@ -278,7 +338,12 @@
                 <p class="text-gray-400">Selecione um projeto para gerenciar ou crie um novo.</p>
                 <p id="user-role-display" class="text-sm font-semibold mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full inline-block">Papel: Carregando...</p>
             </header>
-            <div id="main-dashboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"></div>
+            
+            <!-- Dashboard Gráfico -->
+            <div id="main-dashboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Os gráficos serão inseridos aqui dinamicamente -->
+            </div>
+            
             <div class="mb-6"><button id="add-project-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>Novo Projeto</button></div>
             <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
@@ -463,7 +528,7 @@
                     if (document.getElementById('user-management-modal').classList.contains('modal-visible') && dataService.userRole === 'Gestor') {
                          uiService.renderUserManagementTable();
                     }
-                    uiService.populateAssignedUsersSelect();
+                    uiService.populateAssignedUsersCheckboxes();
                 }, (error) => {
                     console.error("Erro ao ouvir usuários:", error);
                 });
@@ -766,7 +831,7 @@
                 } else { 
                     const newTask = { 
                         ...restOfTaskData, 
-                        id: Date.now(), 
+                        id: Date.now() + Math.random(), // CORREÇÃO: Usar Math.random() para evitar IDs duplicados
                         dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
                         comments: taskData.comments || [],
                         // Garante que dependsOn seja limpo se é uma subtarefa
@@ -927,8 +992,8 @@
                 }).join(', ');
             },
 
-            // CORREÇÃO: Função para importar tarefas do Excel
-            importTasksFromExcel: async function(file) {
+            // NOVA FUNÇÃO: Processar importação com validação detalhada
+            processImportWithValidation: async function(file) {
                 try {
                     const project = dataService.getCurrentProject();
                     if (!project) {
@@ -943,7 +1008,6 @@
                                 const data = new Uint8Array(e.target.result);
                                 const workbook = XLSX.read(data, { type: 'array' });
                                 
-                                // Pega a primeira planilha
                                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                                 const jsonData = XLSX.utils.sheet_to_json(worksheet);
                                 
@@ -951,85 +1015,43 @@
                                     throw new Error('A planilha está vazia');
                                 }
 
-                                const newTasks = [];
-                                const taskNameMap = new Map(); // Mapeia nomes para IDs de tarefas existentes
-                                
-                                // Primeiro, mapear tarefas existentes por nome
+                                const importResults = {
+                                    validTasks: [],
+                                    invalidTasks: [],
+                                    errors: [],
+                                    taskNameMap: new Map()
+                                };
+
+                                // Mapear tarefas existentes
                                 project.tasks.forEach(task => {
-                                    taskNameMap.set(task.name.trim().toLowerCase(), task.id);
+                                    importResults.taskNameMap.set(task.name.trim().toLowerCase(), task.id);
                                 });
 
-                                // Processar cada linha da planilha
-                                for (const row of jsonData) {
-                                    const taskName = row['Tarefa']?.toString().trim();
-                                    if (!taskName) continue;
-
-                                    // Converter dados da planilha
-                                    const startDate = this.parseExcelDate(row['Data Início']);
-                                    const endDate = this.parseExcelDate(row['Data Termino']);
-                                    
-                                    if (!startDate || !endDate) {
-                                        console.warn(`Datas inválidas para tarefa: ${taskName}`);
-                                        continue;
+                                // Validar cada linha
+                                jsonData.forEach((row, index) => {
+                                    const result = this.validateImportRow(row, index + 2, importResults.taskNameMap);
+                                    if (result.isValid) {
+                                        importResults.validTasks.push(result.task);
+                                    } else {
+                                        importResults.invalidTasks.push({
+                                            row: index + 2,
+                                            data: row,
+                                            errors: result.errors,
+                                            task: result.task
+                                        });
                                     }
+                                });
 
-                                    // Validar datas
-                                    if (new Date(startDate) > new Date(endDate)) {
-                                        console.warn(`Datas inválidas para tarefa ${taskName}: início após término`);
-                                        continue;
-                                    }
-
-                                    // Processar responsáveis
-                                    let assignedUsers = [];
-                                    const assignedNames = row['Atribuído a (Nomes Separados por Vírgula)']?.toString();
-                                    if (assignedNames) {
-                                        assignedUsers = this.findUserIdsByNames(assignedNames.split(',').map(name => name.trim()));
-                                    }
-
-                                    // Encontrar parentId se especificado
-                                    let parentId = null;
-                                    const parentTaskName = row['Tarefa Pai (Nome)']?.toString().trim();
-                                    if (parentTaskName) {
-                                        parentId = taskNameMap.get(parentTaskName.toLowerCase());
-                                        if (!parentId) {
-                                            console.warn(`Tarefa pai não encontrada: ${parentTaskName}`);
-                                        }
-                                    }
-
-                                    const newTask = {
-                                        id: Date.now() + Math.random(), // ID único
-                                        name: taskName,
-                                        parentId: parentId,
-                                        assignedUsers: assignedUsers,
-                                        priority: row['Prioridade'] || 'Média',
-                                        status: row['Status'] || 'Não Iniciada',
-                                        progress: parseInt(row['Progresso (%)']) || 0,
-                                        risk: (row['Risco (Sim/Nao)']?.toString().toLowerCase() === 'sim'),
-                                        dependsOn: null, // Será implementado se necessário
-                                        comments: [],
-                                        dateHistory: [{
-                                            startDate: startDate,
-                                            endDate: endDate
-                                        }]
-                                    };
-
-                                    newTasks.push(newTask);
-                                    taskNameMap.set(taskName.toLowerCase(), newTask.id);
+                                // Se há tarefas inválidas, mostrar modal de ajustes
+                                if (importResults.invalidTasks.length > 0) {
+                                    uiService.showImportAdjustmentModal(importResults);
+                                    resolve({ needsAdjustment: true, results: importResults });
+                                } else {
+                                    // Todas válidas, importar diretamente
+                                    await this.finalizeImport(importResults.validTasks, project);
+                                    resolve({ needsAdjustment: false, count: importResults.validTasks.length });
                                 }
 
-                                if (newTasks.length === 0) {
-                                    throw new Error('Nenhuma tarefa válida encontrada na planilha');
-                                }
-
-                                // Adicionar novas tarefas ao projeto
-                                project.tasks = [...project.tasks, ...newTasks];
-                                
-                                // Recalcular progresso e salvar
-                                dataService.recalculateAllProgress();
-                                await dataService.saveProjectDocument(project);
-                                
-                                resolve(newTasks.length);
-                                
                             } catch (error) {
                                 reject(error);
                             }
@@ -1043,6 +1065,111 @@
                     console.error('Erro na importação:', error);
                     throw error;
                 }
+            },
+
+            // FUNÇÃO: Validar linha individual
+            validateImportRow: function(row, rowNumber, taskNameMap) {
+                const errors = [];
+                const task = {};
+
+                // Validar nome da tarefa
+                const taskName = row['Tarefa']?.toString().trim();
+                if (!taskName) {
+                    errors.push('Nome da tarefa é obrigatório');
+                } else {
+                    task.name = taskName;
+                }
+
+                // Validar e converter datas
+                const startDate = this.parseExcelDate(row['Data Início']);
+                const endDate = this.parseExcelDate(row['Data Termino']);
+                
+                if (!startDate) errors.push('Data de início inválida');
+                if (!endDate) errors.push('Data de término inválida');
+                
+                if (startDate && endDate) {
+                    if (new Date(startDate) > new Date(endDate)) {
+                        errors.push('Data de início não pode ser posterior à data de término');
+                    } else {
+                        task.startDate = startDate;
+                        task.endDate = endDate;
+                    }
+                }
+
+                // Validar status
+                const status = row['Status']?.toString().trim();
+                const validStatuses = ['Não Iniciada', 'Em Andamento', 'Concluída'];
+                if (status && validStatuses.includes(status)) {
+                    task.status = status;
+                } else if (status) {
+                    errors.push(`Status inválido: "${status}". Use: ${validStatuses.join(', ')}`);
+                } else {
+                    task.status = 'Não Iniciada';
+                }
+
+                // Validar progresso
+                const progress = parseInt(row['Progresso (%)']) || 0;
+                if (progress < 0 || progress > 100) {
+                    errors.push('Progresso deve estar entre 0 e 100');
+                } else {
+                    task.progress = progress;
+                }
+
+                // Validar prioridade
+                const priority = row['Prioridade']?.toString().trim();
+                const validPriorities = ['Baixa', 'Média', 'Alta'];
+                if (priority && validPriorities.includes(priority)) {
+                    task.priority = priority;
+                } else if (priority) {
+                    errors.push(`Prioridade inválida: "${priority}". Use: ${validPriorities.join(', ')}`);
+                } else {
+                    task.priority = 'Média';
+                }
+
+                // Processar responsáveis
+                const assignedNames = row['Atribuído a (Nomes Separados por Vírgula)']?.toString();
+                if (assignedNames) {
+                    task.assignedUsers = this.findUserIdsByNames(assignedNames.split(',').map(name => name.trim()));
+                    if (task.assignedUsers.length === 0) {
+                        errors.push('Nenhum responsável válido encontrado');
+                    }
+                } else {
+                    task.assignedUsers = [];
+                }
+
+                // Validar risco
+                const risk = row['Risco (Sim/Nao)']?.toString().trim().toLowerCase();
+                task.risk = risk === 'sim';
+
+                // Processar tarefa pai
+                const parentTaskName = row['Tarefa Pai (Nome)']?.toString().trim();
+                if (parentTaskName) {
+                    task.parentId = taskNameMap.get(parentTaskName.toLowerCase());
+                    if (!task.parentId) {
+                        errors.push(`Tarefa pai não encontrada: "${parentTaskName}"`);
+                    }
+                } else {
+                    task.parentId = null;
+                }
+
+                // CORREÇÃO: Gerar ID único usando Math.random() para evitar duplicação
+                task.id = Date.now() + Math.random();
+                task.comments = [];
+                task.dateHistory = [{ startDate: task.startDate, endDate: task.endDate }];
+
+                return {
+                    isValid: errors.length === 0,
+                    task: task,
+                    errors: errors
+                };
+            },
+
+            // FUNÇÃO: Finalizar importação
+            finalizeImport: async function(validTasks, project) {
+                project.tasks = [...project.tasks, ...validTasks];
+                dataService.recalculateAllProgress();
+                await dataService.saveProjectDocument(project);
+                return validTasks.length;
             },
 
             // Função auxiliar para converter datas do Excel
@@ -1352,14 +1479,14 @@
                     const taskNameEl = event.target.closest('.task-edit-trigger');
 
                     if (taskNameEl) {
-                        const taskId = parseInt(taskNameEl.dataset.taskId);
+                        const taskId = parseFloat(taskNameEl.dataset.taskId); // CORREÇÃO: Usar parseFloat para IDs com decimais
                         uiService.openTaskModal('edit', { taskId });
                         return;
                     }
 
                     if (!button) return;
-                    const taskId = parseInt(button.dataset.taskId); 
-                    const parentId = parseInt(button.dataset.parentId);
+                    const taskId = parseFloat(button.dataset.taskId); // CORREÇÃO: Usar parseFloat para IDs com decimais
+                    const parentId = parseFloat(button.dataset.parentId);
                     
                     if (button.classList.contains('add-subtask-btn')) uiService.openTaskModal('add', { parentId });
                     if (button.classList.contains('edit-task-btn')) uiService.openTaskModal('edit', { taskId });
@@ -1385,17 +1512,37 @@
                 document.getElementById('download-template-btn').addEventListener('click', () => reportService.downloadExcelTemplate());
                 document.getElementById('import-excel-btn').addEventListener('click', () => document.getElementById('import-excel-input').click());
                 
-                // CORREÇÃO: Evento de importação corrigido
+                // ATUALIZADO: Evento de importação com nova funcionalidade
                 document.getElementById('import-excel-input').addEventListener('change', async (event) => {
                     const file = event.target.files[0];
                     if (file) {
                         document.getElementById('loader').style.display = 'flex';
                         try {
-                            await dataService.importTasksFromExcel(file);
-                            uiService.showToast('Tarefas importadas com sucesso! Sincronizando...', 'success');
+                            // Usar a nova função de importação com validação
+                            const result = await dataService.processImportWithValidation(file);
+                            
+                            if (!result.needsAdjustment) {
+                                uiService.showToast(`${result.count} tarefas importadas com sucesso!`, 'success');
+                            }
+                            // Se needsAdjustment = true, o modal de ajustes já foi aberto automaticamente
+                            
                         } catch (error) {
                             console.error('Erro na importação:', error);
-                            uiService.showToast(`Erro ao importar: ${error.message}`, 'error');
+                            
+                            // Mensagens de erro mais específicas
+                            let errorMessage = 'Erro ao importar arquivo. ';
+                            
+                            if (error.message.includes('vazia')) {
+                                errorMessage += 'A planilha está vazia.';
+                            } else if (error.message.includes('formato')) {
+                                errorMessage += 'Formato de arquivo inválido. Use .xlsx ou .xls.';
+                            } else if (error.message.includes('projeto')) {
+                                errorMessage += 'Nenhum projeto selecionado.';
+                            } else {
+                                errorMessage += `Detalhes: ${error.message}`;
+                            }
+                            
+                            uiService.showToast(errorMessage, 'error');
                         } finally {
                             document.getElementById('loader').style.display = 'none';
                             event.target.value = '';
@@ -1513,20 +1660,28 @@
             },
 
             // --- TASK UI HELPERS ---
-            populateAssignedUsersSelect: () => {
-                const selectEl = document.getElementById('assigned-users-select');
-                selectEl.innerHTML = '';
+            populateAssignedUsersCheckboxes: function() {
+                const container = document.getElementById('assigned-users-container');
+                container.innerHTML = '';
                 
-                const defaultOption = document.createElement('option');
-                defaultOption.value = "";
-                defaultOption.textContent = "Selecione usuários...";
-                selectEl.appendChild(defaultOption);
-
                 dataService.users.filter(u => u.email).forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.id;
-                    option.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
-                    selectEl.appendChild(option);
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'user-checkbox-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = user.id;
+                    checkbox.id = `user-${user.id}`;
+                    checkbox.className = 'user-checkbox';
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `user-${user.id}`;
+                    label.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
+                    label.className = 'text-sm text-gray-700 dark:text-gray-300';
+                    
+                    checkboxItem.appendChild(checkbox);
+                    checkboxItem.appendChild(label);
+                    container.appendChild(checkboxItem);
                 });
             },
 
@@ -1541,6 +1696,174 @@
                     option.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
                     selectEl.appendChild(option);
                 });
+            },
+
+            // NOVA FUNÇÃO: Mostrar modal de ajustes de importação
+            showImportAdjustmentModal: function(importResults) {
+                this.openModal('import-adjustment-modal');
+                
+                // Atualizar contadores
+                document.getElementById('import-valid-count').textContent = importResults.validTasks.length;
+                document.getElementById('import-total-count').textContent = importResults.validTasks.length + importResults.invalidTasks.length;
+                document.getElementById('confirm-count').textContent = importResults.validTasks.length;
+                
+                // Listar erros gerais
+                const errorsList = document.getElementById('import-errors-list');
+                const errorMessages = [...new Set(importResults.invalidTasks.flatMap(item => item.errors))];
+                errorsList.innerHTML = errorMessages.map(error => 
+                    `<div>• ${error}</div>`
+                ).join('');
+                
+                // Preencher tabela de ajustes
+                const tableBody = document.getElementById('import-adjustment-table-body');
+                tableBody.innerHTML = '';
+                
+                importResults.invalidTasks.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-[var(--border-color)] import-error-row';
+                    
+                    // Buscar opções de tarefas pai
+                    const parentOptions = this.getParentTaskOptions(importResults.taskNameMap);
+                    
+                    row.innerHTML = `
+                        <td class="p-2">${item.row}</td>
+                        <td class="p-2">
+                            <input type="text" class="adjust-task-name border border-[var(--border-color)] rounded p-1 w-full text-black" 
+                                   value="${item.data['Tarefa'] || ''}" data-index="${index}">
+                        </td>
+                        <td class="p-2">
+                            <input type="date" class="adjust-start-date border border-[var(--border-color)] rounded p-1 w-full text-black" 
+                                   value="${item.task.startDate || ''}" data-index="${index}">
+                        </td>
+                        <td class="p-2">
+                            <input type="date" class="adjust-end-date border border-[var(--border-color)] rounded p-1 w-full text-black" 
+                                   value="${item.task.endDate || ''}" data-index="${index}">
+                        </td>
+                        <td class="p-2">
+                            <select class="adjust-status border border-[var(--border-color)] rounded p-1 w-full text-black" data-index="${index}">
+                                <option value="Não Iniciada" ${item.task.status === 'Não Iniciada' ? 'selected' : ''}>Não Iniciada</option>
+                                <option value="Em Andamento" ${item.task.status === 'Em Andamento' ? 'selected' : ''}>Em Andamento</option>
+                                <option value="Concluída" ${item.task.status === 'Concluída' ? 'selected' : ''}>Concluída</option>
+                            </select>
+                        </td>
+                        <td class="p-2">
+                            <input type="text" class="adjust-assigned border border-[var(--border-color)] rounded p-1 w-full text-black" 
+                                   value="${item.data['Atribuído a (Nomes Separados por Vírgula)'] || ''}" 
+                                   placeholder="Nomes separados por vírgula" data-index="${index}">
+                        </td>
+                        <td class="p-2">
+                            <select class="adjust-parent border border-[var(--border-color)] rounded p-1 w-full text-black" data-index="${index}">
+                                <option value="">Nenhuma</option>
+                                ${parentOptions}
+                            </select>
+                        </td>
+                        <td class="p-2 text-red-500 text-xs">
+                            ${item.errors.join(', ')}
+                        </td>
+                        <td class="p-2 text-center">
+                            <button class="validate-row-btn bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" data-index="${index}">
+                                Validar
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                    
+                    // Configurar tarefa pai se existir
+                    if (item.data['Tarefa Pai (Nome)']) {
+                        const parentSelect = row.querySelector('.adjust-parent');
+                        const parentName = item.data['Tarefa Pai (Nome)'].toLowerCase();
+                        Array.from(parentSelect.options).forEach(option => {
+                            if (option.text.toLowerCase() === parentName) {
+                                option.selected = true;
+                            }
+                        });
+                    }
+                });
+                
+                // Configurar event listeners
+                this.setupImportAdjustmentEvents(importResults);
+            },
+
+            // FUNÇÃO: Obter opções de tarefas pai
+            getParentTaskOptions: function(taskNameMap) {
+                let options = '';
+                taskNameMap.forEach((id, name) => {
+                    // Capitalizar nome para exibição
+                    const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+                    options += `<option value="${id}">${displayName}</option>`;
+                });
+                return options;
+            },
+
+            // FUNÇÃO: Configurar eventos do modal de ajustes
+            setupImportAdjustmentEvents: function(importResults) {
+                let currentResults = importResults;
+                
+                // Botão validar linha
+                document.querySelectorAll('.validate-row-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = parseInt(e.target.dataset.index);
+                        this.validateSingleRow(index, currentResults);
+                    });
+                });
+                
+                // Botão cancelar
+                document.getElementById('cancel-import-btn').onclick = () => {
+                    this.closeModal('import-adjustment-modal');
+                    uiService.showToast('Importação cancelada', 'error');
+                };
+                
+                // Botão confirmar importação
+                document.getElementById('confirm-import-btn').onclick = async () => {
+                    document.getElementById('loader').style.display = 'flex';
+                    try {
+                        await dataService.finalizeImport(currentResults.validTasks, dataService.getCurrentProject());
+                        this.closeModal('import-adjustment-modal');
+                        uiService.showToast(`${currentResults.validTasks.length} tarefas importadas com sucesso!`, 'success');
+                    } catch (error) {
+                        console.error('Erro ao finalizar importação:', error);
+                        uiService.showToast('Erro ao importar tarefas', 'error');
+                    } finally {
+                        document.getElementById('loader').style.display = 'none';
+                    }
+                };
+            },
+
+            // FUNÇÃO: Validar linha individual no modal
+            validateSingleRow: function(rowIndex, importResults) {
+                const row = importResults.invalidTasks[rowIndex];
+                const rowElement = document.querySelectorAll('#import-adjustment-table-body tr')[rowIndex];
+                
+                // Coletar dados atualizados
+                const updatedData = {
+                    'Tarefa': rowElement.querySelector('.adjust-task-name').value,
+                    'Data Início': rowElement.querySelector('.adjust-start-date').value,
+                    'Data Termino': rowElement.querySelector('.adjust-end-date').value,
+                    'Status': rowElement.querySelector('.adjust-status').value,
+                    'Atribuído a (Nomes Separados por Vírgula)': rowElement.querySelector('.adjust-assigned').value,
+                    'Tarefa Pai (Nome)': rowElement.querySelector('.adjust-parent').selectedOptions[0]?.text || ''
+                };
+                
+                // Validar novamente
+                const validationResult = dataService.validateImportRow(updatedData, row.row, importResults.taskNameMap);
+                
+                if (validationResult.isValid) {
+                    // Mover para válidas
+                    importResults.validTasks.push(validationResult.task);
+                    importResults.invalidTasks.splice(rowIndex, 1);
+                    
+                    // Atualizar UI
+                    this.showImportAdjustmentModal(importResults);
+                    uiService.showToast('Linha corrigida e validada!', 'success');
+                } else {
+                    // Atualizar erros
+                    row.errors = validationResult.errors;
+                    const errorCell = rowElement.querySelector('td:nth-child(8)');
+                    errorCell.innerHTML = validationResult.errors.join(', ');
+                    errorCell.className = 'p-2 text-red-500 text-xs';
+                    
+                    uiService.showToast('Ainda há problemas na linha', 'error');
+                }
             },
 
             // --- VIEW/MODAL MANAGEMENT ---
@@ -1587,20 +1910,22 @@
             },
             openTaskModal(mode, data = {}) {
                 document.getElementById('task-form').reset();
-                this.populateAssignedUsersSelect(); 
+                this.populateAssignedUsersCheckboxes(); 
                 
                 const { parentId, taskId } = data;
                 const project = dataService.getCurrentProject();
                 const task = taskId ? project.tasks.find(t => t.id === taskId) : {};
                 const isParent = taskId ? project.tasks.some(t => t.parentId === taskId) : false;
                 
-                const assignedUsersSelect = document.getElementById('assigned-users-select');
-                assignedUsersSelect.value = null; 
-
+                // Preencher checkboxes de usuários atribuídos
                 if (mode === 'edit') {
                     const assignedUsers = task.assignedUsers || [];
-                    Array.from(assignedUsersSelect.options).forEach(option => {
-                        option.selected = assignedUsers.includes(option.value);
+                    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+                        checkbox.checked = assignedUsers.includes(checkbox.value);
+                    });
+                } else {
+                    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+                        checkbox.checked = false;
                     });
                 }
                 
@@ -1673,30 +1998,30 @@
             getTaskFormData() {
                 const startDateInput = document.getElementById('start-date');
                 const endDateInput = document.getElementById('end-date');
-                const assignedUsersSelect = document.getElementById('assigned-users-select');
                 
+                // Coletar usuários selecionados
+                const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+                                         .map(checkbox => checkbox.value)
+                                         .filter(uid => uid);
+
                 const commentsList = document.getElementById('comments-list');
                 const comments = Array.from(commentsList.querySelectorAll('.comment-item')).map(item => ({
                     id: item.dataset.commentId,
                     text: item.dataset.text, 
-                    timestamp: item.dataset.timestamp
+                    timestamp: item.dataset.timestamp,
+                    author: item.dataset.author
                 }));
 
-                const selectedUsers = Array.from(assignedUsersSelect.options)
-                                         .filter(option => option.selected)
-                                         .map(option => option.value)
-                                         .filter(uid => uid); 
-
                 const data = {
-                    id: document.getElementById('task-id').value ? parseInt(document.getElementById('task-id').value) : null,
-                    parentId: document.getElementById('parent-id').value ? parseInt(document.getElementById('parent-id').value) : null,
+                    id: document.getElementById('task-id').value ? parseFloat(document.getElementById('task-id').value) : null, // CORREÇÃO: Usar parseFloat
+                    parentId: document.getElementById('parent-id').value ? parseFloat(document.getElementById('parent-id').value) : null, // CORREÇÃO: Usar parseFloat
                     name: document.getElementById('task-name').value, 
                     assignedUsers: selectedUsers, 
                     priority: document.getElementById('task-priority').value, 
                     status: document.getElementById('task-status').value,
                     progress: parseInt(document.getElementById('task-progress').value), 
                     risk: document.getElementById('task-risk').checked,
-                    dependsOn: document.getElementById('task-dependency').value ? parseInt(document.getElementById('task-dependency').value) : null,
+                    dependsOn: document.getElementById('task-dependency').value ? parseFloat(document.getElementById('task-dependency').value) : null, // CORREÇÃO: Usar parseFloat
                     comments: comments,
                     newStartDate: startDateInput.value,
                     newEndDate: endDateInput.value,
@@ -1719,7 +2044,7 @@
                 newCancelBtn.addEventListener('click', () => { this.closeModal('confirm-modal'); });
             },
             
-            // MELHORIA 03: Função melhorada para renderizar comentários com edição
+            // MELHORIA: Função melhorada para renderizar comentários com autor
             renderComments: function(comments) {
                 const listEl = document.getElementById('comments-list');
                 listEl.innerHTML = '';
@@ -1732,6 +2057,7 @@
                     commentItem.dataset.commentId = comment.id || Date.now() + Math.random();
                     commentItem.dataset.timestamp = comment.timestamp;
                     commentItem.dataset.text = comment.text;
+                    commentItem.dataset.author = comment.author || dataService.users.find(u => u.id === dataService.userId)?.name || 'Utilizador';
                     
                     const dateString = new Date(comment.timestamp).toLocaleDateString('pt-BR');
                     const timeString = new Date(comment.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -1739,7 +2065,10 @@
                     commentItem.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
-                                <span class="font-semibold text-gray-500">${dateString} ${timeString}:</span>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-semibold text-gray-500">${commentItem.dataset.author}</span>
+                                    <span class="text-gray-400 text-xs">${dateString} ${timeString}</span>
+                                </div>
                                 <span class="comment-text">${comment.text}</span>
                             </div>
                             <div class="comment-actions flex gap-1 ml-2">
@@ -1775,7 +2104,7 @@
                 });
             },
 
-            // MELHORIA 03: Função para editar comentário
+            // MELHORIA: Função para editar comentário
             editComment: function(commentItem) {
                 const commentText = commentItem.querySelector('.comment-text');
                 const currentText = commentText.textContent;
@@ -1834,7 +2163,7 @@
                 });
             },
 
-            // MELHORIA 03: Restaurar botões padrão do comentário
+            // MELHORIA: Restaurar botões padrão do comentário
             restoreCommentButtons: function(commentItem) {
                 const actionButtons = commentItem.querySelector('.comment-actions');
                 actionButtons.innerHTML = `
@@ -1859,22 +2188,25 @@
                 });
             },
 
-            // MELHORIA 03: Função para excluir comentário
+            // MELHORIA: Função para excluir comentário
             deleteComment: function(commentItem) {
                 commentItem.remove();
             },
 
-            // MELHORIA 03: Função para adicionar comentário (atualizada)
+            // MELHORIA: Função para adicionar comentário (atualizada com autor)
             addComment: function(text) {
                 const listEl = document.getElementById('comments-list');
                 const commentItem = document.createElement('div');
                 const commentId = Date.now() + Math.random();
                 const timestamp = new Date().toISOString();
+                const currentUser = dataService.users.find(u => u.id === dataService.userId);
+                const authorName = currentUser?.name || currentUser?.email.split('@')[0] || 'Utilizador';
                 
                 commentItem.className = "comment-item border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0 relative";
                 commentItem.dataset.commentId = commentId;
                 commentItem.dataset.timestamp = timestamp;
                 commentItem.dataset.text = text;
+                commentItem.dataset.author = authorName;
                 
                 const dateString = new Date(timestamp).toLocaleDateString('pt-BR');
                 const timeString = new Date(timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -1882,7 +2214,10 @@
                 commentItem.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
-                            <span class="font-semibold text-gray-500">${dateString} ${timeString}:</span>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-gray-500">${authorName}</span>
+                                <span class="text-gray-400 text-xs">${dateString} ${timeString}</span>
+                            </div>
                             <span class="comment-text">${text}</span>
                         </div>
                         <div class="comment-actions flex gap-1 ml-2">
@@ -1983,56 +2318,149 @@
                     </div>
                 `).join('');
             },
-            updateMainDashboard(projects) { 
+
+            // CORREÇÃO: Dashboard com gráficos funcionais
+            updateMainDashboard: function(projects) { 
                 const mainDashboard = document.getElementById('main-dashboard');
                 
+                // Destruir gráficos existentes
+                Object.values(this.mainDashboardCharts).forEach(chart => {
+                    if (chart) chart.destroy();
+                });
+                this.mainDashboardCharts = {};
+                
+                // Calcular métricas
                 let inProgressCount = 0, overdueCount = 0, atRiskCount = 0;
                 const totalProjects = projects.length;
 
+                const overdueProjects = [];
+                const inProgressProjects = [];
+                const atRiskProjects = [];
+
                 projects.forEach(project => {
                     const progress = dataService.getProjectProgress(project.tasks);
-                    if (progress > 0 && progress < 100) inProgressCount++;
-                    if (project.tasks.some(t => reportService.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada')) overdueCount++;
-                    if (project.tasks.some(t => t.risk)) atRiskCount++;
+                    if (progress > 0 && progress < 100) {
+                        inProgressCount++;
+                        inProgressProjects.push(project);
+                    }
+                    
+                    const hasOverdue = project.tasks.some(t => reportService.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada');
+                    if (hasOverdue) {
+                        overdueCount++;
+                        overdueProjects.push(project);
+                    }
+                    
+                    const hasRisk = project.tasks.some(t => t.risk);
+                    if (hasRisk) {
+                        atRiskCount++;
+                        atRiskProjects.push(project);
+                    }
                 });
                 
-                const icons = {
-                    total: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>`,
-                    inProgress: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-                    overdue: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-8 0 9 9 0 018 0z" /></svg>`,
-                    atRisk: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`
-                };
-                
+                // Criar container para os gráficos
                 mainDashboard.innerHTML = `
-                    <div class="bg-blue-100 dark:bg-blue-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-blue-200 dark:border-blue-800">
-                        <div class="bg-blue-500 p-3 rounded-full">${icons.total}</div>
-                        <div>
-                            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">${totalProjects}</div>
-                            <div class="text-sm text-blue-600 dark:text-blue-400">Total de Projetos</div>
+                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
+                        <h3 class="text-lg font-semibold mb-4">Total de Projetos</h3>
+                        <div class="relative">
+                            <canvas id="total-projects-chart" height="120"></canvas>
                         </div>
                     </div>
-                    <div class="bg-yellow-100 dark:bg-yellow-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-yellow-200 dark:border-yellow-800">
-                        <div class="bg-yellow-500 p-3 rounded-full">${icons.inProgress}</div>
-                        <div>
-                            <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-300">${inProgressCount}</div>
-                            <div class="text-sm text-yellow-600 dark:text-yellow-400">Em Andamento</div>
+                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
+                        <h3 class="text-lg font-semibold mb-4">Projetos em Andamento</h3>
+                        <div class="relative">
+                            <canvas id="in-progress-chart" height="120"></canvas>
                         </div>
                     </div>
-                    <div class="bg-red-100 dark:bg-red-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-red-200 dark:border-red-800">
-                        <div class="bg-red-500 p-3 rounded-full">${icons.overdue}</div>
-                        <div>
-                            <div class="text-3xl font-bold text-red-700 dark:text-red-300">${overdueCount}</div>
-                            <div class="text-sm text-red-600 dark:text-red-400">Projetos Atrasados</div>
+                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
+                        <h3 class="text-lg font-semibold mb-4">Projetos Atrasados</h3>
+                        <div class="relative">
+                            <canvas id="overdue-chart" height="120"></canvas>
                         </div>
                     </div>
-                    <div class="bg-orange-100 dark:bg-orange-900/50 p-5 rounded-lg shadow-md flex items-center gap-5 border border-orange-200 dark:border-orange-800">
-                        <div class="bg-orange-500 p-3 rounded-full">${icons.atRisk}</div>
-                        <div>
-                            <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">${atRiskCount}</div>
-                            <div class="text-sm text-orange-600 dark:text-orange-400">Projetos em Risco</div>
+                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
+                        <h3 class="text-lg font-semibold mb-4">Projetos em Risco</h3>
+                        <div class="relative">
+                            <canvas id="at-risk-chart" height="120"></canvas>
                         </div>
                     </div>
                 `;
+
+                // CORREÇÃO: Criar gráficos com cores corretas
+                this.createDashboardChart('total-projects-chart', totalProjects, 0, 'Total', '#3b82f6', projects);
+                this.createDashboardChart('in-progress-chart', inProgressCount, totalProjects - inProgressCount, 'Em Andamento', '#f59e0b', inProgressProjects);
+                this.createDashboardChart('overdue-chart', overdueCount, totalProjects - overdueCount, 'Atrasados', '#ef4444', overdueProjects);
+                this.createDashboardChart('at-risk-chart', atRiskCount, totalProjects - atRiskCount, 'Em Risco', '#f97316', atRiskProjects);
+            },
+
+            // CORREÇÃO: Função para criar gráficos do dashboard
+            createDashboardChart: function(canvasId, value, remaining, label, color, projects) {
+                const ctx = document.getElementById(canvasId);
+                if (!ctx) return;
+                
+                const total = value + remaining;
+                
+                // Destruir gráfico existente se houver
+                if (this.mainDashboardCharts[canvasId]) {
+                    this.mainDashboardCharts[canvasId].destroy();
+                }
+                
+                this.mainDashboardCharts[canvasId] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [value, remaining],
+                            backgroundColor: [color, '#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.parsed;
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return `${value} projetos (${percentage}%)`;
+                                    },
+                                    afterBody: function(context) {
+                                        if (context[0].dataIndex === 0 && projects.length > 0) {
+                                            const projectNames = projects.map(p => p.name).slice(0, 5);
+                                            const remainingCount = projects.length - 5;
+                                            let tooltipText = ['', 'Projetos:'];
+                                            tooltipText = tooltipText.concat(projectNames);
+                                            if (remainingCount > 0) {
+                                                tooltipText.push(`... e mais ${remainingCount}`);
+                                            }
+                                            return tooltipText;
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [{
+                        id: 'centerText',
+                        afterDraw(chart) {
+                            const { ctx, chartArea: { width, height } } = chart;
+                            ctx.save();
+                            ctx.font = 'bold 20px Inter';
+                            ctx.fillStyle = chart.config.data.datasets[0].backgroundColor[0];
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(value.toString(), width / 2, height / 2 - 10);
+                            
+                            ctx.font = '12px Inter';
+                            ctx.fillStyle = '#6b7280';
+                            ctx.fillText(label, width / 2, height / 2 + 15);
+                            ctx.restore();
+                        }
+                    }]
+                });
             },
 
             // FUNÇÕES ADICIONADAS PARA CORRIGIR OS ERROS
@@ -2135,7 +2563,7 @@
 
                         const commentsPreview = (task.comments || [])
                             .slice(0, 2)
-                            .map(c => c.text.substring(0, 30) + (c.text.length > 30 ? '...' : ''))
+                            .map(c => `${c.author || 'Utilizador'}: ${c.text.substring(0, 30)}${c.text.length > 30 ? '...' : ''}`)
                             .join('; ');
 
                         html += `
@@ -2365,21 +2793,20 @@
                 
                 const workbook = XLSX.utils.book_new();
                 
-                // CORREÇÃO: Remover a mesclagem de células que estava causando problemas
+                // Garantir a ordem das colunas
                 const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
                 
-                // Aplicar formatação e estilo SEM mesclagem
                 worksheet['!cols'] = [
                     { wch: 40 }, // Tarefa
-                    { wch: 15 }, // Duração
+                    { wch: 15 }, // Duração (dias)
                     { wch: 15 }, // Data Início
-                    { wch: 15 }, // Data Término
+                    { wch: 15 }, // Data Termino
                     { wch: 15 }, // Status
-                    { wch: 15 }, // Progresso
+                    { wch: 15 }, // Progresso (%)
                     { wch: 15 }, // Prioridade
-                    { wch: 40 }, // Atribuído a
-                    { wch: 15 }, // Risco
-                    { wch: 40 }  // Tarefa Pai
+                    { wch: 40 }, // Atribuído a (Nomes Separados por Vírgula)
+                    { wch: 15 }, // Risco (Sim/Nao)
+                    { wch: 40 }  // Tarefa Pai (Nome)
                 ];
                 
                 XLSX.utils.book_append_sheet(workbook, worksheet, "Template Importação");
@@ -2415,7 +2842,7 @@
                 
                 XLSX.utils.book_append_sheet(workbook, instructionSheet, "Instruções");
                 
-                XLSX.writeFile(workbook, "template_importacao_formatado.xlsx");
+                XLSX.writeFile(workbook, "template_importacao_correto.xlsx");
             },
             
             calculateDuration: (start, end) => {
@@ -2454,7 +2881,7 @@
                             const duration = this.calculateDuration(latestDates.startDate, latestDates.endDate);
                             const statusInfo = this.getTaskStatusClass(task.status, latestDates.endDate);
                             const commentsString = (task.comments || [])
-                                .map(c => `${new Date(c.timestamp).toLocaleDateString('pt-BR')}: ${c.text}`)
+                                .map(c => `${c.author || 'Utilizador'}: ${c.text} (${new Date(c.timestamp).toLocaleDateString('pt-BR')})`)
                                 .join(' | ');
 
                             // CORREÇÃO: Usar nomes em vez de UIDs
