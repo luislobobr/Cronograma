@@ -32,7 +32,17 @@
         .toast { display: flex; align-items: center; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); transform: translateX(120%); opacity: 0; transition: all 0.4s cubic-bezier(0.21, 1.02, 0.73, 1); }
         .toast.show { transform: translateX(0); opacity: 1; }
         /* Estilos para Impressão */
-        @media print { .no-print { display: none !important; } body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .container, #dashboard-view, main#content-area, .bg-white { padding: 0 !important; margin: 0 !important; max-width: 100% !important; box-shadow: none !important; border: none !important; } .gantt-timeline-container, .overflow-x-auto { overflow: visible !important; } }
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+            .container, #dashboard-view, main#content-area, .bg-white { padding: 0 !important; margin: 0 !important; max-width: 100% !important; box-shadow: none !important; border: none !important; } 
+            .gantt-timeline-container, .overflow-x-auto { overflow: visible !important; } 
+            .gantt-bar { color: #000 !important; font-weight: bold; }
+            .bg-blue-500 { background-color: #3b82f6 !important; }
+            .bg-green-500 { background-color: #10b981 !important; }
+            .bg-red-500 { background-color: #ef4444 !important; }
+            .bg-gray-500 { background-color: #6b7280 !important; }
+        }
         
         /* Z-index para modais */
         .modal-z-50 { z-index: 50; }
@@ -915,6 +925,176 @@
                     const user = dataService.users.find(u => u.id === uid);
                     return user ? (user.name || user.email.split('@')[0]) : `UID:${uid.substring(0,4)}`;
                 }).join(', ');
+            },
+
+            // CORREÇÃO: Função para importar tarefas do Excel
+            importTasksFromExcel: async function(file) {
+                try {
+                    const project = dataService.getCurrentProject();
+                    if (!project) {
+                        throw new Error('Nenhum projeto selecionado');
+                    }
+
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        
+                        reader.onload = async (e) => {
+                            try {
+                                const data = new Uint8Array(e.target.result);
+                                const workbook = XLSX.read(data, { type: 'array' });
+                                
+                                // Pega a primeira planilha
+                                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                                
+                                if (jsonData.length === 0) {
+                                    throw new Error('A planilha está vazia');
+                                }
+
+                                const newTasks = [];
+                                const taskNameMap = new Map(); // Mapeia nomes para IDs de tarefas existentes
+                                
+                                // Primeiro, mapear tarefas existentes por nome
+                                project.tasks.forEach(task => {
+                                    taskNameMap.set(task.name.trim().toLowerCase(), task.id);
+                                });
+
+                                // Processar cada linha da planilha
+                                for (const row of jsonData) {
+                                    const taskName = row['Tarefa']?.toString().trim();
+                                    if (!taskName) continue;
+
+                                    // Converter dados da planilha
+                                    const startDate = this.parseExcelDate(row['Data Início']);
+                                    const endDate = this.parseExcelDate(row['Data Termino']);
+                                    
+                                    if (!startDate || !endDate) {
+                                        console.warn(`Datas inválidas para tarefa: ${taskName}`);
+                                        continue;
+                                    }
+
+                                    // Validar datas
+                                    if (new Date(startDate) > new Date(endDate)) {
+                                        console.warn(`Datas inválidas para tarefa ${taskName}: início após término`);
+                                        continue;
+                                    }
+
+                                    // Processar responsáveis
+                                    let assignedUsers = [];
+                                    const assignedNames = row['Atribuído a (Nomes Separados por Vírgula)']?.toString();
+                                    if (assignedNames) {
+                                        assignedUsers = this.findUserIdsByNames(assignedNames.split(',').map(name => name.trim()));
+                                    }
+
+                                    // Encontrar parentId se especificado
+                                    let parentId = null;
+                                    const parentTaskName = row['Tarefa Pai (Nome)']?.toString().trim();
+                                    if (parentTaskName) {
+                                        parentId = taskNameMap.get(parentTaskName.toLowerCase());
+                                        if (!parentId) {
+                                            console.warn(`Tarefa pai não encontrada: ${parentTaskName}`);
+                                        }
+                                    }
+
+                                    const newTask = {
+                                        id: Date.now() + Math.random(), // ID único
+                                        name: taskName,
+                                        parentId: parentId,
+                                        assignedUsers: assignedUsers,
+                                        priority: row['Prioridade'] || 'Média',
+                                        status: row['Status'] || 'Não Iniciada',
+                                        progress: parseInt(row['Progresso (%)']) || 0,
+                                        risk: (row['Risco (Sim/Nao)']?.toString().toLowerCase() === 'sim'),
+                                        dependsOn: null, // Será implementado se necessário
+                                        comments: [],
+                                        dateHistory: [{
+                                            startDate: startDate,
+                                            endDate: endDate
+                                        }]
+                                    };
+
+                                    newTasks.push(newTask);
+                                    taskNameMap.set(taskName.toLowerCase(), newTask.id);
+                                }
+
+                                if (newTasks.length === 0) {
+                                    throw new Error('Nenhuma tarefa válida encontrada na planilha');
+                                }
+
+                                // Adicionar novas tarefas ao projeto
+                                project.tasks = [...project.tasks, ...newTasks];
+                                
+                                // Recalcular progresso e salvar
+                                dataService.recalculateAllProgress();
+                                await dataService.saveProjectDocument(project);
+                                
+                                resolve(newTasks.length);
+                                
+                            } catch (error) {
+                                reject(error);
+                            }
+                        };
+
+                        reader.onerror = (error) => reject(error);
+                        reader.readAsArrayBuffer(file);
+                    });
+
+                } catch (error) {
+                    console.error('Erro na importação:', error);
+                    throw error;
+                }
+            },
+
+            // Função auxiliar para converter datas do Excel
+            parseExcelDate: function(excelDate) {
+                if (!excelDate) return null;
+                
+                try {
+                    // Se for número (formato Excel)
+                    if (typeof excelDate === 'number') {
+                        const date = new Date((excelDate - 25569) * 86400 * 1000);
+                        return date.toISOString().split('T')[0];
+                    }
+                    
+                    // Se for string, tentar parse
+                    if (typeof excelDate === 'string') {
+                        // Remover espaços e tentar diferentes formatos
+                        const cleanDate = excelDate.trim();
+                        
+                        // Formato YYYY-MM-DD
+                        if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+                            return cleanDate;
+                        }
+                        
+                        // Formato DD/MM/YYYY
+                        if (/^\d{2}\/\d{2}\/\d{4}$/.test(cleanDate)) {
+                            const parts = cleanDate.split('/');
+                            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        }
+                        
+                        // Tentar parse automático
+                        const parsedDate = new Date(cleanDate);
+                        if (!isNaN(parsedDate.getTime())) {
+                            return parsedDate.toISOString().split('T')[0];
+                        }
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    console.warn('Erro ao converter data:', excelDate, error);
+                    return null;
+                }
+            },
+
+            // Função para encontrar IDs de usuário pelos nomes
+            findUserIdsByNames: function(names) {
+                return names.map(name => {
+                    const user = dataService.users.find(u => 
+                        u.name?.toLowerCase().includes(name.toLowerCase()) || 
+                        u.email.toLowerCase().includes(name.toLowerCase())
+                    );
+                    return user?.id || null;
+                }).filter(id => id !== null);
             }
         };
 
@@ -1204,19 +1384,21 @@
                 document.getElementById('print-view-btn').addEventListener('click', () => window.print());
                 document.getElementById('download-template-btn').addEventListener('click', () => reportService.downloadExcelTemplate());
                 document.getElementById('import-excel-btn').addEventListener('click', () => document.getElementById('import-excel-input').click());
+                
+                // CORREÇÃO: Evento de importação corrigido
                 document.getElementById('import-excel-input').addEventListener('change', async (event) => {
                     const file = event.target.files[0];
                     if (file) {
                         document.getElementById('loader').style.display = 'flex';
                         try {
-                            await dataService.importTasksFromExcel(file); 
-                            uiService.showToast('Tarefas importadas com sucesso! Sincronizando...');
+                            await dataService.importTasksFromExcel(file);
+                            uiService.showToast('Tarefas importadas com sucesso! Sincronizando...', 'success');
                         } catch (error) {
-                            console.error(error);
-                            uiService.showToast('Erro ao importar o arquivo. Verifique o console.', 'error');
+                            console.error('Erro na importação:', error);
+                            uiService.showToast(`Erro ao importar: ${error.message}`, 'error');
                         } finally {
                             document.getElementById('loader').style.display = 'none';
-                            event.target.value = ''; 
+                            event.target.value = '';
                         }
                     }
                 });
@@ -2183,10 +2365,10 @@
                 
                 const workbook = XLSX.utils.book_new();
                 
-                // Criar worksheet com dados de exemplo
+                // CORREÇÃO: Remover a mesclagem de células que estava causando problemas
                 const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
                 
-                // Aplicar formatação e estilo
+                // Aplicar formatação e estilo SEM mesclagem
                 worksheet['!cols'] = [
                     { wch: 40 }, // Tarefa
                     { wch: 15 }, // Duração
@@ -2199,10 +2381,6 @@
                     { wch: 15 }, // Risco
                     { wch: 40 }  // Tarefa Pai
                 ];
-                
-                // Adicionar cabeçalho com estilo
-                if (!worksheet['!merges']) worksheet['!merges'] = [];
-                worksheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } });
                 
                 XLSX.utils.book_append_sheet(workbook, worksheet, "Template Importação");
                 
@@ -2344,55 +2522,174 @@
                 XLSX.writeFile(workbook, `${project.name.replace(/ /g,"_")}_Relatorio_Formatado.xlsx`);
             },
             
+            // CORREÇÃO COMPLETA: Função generatePdf corrigida para não gerar PDF em branco
             generatePdf: function(project) {
                 const loader = document.getElementById('loader');
                 loader.style.display = 'flex';
-                if (!project) { loader.style.display = 'none'; return; }
-                const reportElement = document.createElement('div');
-                reportElement.className = 'p-8 bg-white dark:bg-gray-800';
-                reportElement.style.width = '1123px'; 
-                const titleHeader = document.querySelector('#dashboard-view header').cloneNode(true);
-                titleHeader.querySelector('button.no-print')?.remove();
-                const kpiDashboardClone = document.getElementById('kpi-dashboard').cloneNode(true);
-                const currentViewId = document.getElementById('view-switcher').value === 'table' ? 'table-view' : 'gantt-view';
-                const activeViewClone = document.getElementById(currentViewId).cloneNode(true);
-                activeViewClone.classList.remove('hidden');
-                activeViewClone.style.display = 'block';
-
-                if (currentViewId === 'table-view') {
-                    const thead = activeViewClone.querySelector('thead');
-                    thead.querySelector('th:last-child')?.remove();
-                    activeViewClone.querySelectorAll('tbody td.no-print').forEach(cell => cell.remove());
+                
+                if (!project) { 
+                    loader.style.display = 'none'; 
+                    uiService.showToast('Nenhum projeto selecionado para gerar PDF', 'error');
+                    return; 
                 }
 
-                const scrollableContent = activeViewClone.querySelector('.overflow-x-auto, .gantt-timeline-container');
-                if (scrollableContent) scrollableContent.style.overflow = 'visible';
-                
-                reportElement.appendChild(titleHeader);
-                reportElement.appendChild(kpiDashboardClone);
-                reportElement.appendChild(activeViewClone);
-                
-                reportElement.style.position = 'absolute';
-                reportElement.style.left = '-9999px';
-                document.body.appendChild(reportElement);
-
-                setTimeout(() => {
-                    const opt = { 
-                        margin: 10, 
-                        filename: `${project.name.replace(/ /g,"_")}_Relatorio.pdf`, 
-                        image: { type: 'jpeg', quality: 0.98 }, 
-                        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: null }, 
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
+                try {
+                    // Criar um elemento HTML específico para o PDF
+                    const pdfContainer = document.createElement('div');
+                    pdfContainer.style.padding = '20px';
+                    pdfContainer.style.backgroundColor = 'white';
+                    pdfContainer.style.color = 'black';
+                    pdfContainer.style.fontFamily = 'Arial, sans-serif';
+                    pdfContainer.style.width = '100%';
+                    
+                    // Cabeçalho do relatório
+                    const header = `
+                        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                            <h1 style="font-size: 24px; font-weight: bold; margin: 0;">${project.name}</h1>
+                            <p style="color: #666; margin: 5px 0;">Relatório Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+                            <p style="color: #666; margin: 0;">Responsável: ${dataService.getManagerName(project.manager)}</p>
+                        </div>
+                    `;
+                    
+                    // KPIs
+                    const overallProgress = dataService.getProjectProgress(project.tasks);
+                    const kpis = `
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                                <div style="font-size: 18px; font-weight: bold;">${overallProgress}%</div>
+                                <div style="font-size: 12px;">Progresso Geral</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.length}</div>
+                                <div style="font-size: 12px;">Total de Tarefas</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => t.status === 'Concluída').length}</div>
+                                <div style="font-size: 12px;">Concluídas</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => this.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada').length}</div>
+                                <div style="font-size: 12px;">Atrasadas</div>
+                            </div>
+                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => t.risk).length}</div>
+                                <div style="font-size: 12px;">Em Risco</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Tabela de tarefas
+                    let tasksTable = `
+                        <div style="margin-top: 20px;">
+                            <h2 style="font-size: 18px; margin-bottom: 10px;">Tarefas do Projeto</h2>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                                <thead>
+                                    <tr style="background-color: #333; color: white;">
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Tarefa</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Duração</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Início</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Término</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Status</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Progresso</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Responsáveis</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    // Processar tarefas para a tabela
+                    const processTasksForPdf = (parentId, level) => {
+                        project.tasks.filter(t => t.parentId === parentId)
+                            .sort((a, b) => {
+                                const dateA = new Date(dataService.getLatestDates(a).startDate);
+                                const dateB = new Date(dataService.getLatestDates(b).startDate);
+                                return dateA - dateB;
+                            })
+                            .forEach(task => {
+                                const latestDates = dataService.getLatestDates(task);
+                                const duration = this.calculateDuration(latestDates.startDate, latestDates.endDate);
+                                const statusInfo = this.getTaskStatusClass(task.status, latestDates.endDate);
+                                const assignedUsersText = dataService.getAssignedUserNames(task.assignedUsers);
+                                
+                                const statusColor = statusInfo.name === 'Concluída' ? '#10b981' : 
+                                                 statusInfo.name === 'Atrasada' ? '#ef4444' : 
+                                                 statusInfo.name === 'Em Andamento' ? '#f59e0b' : '#6b7280';
+                                
+                                tasksTable += `
+                                    <tr>
+                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: left; padding-left: ${level * 15 + 8}px;">
+                                            ${task.name} ${task.risk ? '⚠️' : ''}
+                                        </td>
+                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${duration}d</td>
+                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center; background-color: ${statusColor}; color: white; font-weight: bold;">
+                                            ${statusInfo.name}
+                                        </td>
+                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${task.progress}%</td>
+                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${assignedUsersText}</td>
+                                    </tr>
+                                `;
+                                
+                                processTasksForPdf(task.id, level + 1);
+                            });
                     };
-                    html2pdf().from(reportElement).set(opt).save().then(() => {
-                        loader.style.display = 'none';
-                        document.body.removeChild(reportElement);
-                    }).catch(err => {
-                        console.error("Erro ao gerar PDF:", err);
-                        loader.style.display = 'none';
-                        document.body.removeChild(reportElement);
-                    });
-                }, 300);
+                    
+                    processTasksForPdf(null, 0);
+                    
+                    tasksTable += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    // Montar o conteúdo completo
+                    pdfContainer.innerHTML = header + kpis + tasksTable;
+                    
+                    // Adicionar ao DOM temporariamente
+                    pdfContainer.style.position = 'absolute';
+                    pdfContainer.style.left = '-9999px';
+                    document.body.appendChild(pdfContainer);
+                    
+                    // Configurações do PDF
+                    const opt = {
+                        margin: 10,
+                        filename: `${project.name.replace(/ /g, '_')}_Relatorio.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { 
+                            scale: 2,
+                            useCORS: true,
+                            logging: false,
+                            backgroundColor: '#FFFFFF',
+                            width: pdfContainer.scrollWidth,
+                            height: pdfContainer.scrollHeight
+                        },
+                        jsPDF: { 
+                            unit: 'mm', 
+                            format: 'a4', 
+                            orientation: 'portrait' 
+                        }
+                    };
+
+                    // Gerar PDF com timeout para garantir que o conteúdo seja renderizado
+                    setTimeout(() => {
+                        html2pdf().set(opt).from(pdfContainer).save().then(() => {
+                            loader.style.display = 'none';
+                            document.body.removeChild(pdfContainer);
+                            uiService.showToast('PDF gerado com sucesso!', 'success');
+                        }).catch(err => {
+                            console.error('Erro ao gerar PDF:', err);
+                            loader.style.display = 'none';
+                            document.body.removeChild(pdfContainer);
+                            uiService.showToast('Erro ao gerar PDF. Tente novamente.', 'error');
+                        });
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Erro no processo de PDF:', error);
+                    loader.style.display = 'none';
+                    uiService.showToast('Erro ao gerar PDF.', 'error');
+                }
             }
         };
 
