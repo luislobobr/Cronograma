@@ -9,10 +9,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Estilos personalizados */
         :root { --background-color: #f3f4f6; --text-color: #374151; --card-bg: #ffffff; --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --border-color: #e5e7eb; }
         html.dark { --background-color: #111827; --text-color: #d1d5db; --card-bg: #1f2937; --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2); --border-color: #374151; }
-        body { background-color: var(--background-color); color: var(--text-color); font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        body { 
+            background-color: var(--background-color); 
+            color: var(--text-color); 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-feature-settings: 'kern' 1, 'liga' 1;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s ease, color 0.3s ease; 
+        }
         @import url('https://rsms.me/inter/inter.css');
         .gantt-chart-container { display: grid; grid-template-columns: 250px 1fr; overflow-x: auto; position: relative; }
         .gantt-task-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -23,15 +30,12 @@
         html.dark #loader { background-color: rgba(17, 24, 39, 0.8); }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Transitions for Modals */
         .modal-transition { transition: opacity 0.3s ease, transform 0.3s ease; }
         .modal-hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
         .modal-visible { opacity: 1; transform: scale(1); }
-        /* Toast Notifications */
         #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; display: flex; flex-direction: column; gap: 0.75rem; }
         .toast { display: flex; align-items: center; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); transform: translateX(120%); opacity: 0; transition: all 0.4s cubic-bezier(0.21, 1.02, 0.73, 1); }
         .toast.show { transform: translateX(0); opacity: 1; }
-        /* Estilos para Impressão */
         @media print { 
             .no-print { display: none !important; } 
             body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
@@ -43,114 +47,55 @@
             .bg-red-500 { background-color: #ef4444 !important; }
             .bg-gray-500 { background-color: #6b7280 !important; }
         }
-        
-        /* Z-index para modais */
         .modal-z-50 { z-index: 50; }
         .modal-z-60 { z-index: 60; }
-        
-        /* Estilos para comentários editáveis */
         .comment-item { position: relative; }
         .comment-actions { position: absolute; right: 0; top: 0; display: none; }
         .comment-item:hover .comment-actions { display: flex; }
         .edit-comment-input { width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; }
-        
-        /* Estilos para ajuste de importação */
         .import-error-row { background-color: #fef2f2 !important; }
         .import-valid-row { background-color: #f0fdf4 !important; }
-
-        /* Estilos para tooltip dos gráficos */
         .chart-tooltip { position: absolute; background: rgba(0, 0, 0, 0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 1000; max-width: 300px; }
-        
-        /* Estilos para caixa de seleção de usuários */
         .assigned-users-container { max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; }
         .user-checkbox-item { display: flex; align-items: center; padding: 4px 0; }
         .user-checkbox-item input { margin-right: 8px; }
-
-        /* MELHORIAS PARA DRAG AND DROP */
-        .draggable-subtask {
-            cursor: grab;
-            transition: all 0.2s ease;
-            position: relative;
+        .draggable-subtask { cursor: grab; transition: all 0.2s ease; position: relative; }
+        .draggable-subtask:active { cursor: grabbing; }
+        .draggable-subtask.dragging { opacity: 0.6; background-color: #f0f9ff !important; transform: scale(1.02); z-index: 1000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+        .draggable-subtask.drag-over { background-color: #e0f2fe !important; border-top: 2px solid #0ea5e9 !important; }
+        .drag-handle { cursor: grab; color: #6b7280; font-size: 12px; margin-right: 8px; user-select: none; padding: 4px 6px; border-radius: 4px; transition: all 0.2s ease; }
+        .drag-handle:active { cursor: grabbing; }
+        .drag-handle:hover { background-color: #e5e7eb; color: #374151; }
+        html.dark .drag-handle:hover { background-color: #4b5563; color: #f3f4f6; }
+        tr.dragging { opacity: 0.6; background-color: #f3f4f6 !important; }
+        tr.drag-over { background-color: #dbeafe !important; border-top: 2px solid #3b82f6 !important; }
+        .subtask-row { background-color: #f9fafb; }
+        html.dark .subtask-row { background-color: #374151; }
+        html.dark .draggable-subtask.drag-over { background-color: #1e3a8a !important; }
+        html.dark .draggable-subtask.dragging { background-color: #1e40af !important; }
+        .drag-indicator { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; }
+        .project-date-editable { cursor: pointer; transition: all 0.2s ease; }
+        .project-date-editable:hover { background-color: #f0f9ff; border-radius: 4px; padding: 2px 4px; }
+        .project-date-locked { color: #6b7280; cursor: not-allowed; }
+        .project-overdue { background-color: #fef2f2 !important; border-left: 4px solid #ef4444 !important; }
+        html.dark .project-overdue { background-color: #7f1d1d !important; }
+        
+        /* MELHORIA: Tipografia melhorada para gráficos */
+        .dashboard-chart-text {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 600;
         }
-
-        .draggable-subtask:active {
-            cursor: grabbing;
+        
+        .chart-center-text {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 700;
+            font-size: 20px;
         }
-
-        .draggable-subtask.dragging {
-            opacity: 0.6;
-            background-color: #f0f9ff !important;
-            transform: scale(1.02);
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .draggable-subtask.drag-over {
-            background-color: #e0f2fe !important;
-            border-top: 2px solid #0ea5e9 !important;
-        }
-
-        .drag-handle {
-            cursor: grab;
-            color: #6b7280;
+        
+        .chart-label-text {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 500;
             font-size: 12px;
-            margin-right: 8px;
-            user-select: none;
-            padding: 4px 6px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        .drag-handle:hover {
-            background-color: #e5e7eb;
-            color: #374151;
-        }
-
-        html.dark .drag-handle:hover {
-            background-color: #4b5563;
-            color: #f3f4f6;
-        }
-
-        /* Feedback visual durante o drag */
-        tr.dragging {
-            opacity: 0.6;
-            background-color: #f3f4f6 !important;
-        }
-
-        tr.drag-over {
-            background-color: #dbeafe !important;
-            border-top: 2px solid #3b82f6 !important;
-        }
-
-        /* Estilo para as subtarefas */
-        .subtask-row {
-            background-color: #f9fafb;
-        }
-
-        html.dark .subtask-row {
-            background-color: #374151;
-        }
-
-        html.dark .draggable-subtask.drag-over {
-            background-color: #1e3a8a !important;
-        }
-
-        html.dark .draggable-subtask.dragging {
-            background-color: #1e40af !important;
-        }
-
-        /* Indicador visual de arrastável */
-        .drag-indicator {
-            width: 16px;
-            height: 16px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
         }
     </style>
 </head>
@@ -311,9 +256,49 @@
                         <option value="">Selecione um responsável</option>
                     </select>
                 </div>
+                <!-- NOVO: Campos de data de início e término do projeto -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="project-start-date" class="block text-sm font-medium text-gray-400">Data de Início</label>
+                        <input type="date" id="project-start-date" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="project-end-date" class="block text-sm font-medium text-gray-400">Data de Término</label>
+                        <input type="date" id="project-end-date" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required>
+                    </div>
+                </div>
                 <div class="flex justify-end gap-2">
                     <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Salvar Projeto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Data do Projeto -->
+    <div id="project-date-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Editar Datas do Projeto</h2>
+            <form id="project-date-form">
+                <input type="hidden" id="edit-project-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="edit-project-start-date" class="block text-sm font-medium text-gray-400">Data de Início</label>
+                        <input type="date" id="edit-project-start-date" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="edit-project-end-date" class="block text-sm font-medium text-gray-400">Data de Término</label>
+                        <input type="date" id="edit-project-end-date" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required>
+                    </div>
+                </div>
+                <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-md">
+                    <p class="text-sm text-blue-700 dark:text-blue-300">
+                        <strong>Atenção:</strong> Alterar as datas do projeto pode afetar todas as tarefas vinculadas.
+                    </p>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -408,6 +393,27 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmação de Data de Subtarefa -->
+    <div id="subtask-date-confirm-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4 text-[var(--text-color)]">Ajustar Data da Tarefa Pai</h2>
+            <p id="subtask-date-confirm-body" class="mb-6 text-gray-400">
+                A data de início da subtarefa é anterior à data da tarefa pai. 
+                Deseja alterar a data da tarefa pai?
+            </p>
+            <div class="flex justify-between items-center mb-4">
+                <label class="flex items-center">
+                    <input type="checkbox" id="update-parent-dates" class="h-4 w-4 text-blue-600 border-gray-300 rounded" checked>
+                    <span class="ml-2 text-sm font-medium">Atualizar datas da tarefa pai</span>
+                </label>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="subtask-date-cancel-btn" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                <button id="subtask-date-confirm-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Conteúdo Principal -->
     <div class="relative min-h-screen">
         <input type="file" id="import-excel-input" class="hidden" accept=".xlsx, .xls">
@@ -437,8 +443,47 @@
                 <!-- Os gráficos serão inseridos aqui dinamicamente -->
             </div>
             
-            <div class="mb-6"><button id="add-project-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>Novo Projeto</button></div>
+            <div class="flex justify-between items-center mb-6">
+                <button id="add-project-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Novo Projeto
+                </button>
+                
+                <!-- Botões de visualização posicionados no canto direito -->
+                <div class="flex items-center gap-3" id="project-view-mode-controls">
+                    <button id="view-cards-btn" class="px-4 py-2 rounded-md bg-blue-600 text-white flex items-center gap-2 hover:bg-blue-700">
+                        <span>🔳</span> Cards
+                    </button>
+                    <button id="view-list-btn" class="px-4 py-2 rounded-md bg-gray-300 text-gray-800 flex items-center gap-2 hover:bg-gray-400">
+                        <span>📋</span> Lista
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Vista Cards (padrão) -->
             <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            
+            <!-- Vista Lista (oculta inicialmente) -->
+            <div id="project-list-table" class="hidden bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg shadow-md p-4 no-print">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs uppercase bg-gray-700 text-gray-300">
+                            <tr>
+                                <th class="p-3">Projeto</th>
+                                <th class="p-3">Responsável</th>
+                                <th class="p-3">Progresso</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Início</th>
+                                <th class="p-3">Término</th>
+                                <th class="p-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="project-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- Vista do Dashboard do Projeto -->
@@ -448,8 +493,25 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
                    Voltar para Cronogramas
                 </button>
-                <h1 id="project-title" class="text-4xl font-bold">Nome do Projeto</h1>
-                <p class="text-gray-400">Painel de controle com o cronograma de execução.</p>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 id="project-title" class="text-4xl font-bold">Nome do Projeto</h1>
+                        <p class="text-gray-400">Painel de controle com o cronograma de execução.</p>
+                    </div>
+                    <!-- NOVO: Botão para editar datas do projeto -->
+                    <button id="edit-project-dates-btn" class="no-print bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                        </svg>
+                        Editar Datas do Projeto
+                    </button>
+                </div>
+                <!-- NOVO: Exibição das datas do projeto -->
+                <div id="project-dates-display" class="mt-2 text-sm text-gray-500">
+                    <span id="project-start-date-display"></span> a <span id="project-end-date-display"></span>
+                    <span id="project-date-auto" class="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hidden">Datas automáticas</span>
+                    <span id="project-date-manual" class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded hidden">Datas manuais</span>
+                </div>
             </header>
             <div id="kpi-dashboard" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"></div>
             
@@ -775,6 +837,9 @@
                             manager: projectData.manager || 'Não Definido', 
                             creatorId: creatorId, 
                             tasks: tasksWithDefaults,
+                            startDate: projectData.startDate || '', // NOVO: Data de início
+                            endDate: projectData.endDate || '',     // NOVO: Data de término
+                            dateMode: projectData.dateMode || 'manual', // NOVO: Modo de data (manual/auto)
                             ...projectData 
                         };
                         newProjects.push(project); 
@@ -829,6 +894,9 @@
                     const newProjectData = { 
                         name: projectData.name, 
                         manager: projectData.manager, 
+                        startDate: projectData.startDate, // NOVO: Salvar data de início
+                        endDate: projectData.endDate,     // NOVO: Salvar data de término
+                        dateMode: 'manual', // NOVO: Inicialmente manual
                         tasks: [],
                         creatorId: dataService.userId
                     };
@@ -836,6 +904,28 @@
                 } catch (error) {
                     console.error("Erro ao adicionar projeto:", error);
                     uiService.showToast('Falha ao adicionar projeto.', 'error');
+                }
+            },
+
+            // NOVA FUNÇÃO: Atualizar datas do projeto
+            updateProjectDates: async (projectId, startDate, endDate, dateMode = 'manual') => {
+                try {
+                    const project = dataService.getProjectById(projectId);
+                    if (!project) throw new Error('Projeto não encontrado');
+                    
+                    const ownerUid = dataService.getProjectOwnerUid(projectId);
+                    const projectDocRef = doc(dataService.getProjectCollectionRef(ownerUid), projectId);
+
+                    await setDoc(projectDocRef, { 
+                        startDate: startDate,
+                        endDate: endDate,
+                        dateMode: dateMode
+                    }, { merge: true });
+
+                    return true;
+                } catch (error) {
+                    console.error("Erro ao atualizar datas do projeto:", error);
+                    throw error;
                 }
             },
 
@@ -859,6 +949,9 @@
                     await setDoc(projectDocRef, { 
                         name: project.name, 
                         manager: project.manager, 
+                        startDate: project.startDate, // NOVO: Salvar data de início
+                        endDate: project.endDate,     // NOVO: Salvar data de término
+                        dateMode: project.dateMode || 'manual', // NOVO: Salvar modo de data
                         tasks: project.tasks,
                         creatorId: ownerUid
                     }, { merge: true });
@@ -869,13 +962,244 @@
                 }
             },
 
+            // NOVA FUNÇÃO: Calcular datas automáticas do projeto baseado nas tarefas
+            calculateProjectDatesFromTasks: function(project) {
+                if (!project.tasks || project.tasks.length === 0) {
+                    return { startDate: project.startDate, endDate: project.endDate };
+                }
+
+                // Encontrar a data de início mais antiga e data de término mais recente
+                let earliestStartDate = null;
+                let latestEndDate = null;
+
+                project.tasks.forEach(task => {
+                    const taskDates = this.getLatestDates(task);
+                    if (taskDates.startDate && taskDates.endDate) {
+                        const taskStart = new Date(taskDates.startDate);
+                        const taskEnd = new Date(taskDates.endDate);
+
+                        if (!earliestStartDate || taskStart < earliestStartDate) {
+                            earliestStartDate = taskStart;
+                        }
+                        if (!latestEndDate || taskEnd > latestEndDate) {
+                            latestEndDate = taskEnd;
+                        }
+                    }
+                });
+
+                if (earliestStartDate && latestEndDate) {
+                    return {
+                        startDate: earliestStartDate.toISOString().split('T')[0],
+                        endDate: latestEndDate.toISOString().split('T')[0]
+                    };
+                }
+
+                return { startDate: project.startDate, endDate: project.endDate };
+            },
+
+            // NOVA FUNÇÃO: Verificar se projeto tem subtarefas
+            projectHasSubtasks: function(project) {
+                return project.tasks && project.tasks.some(task => task.parentId !== null && task.parentId !== undefined);
+            },
+
+            // NOVA FUNÇÃO: Verificar se tarefa tem subtarefas
+            taskHasSubtasks: function(project, taskId) {
+                return project.tasks && project.tasks.some(task => task.parentId === taskId);
+            },
+
+            // NOVA FUNÇÃO: Calcular datas automáticas de tarefa pai
+            calculateParentTaskDates: function(project, parentTaskId) {
+                const childTasks = project.tasks.filter(t => t.parentId === parentTaskId);
+                if (childTasks.length === 0) return null;
+
+                let earliestStartDate = null;
+                let latestEndDate = null;
+
+                childTasks.forEach(child => {
+                    const childDates = this.getLatestDates(child);
+                    if (childDates.startDate && childDates.endDate) {
+                        const childStart = new Date(childDates.startDate);
+                        const childEnd = new Date(childDates.endDate);
+
+                        if (!earliestStartDate || childStart < earliestStartDate) {
+                            earliestStartDate = childStart;
+                        }
+                        if (!latestEndDate || childEnd > latestEndDate) {
+                            latestEndDate = childEnd;
+                        }
+                    }
+                });
+
+                if (earliestStartDate && latestEndDate) {
+                    return {
+                        startDate: earliestStartDate.toISOString().split('T')[0],
+                        endDate: latestEndDate.toISOString().split('T')[0]
+                    };
+                }
+
+                return null;
+            },
+
+            // NOVA FUNÇÃO: Validar data de tarefa contra projeto
+            validateTaskDateAgainstProject: function(taskStartDate, projectStartDate) {
+                if (!taskStartDate || !projectStartDate) return true;
+                
+                const taskStart = new Date(taskStartDate);
+                const projectStart = new Date(projectStartDate);
+                
+                return taskStart >= projectStart;
+            },
+
+            // NOVA FUNÇÃO: Validar data de subtarefa contra tarefa pai
+            validateSubtaskDateAgainstParent: function(subtaskStartDate, parentStartDate) {
+                if (!subtaskStartDate || !parentStartDate) return true;
+                
+                const subtaskStart = new Date(subtaskStartDate);
+                const parentStart = new Date(parentStartDate);
+                
+                return subtaskStart >= parentStart;
+            },
+
+            // NOVA FUNÇÃO: Resolver conflito de datas ao re-parentar tarefa
+            resolveReparentingDateConflict: async function(movingTaskId, newParentId) {
+                const project = dataService.getCurrentProject();
+                if (!project) return false;
+
+                const movingTask = project.tasks.find(t => t.id === movingTaskId);
+                const newParent = project.tasks.find(t => t.id === newParentId);
+
+                if (!movingTask || !newParent) return false;
+
+                const movingTaskDates = this.getLatestDates(movingTask);
+                const parentDates = this.getLatestDates(newParent);
+
+                // Verificar se há conflito
+                if (new Date(movingTaskDates.startDate) < new Date(parentDates.startDate)) {
+                    // CONFLITO: A tarefa sendo movida começa antes da nova tarefa pai
+                    
+                    // Opção B: Aplicar roll-up automático
+                    const shouldUpdateParent = await uiService.showSubtaskDateConfirmModal(
+                        movingTask.name,
+                        movingTaskDates.startDate,
+                        movingTaskDates.endDate,
+                        parentDates.startDate,
+                        parentDates.endDate
+                    );
+                    
+                    if (shouldUpdateParent) {
+                        // Atualizar a tarefa pai para acomodar a subtarefa
+                        const updatedParentDates = {
+                            startDate: movingTaskDates.startDate,
+                            endDate: new Date(Math.max(
+                                new Date(parentDates.endDate).getTime(),
+                                new Date(movingTaskDates.endDate).getTime()
+                            )).toISOString().split('T')[0]
+                        };
+
+                        // Atualizar tarefa pai
+                        const updatedTasks = project.tasks.map(t => {
+                            if (t.id === newParentId) {
+                                const updatedTask = { ...t };
+                                if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
+                                    const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
+                                    if (latestDates.startDate !== updatedParentDates.startDate || latestDates.endDate !== updatedParentDates.endDate) {
+                                        updatedTask.dateHistory = [
+                                            ...updatedTask.dateHistory,
+                                            { startDate: updatedParentDates.startDate, endDate: updatedParentDates.endDate }
+                                        ];
+                                    }
+                                } else {
+                                    updatedTask.dateHistory = [{ 
+                                        startDate: updatedParentDates.startDate, 
+                                        endDate: updatedParentDates.endDate 
+                                    }];
+                                }
+                                return updatedTask;
+                            }
+                            return t;
+                        });
+
+                        project.tasks = updatedTasks;
+                        return true;
+                    } else {
+                        // Usuário cancelou - não permitir o re-parenting
+                        return false;
+                    }
+                }
+
+                return true; // Sem conflito
+            },
+
+            // NOVA FUNÇÃO: Atualizar automaticamente datas do projeto quando em modo automático
+            updateProjectDatesIfAuto: function(project) {
+                if (project.dateMode === 'auto') {
+                    const calculatedDates = this.calculateProjectDatesFromTasks(project);
+                    if (calculatedDates.startDate !== project.startDate || calculatedDates.endDate !== project.endDate) {
+                        project.startDate = calculatedDates.startDate;
+                        project.endDate = calculatedDates.endDate;
+                        return true;
+                    }
+                }
+                return false;
+            },
+
+            // NOVA FUNÇÃO: Atualizar automaticamente datas de tarefas pai
+            updateParentTaskDatesIfNeeded: function(project, taskId) {
+                const task = project.tasks.find(t => t.id === taskId);
+                if (!task || !task.parentId) return false;
+
+                const parentTask = project.tasks.find(t => t.id === task.parentId);
+                if (!parentTask) return false;
+
+                const calculatedDates = this.calculateParentTaskDates(project, task.parentId);
+                if (!calculatedDates) return false;
+
+                const parentDates = this.getLatestDates(parentTask);
+                if (calculatedDates.startDate !== parentDates.startDate || calculatedDates.endDate !== parentDates.endDate) {
+                    // Atualizar a tarefa pai
+                    const updatedTasks = project.tasks.map(t => {
+                        if (t.id === task.parentId) {
+                            const updatedTask = { ...t };
+                            if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
+                                const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
+                                if (latestDates.startDate !== calculatedDates.startDate || latestDates.endDate !== calculatedDates.endDate) {
+                                    updatedTask.dateHistory = [
+                                        ...updatedTask.dateHistory,
+                                        { startDate: calculatedDates.startDate, endDate: calculatedDates.endDate }
+                                    ];
+                                }
+                            } else {
+                                updatedTask.dateHistory = [{ 
+                                    startDate: calculatedDates.startDate, 
+                                    endDate: calculatedDates.endDate 
+                                }];
+                            }
+                            return updatedTask;
+                        }
+                        return t;
+                    });
+
+                    project.tasks = updatedTasks;
+                    return true;
+                }
+
+                return false;
+            },
+
+            // FUNÇÃO saveTask ATUALIZADA com todas as validações
             saveTask: async (taskData) => {
                 const project = dataService.getCurrentProject();
                 if (!project) return;
 
                 const { newStartDate, newEndDate, dependsOn, ...restOfTaskData } = taskData;
                 
-                // CORREÇÃO: Se houver dependência, define a tarefa pai
+                // VALIDAÇÃO 1: Verificar se a data é anterior à data do projeto
+                if (!dataService.validateTaskDateAgainstProject(newStartDate, project.startDate)) {
+                    uiService.showToast(`A data de início não pode ser anterior à data de início do projeto (${new Date(project.startDate).toLocaleDateString('pt-BR')}).`, 'error');
+                    return;
+                }
+
+                // VALIDAÇÃO 2: Se houver dependência, define a tarefa pai
                 if (dependsOn) {
                     // Encontra a tarefa da qual esta depende
                     const parentTask = project.tasks.find(t => t.id === dependsOn);
@@ -890,92 +1214,40 @@
                         const childStart = new Date(newStartDate);
                         const childEnd = new Date(newEndDate);
 
-                        if (childStart < parentStart) {
-                            uiService.showToast('A subtarefa não pode começar antes da tarefa pai!', 'error');
-                            return;
-                        }
-
-                        if (childEnd > parentEnd) {
-                            uiService.showToast('A subtarefa não pode terminar depois da tarefa pai!', 'error');
-                            return;
-                        }
-                    }
-                }
-
-                // NOVA FUNCIONALIDADE 1: Validação inteligente para subtarefas
-                if (restOfTaskData.parentId) {
-                    const parentTask = project.tasks.find(t => t.id === restOfTaskData.parentId);
-                    if (parentTask) {
-                        const parentDates = dataService.getLatestDates(parentTask);
-                        const parentStart = new Date(parentDates.startDate);
-                        const childStart = new Date(newStartDate);
-                        const childEnd = new Date(newEndDate);
-
-                        // Se a subtarefa começa antes da tarefa pai, perguntar ao usuário
-                        if (childStart < parentStart) {
-                            const shouldUpdateParent = await uiService.showConfirmModalPromise(
-                                `A subtarefa "${restOfTaskData.name}" começa antes da tarefa pai. Deseja ajustar a data de início da tarefa pai para ${newStartDate}?`,
-                                'Ajustar Datas da Tarefa Pai'
+                        // VALIDAÇÃO 3: Verificar se subtarefa começa antes da tarefa pai
+                        if (childStart < parentStart || childEnd > parentEnd) {
+                            const shouldUpdateParent = await uiService.showSubtaskDateConfirmModal(
+                                restOfTaskData.name,
+                                newStartDate,
+                                newEndDate,
+                                parentDates.startDate,
+                                parentDates.endDate
                             );
                             
                             if (shouldUpdateParent) {
-                                // Atualizar a tarefa pai para começar na mesma data da subtarefa
+                                // Atualizar a tarefa pai para acomodar a subtarefa
                                 const updatedTasks = project.tasks.map(t => {
                                     if (t.id === restOfTaskData.parentId) {
                                         const updatedTask = { ...t };
+                                        const newParentStart = new Date(Math.min(
+                                            parentStart.getTime(),
+                                            childStart.getTime()
+                                        )).toISOString().split('T')[0];
                                         const newParentEnd = new Date(Math.max(
-                                            new Date(parentDates.endDate).getTime(),
+                                            parentEnd.getTime(),
                                             childEnd.getTime()
                                         )).toISOString().split('T')[0];
                                         
                                         if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
                                             const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
-                                            if (latestDates.startDate !== newStartDate || latestDates.endDate !== newParentEnd) {
+                                            if (latestDates.startDate !== newParentStart || latestDates.endDate !== newParentEnd) {
                                                 updatedTask.dateHistory = [
                                                     ...updatedTask.dateHistory,
-                                                    { startDate: newStartDate, endDate: newParentEnd }
+                                                    { startDate: newParentStart, endDate: newParentEnd }
                                                 ];
                                             }
                                         } else {
-                                            updatedTask.dateHistory = [{ startDate: newStartDate, endDate: newParentEnd }];
-                                        }
-                                        return updatedTask;
-                                    }
-                                    return t;
-                                });
-                                project.tasks = updatedTasks;
-                            } else {
-                                return; // Não salvar se o usuário cancelar
-                            }
-                        }
-
-                        // Se a subtarefa termina depois da tarefa pai, perguntar ao usuário
-                        if (childEnd > new Date(parentDates.endDate)) {
-                            const shouldUpdateParent = await uiService.showConfirmModalPromise(
-                                `A subtarefa "${restOfTaskData.name}" termina depois da tarefa pai. Deseja ajustar a data de término da tarefa pai para ${newEndDate}?`,
-                                'Ajustar Datas da Tarefa Pai'
-                            );
-                            
-                            if (shouldUpdateParent) {
-                                // Atualizar a tarefa pai para terminar na mesma data da subtarefa
-                                const updatedTasks = project.tasks.map(t => {
-                                    if (t.id === restOfTaskData.parentId) {
-                                        const updatedTask = { ...t };
-                                        const newParentStart = new Date(Math.min(
-                                            new Date(parentDates.startDate).getTime(),
-                                            childStart.getTime()
-                                        )).toISOString().split('T')[0];
-                                        
-                                        if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
-                                            const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
-                                            if (latestDates.startDate !== newParentStart || latestDates.endDate !== newEndDate) {
-                                                updatedTask.dateHistory = [
-                                                    ...updatedTask.dateHistory,
-                                                    { startDate: newParentStart, endDate: newEndDate }
-                                                ];
-                                            }
-                                        } else {
-                                            updatedTask.dateHistory = [{ startDate: newParentStart, endDate: newEndDate }];
+                                            updatedTask.dateHistory = [{ startDate: newParentStart, endDate: newParentEnd }];
                                         }
                                         return updatedTask;
                                     }
@@ -1025,10 +1297,13 @@
                 
                 project.tasks = updatedTasks;
                 
-                // MELHORIA 01: Atualizar datas da tarefa pai automaticamente
+                // ATUALIZAÇÃO AUTOMÁTICA: Atualizar datas da tarefa pai se necessário
                 if (restOfTaskData.parentId) {
-                    dataService.updateParentTaskDates(restOfTaskData.parentId);
+                    dataService.updateParentTaskDatesIfNeeded(project, restOfTaskData.id || newTask.id);
                 }
+                
+                // ATUALIZAÇÃO AUTOMÁTICA: Atualizar datas do projeto se em modo automático
+                dataService.updateProjectDatesIfAuto(project);
                 
                 dataService.recalculateAllProgress();
                 await dataService.saveProjectDocument(project);
@@ -1141,6 +1416,10 @@
                 });
 
                 project.tasks = updatedTasks;
+                
+                // ATUALIZAÇÃO AUTOMÁTICA: Atualizar datas do projeto se em modo automático
+                dataService.updateProjectDatesIfAuto(project);
+                
                 dataService.recalculateAllProgress();
                 await dataService.saveProjectDocument(project);
             },
@@ -1234,7 +1513,7 @@
 
                                 // Validar cada linha
                                 jsonData.forEach((row, index) => {
-                                    const result = this.validateImportRow(row, index + 2, importResults.taskNameMap);
+                                    const result = this.validateImportRow(row, index + 2, importResults.taskNameMap, project.startDate);
                                     if (result.isValid) {
                                         importResults.validTasks.push(result.task);
                                     } else {
@@ -1272,8 +1551,8 @@
                 }
             },
 
-            // FUNÇÃO: Validar linha individual
-            validateImportRow: function(row, rowNumber, taskNameMap) {
+            // FUNÇÃO: Validar linha individual (ATUALIZADA com validação de data do projeto)
+            validateImportRow: function(row, rowNumber, taskNameMap, projectStartDate) {
                 const errors = [];
                 const task = {};
 
@@ -1296,8 +1575,13 @@
                     if (new Date(startDate) > new Date(endDate)) {
                         errors.push('Data de início não pode ser posterior à data de término');
                     } else {
-                        task.startDate = startDate;
-                        task.endDate = endDate;
+                        // NOVA VALIDAÇÃO: Verificar se data é anterior ao projeto
+                        if (projectStartDate && new Date(startDate) < new Date(projectStartDate)) {
+                            errors.push(`Data de início não pode ser anterior à data do projeto (${new Date(projectStartDate).toLocaleDateString('pt-BR')})`);
+                        } else {
+                            task.startDate = startDate;
+                            task.endDate = endDate;
+                        }
                     }
                 }
 
@@ -1372,6 +1656,10 @@
             // FUNÇÃO: Finalizar importação
             finalizeImport: async function(validTasks, project) {
                 project.tasks = [...project.tasks, ...validTasks];
+                
+                // ATUALIZAÇÃO AUTOMÁTICA: Atualizar datas do projeto se em modo automático
+                dataService.updateProjectDatesIfAuto(project);
+                
                 dataService.recalculateAllProgress();
                 await dataService.saveProjectDocument(project);
                 return validTasks.length;
@@ -1473,6 +1761,37 @@
                     setTimeout(() => {
                         uiService.openAddUserModal();
                     }, 300);
+                });
+
+                // --- CORREÇÕES ADICIONADAS ---
+                // CORREÇÃO 1: Botões de fechar funcionais para todos os modais
+                document.querySelectorAll('.cancel-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const modal = e.target.closest('.modal-transition');
+                        if (modal) {
+                            uiService.closeModal(modal.id);
+                        }
+                    });
+                });
+
+                // CORREÇÃO 2: Fechar modal de gestão de usuários
+                document.querySelector('#user-management-modal .cancel-btn').addEventListener('click', () => {
+                    uiService.closeModal('user-management-modal');
+                });
+
+                // CORREÇÃO 3: Fechar modal de adicionar usuário
+                document.querySelector('#add-user-modal .cancel-btn').addEventListener('click', () => {
+                    uiService.closeModal('add-user-modal');
+                });
+
+                // CORREÇÃO 4: Fechar modal de projeto
+                document.querySelector('#project-modal .cancel-btn').addEventListener('click', () => {
+                    uiService.closeModal('project-modal');
+                });
+
+                // CORREÇÃO 5: Fechar modal de datas do projeto
+                document.querySelector('#project-date-modal .cancel-btn').addEventListener('click', () => {
+                    uiService.closeModal('project-date-modal');
                 });
 
                 // --- AUTENTICAÇÃO ---
@@ -1594,13 +1913,55 @@
                     event.preventDefault();
                     const name = document.getElementById('project-name').value.trim();
                     const manager = document.getElementById('project-manager').value;
+                    const startDate = document.getElementById('project-start-date').value; // NOVO: Data de início
+                    const endDate = document.getElementById('project-end-date').value;     // NOVO: Data de término
                     
-                    if (name && manager) {
-                        dataService.addProject({ name, manager });
+                    if (name && manager && startDate && endDate) {
+                        if (new Date(startDate) > new Date(endDate)) {
+                            uiService.showToast('Data de início não pode ser posterior à data de término!', 'error');
+                            return;
+                        }
+                        
+                        dataService.addProject({ name, manager, startDate, endDate });
                         uiService.closeModal('project-modal');
                         uiService.showToast('Projeto criado com sucesso! Sincronizando...', 'success');
                     } else {
                         uiService.showToast('Preencha todos os campos obrigatórios.', 'error');
+                    }
+                });
+                
+                // NOVO: Event listener para edição de datas do projeto
+                document.getElementById('edit-project-dates-btn').addEventListener('click', () => {
+                    uiService.openProjectDateModal();
+                });
+                
+                // NOVO: Event listener para formulário de edição de datas do projeto
+                document.getElementById('project-date-form').addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const projectId = document.getElementById('edit-project-id').value;
+                    const startDate = document.getElementById('edit-project-start-date').value;
+                    const endDate = document.getElementById('edit-project-end-date').value;
+                    
+                    if (!startDate || !endDate) {
+                        uiService.showToast('Preencha ambas as datas.', 'error');
+                        return;
+                    }
+                    
+                    if (new Date(startDate) > new Date(endDate)) {
+                        uiService.showToast('Data de início não pode ser posterior à data de término!', 'error');
+                        return;
+                    }
+                    
+                    document.getElementById('loader').style.display = 'flex';
+                    try {
+                        await dataService.updateProjectDates(projectId, startDate, endDate, 'manual');
+                        uiService.closeModal('project-date-modal');
+                        uiService.showToast('Datas do projeto atualizadas com sucesso!', 'success');
+                    } catch (error) {
+                        console.error('Erro ao atualizar datas do projeto:', error);
+                        uiService.showToast('Erro ao atualizar datas do projeto.', 'error');
+                    } finally {
+                        document.getElementById('loader').style.display = 'none';
                     }
                 });
                 
@@ -1754,7 +2115,27 @@
                         }
                     }
                 });
-                document.querySelectorAll('.cancel-btn').forEach(btn => btn.addEventListener('click', () => uiService.closeAllModals()));
+
+                // NOVO: Event listeners para o modal de confirmação de datas de subtarefas
+                document.getElementById('subtask-date-cancel-btn').addEventListener('click', () => {
+                    uiService.closeModal('subtask-date-confirm-modal');
+                    uiService.subtaskDateConfirmResolve(false);
+                });
+
+                document.getElementById('subtask-date-confirm-btn').addEventListener('click', () => {
+                    const updateParent = document.getElementById('update-parent-dates').checked;
+                    uiService.closeModal('subtask-date-confirm-modal');
+                    uiService.subtaskDateConfirmResolve(updateParent);
+                });
+
+                // NOVO: Event listeners para os botões de visualização Cards/Lista
+                document.getElementById('view-cards-btn').addEventListener('click', () => {
+                    uiService.switchProjectView('cards');
+                });
+
+                document.getElementById('view-list-btn').addEventListener('click', () => {
+                    uiService.switchProjectView('list');
+                });
             }
         };
 
@@ -1762,6 +2143,7 @@
         const uiService = {
             mainDashboardCharts: {},
             editingCommentId: null, // Para controle de edição de comentários
+            subtaskDateConfirmResolve: null, // Para resolver a Promise do modal de confirmação
 
             // --- AUTH UI ---
             updateUserRoleDisplay: () => {
@@ -1799,6 +2181,30 @@
                 }
                 document.getElementById('add-user-form').reset();
                 uiService.openModal('add-user-modal');
+            },
+            
+            // NOVA FUNÇÃO: Abrir modal de edição de datas do projeto
+            openProjectDateModal: function() {
+                const project = dataService.getCurrentProject();
+                if (!project) return;
+                
+                document.getElementById('edit-project-id').value = project.id;
+                document.getElementById('edit-project-start-date').value = project.startDate;
+                document.getElementById('edit-project-end-date').value = project.endDate;
+                
+                // Verificar se o projeto tem subtarefas para determinar se pode editar manualmente
+                const hasSubtasks = dataService.projectHasSubtasks(project);
+                
+                if (hasSubtasks && project.dateMode === 'auto') {
+                    document.getElementById('edit-project-start-date').disabled = true;
+                    document.getElementById('edit-project-end-date').disabled = true;
+                    uiService.showToast('As datas do projeto são automáticas devido às subtarefas existentes.', 'info');
+                } else {
+                    document.getElementById('edit-project-start-date').disabled = false;
+                    document.getElementById('edit-project-end-date').disabled = false;
+                }
+                
+                this.openModal('project-date-modal');
             },
             
             renderUserManagementTable: () => {
@@ -1900,6 +2306,23 @@
                     option.value = user.id;
                     option.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
                     selectEl.appendChild(option);
+                });
+            },
+
+            // NOVA FUNÇÃO: Mostrar modal de confirmação para datas de subtarefas
+            showSubtaskDateConfirmModal: function(subtaskName, subtaskStartDate, subtaskEndDate, parentStartDate, parentEndDate) {
+                return new Promise((resolve) => {
+                    this.subtaskDateConfirmResolve = resolve;
+                    
+                    const body = document.getElementById('subtask-date-confirm-body');
+                    body.innerHTML = `
+                        A subtarefa "<strong>${subtaskName}</strong>" possui datas fora do intervalo da tarefa pai.<br><br>
+                        <strong>Subtarefa:</strong> ${new Date(subtaskStartDate).toLocaleDateString('pt-BR')} - ${new Date(subtaskEndDate).toLocaleDateString('pt-BR')}<br>
+                        <strong>Tarefa Pai:</strong> ${new Date(parentStartDate).toLocaleDateString('pt-BR')} - ${new Date(parentEndDate).toLocaleDateString('pt-BR')}<br><br>
+                        Deseja ajustar as datas da tarefa pai para acomodar a subtarefa?
+                    `;
+                    
+                    this.openModal('subtask-date-confirm-modal');
                 });
             },
 
@@ -2050,7 +2473,8 @@
                 };
                 
                 // Validar novamente
-                const validationResult = dataService.validateImportRow(updatedData, row.row, importResults.taskNameMap);
+                const project = dataService.getCurrentProject();
+                const validationResult = dataService.validateImportRow(updatedData, row.row, importResults.taskNameMap, project.startDate);
                 
                 if (validationResult.isValid) {
                     // Mover para válidas
@@ -2110,6 +2534,109 @@
 
                     this.openModal('confirm-modal');
                 });
+            },
+
+            // NOVA FUNÇÃO: Alternar entre visualização Cards/Lista
+            switchProjectView: function(viewType) {
+                const cardsBtn = document.getElementById('view-cards-btn');
+                const listBtn = document.getElementById('view-list-btn');
+                const cardView = document.getElementById('project-list');
+                const listView = document.getElementById('project-list-table');
+
+                if (viewType === 'cards') {
+                    // Ativar cards
+                    cardsBtn.classList.add('bg-blue-600', 'text-white');
+                    cardsBtn.classList.remove('bg-gray-300', 'text-gray-800');
+                    
+                    listBtn.classList.add('bg-gray-300', 'text-gray-800');
+                    listBtn.classList.remove('bg-blue-600', 'text-white');
+                    
+                    // Mostrar cards, ocultar lista
+                    cardView.classList.remove('hidden');
+                    listView.classList.add('hidden');
+                    
+                } else if (viewType === 'list') {
+                    // Ativar lista
+                    listBtn.classList.add('bg-blue-600', 'text-white');
+                    listBtn.classList.remove('bg-gray-300', 'text-gray-800');
+                    
+                    cardsBtn.classList.add('bg-gray-300', 'text-gray-800');
+                    cardsBtn.classList.remove('bg-blue-600', 'text-white');
+                    
+                    // Mostrar lista, ocultar cards
+                    listView.classList.remove('hidden');
+                    cardView.classList.add('hidden');
+                    
+                    // Renderizar a lista se necessário
+                    this.renderProjectListTable(dataService.projects);
+                }
+            },
+
+            // NOVA FUNÇÃO: Renderizar lista de projetos em formato de tabela
+            renderProjectListTable: function(projects) {
+                const body = document.getElementById("project-table-body");
+
+                if (!projects || projects.length === 0) {
+                    body.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-gray-400">Nenhum projeto encontrado.</td></tr>`;
+                    return;
+                }
+
+                body.innerHTML = projects.map(p => {
+                    const progress = dataService.getProjectProgress(p.tasks);
+                    const manager = dataService.getManagerName(p.manager) || "Não informado";
+                    const start = p.startDate ? new Date(p.startDate).toLocaleDateString("pt-BR") : "—";
+                    const end = p.endDate ? new Date(p.endDate).toLocaleDateString("pt-BR") : "—";
+                    const status = progress === 100 ? "Concluído" : progress > 0 ? "Em Andamento" : "Não iniciado";
+                    
+                    // Verificar se o projeto está atrasado
+                    const today = new Date();
+                    const endDate = p.endDate ? new Date(p.endDate) : null;
+                    const isOverdue = endDate && endDate < today && progress < 100;
+                    const rowClass = isOverdue ? 'project-overdue' : '';
+
+                    return `
+                        <tr class="border-b border-[var(--border-color)] ${rowClass}">
+                            <td class="p-3 font-medium">${p.name}</td>
+                            <td class="p-3">${manager}</td>
+                            <td class="p-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: ${progress}%"></div>
+                                    </div>
+                                    <span class="text-sm">${progress}%</span>
+                                </div>
+                            </td>
+                            <td class="p-3">
+                                <span class="px-2 py-1 rounded-full text-xs ${isOverdue ? 'bg-red-600 text-white' : status === 'Concluído' ? 'bg-green-600 text-white' : status === 'Em Andamento' ? 'bg-yellow-500 text-black' : 'bg-gray-500 text-white'}">
+                                    ${isOverdue ? 'Atrasado' : status}
+                                </span>
+                            </td>
+                            <td class="p-3">${start}</td>
+                            <td class="p-3">${end}</td>
+                            <td class="p-3 text-center">
+                                <button class="open-project bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700" data-id="${p.id}">Abrir</button>
+                                <button class="delete-project bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 ml-2" data-id="${p.id}">Excluir</button>
+                            </td>
+                        </tr>`;
+                }).join("");
+
+                // Adicionar event listeners
+                setTimeout(() => {
+                    document.querySelectorAll(".open-project").forEach(btn => {
+                        btn.addEventListener("click", () => App.openProject(btn.dataset.id));
+                    });
+
+                    document.querySelectorAll(".delete-project").forEach(btn => {
+                        btn.addEventListener("click", () => {
+                            uiService.showConfirmModal("Excluir o projeto?", async () => {
+                                document.getElementById('loader').style.display = 'flex';
+                                await dataService.deleteProject(btn.dataset.id);
+                                document.getElementById('loader').style.display = 'none';
+                                uiService.showToast("Projeto excluído", "error");
+                            });
+                        });
+                    });
+                }, 20);
             },
 
             // NOVA FUNÇÃO: Configurar drag and drop para subtarefas (CORRIGIDA)
@@ -2345,11 +2872,42 @@
                 );
 
                 document.getElementById('project-title').textContent = project.name;
+                
+                // NOVO: Atualizar exibição das datas do projeto
+                this.updateProjectDatesDisplay(project);
+                
                 this.renderTaskTable(filteredTasks);
                 this.updateKpis(project.tasks); 
                 this.renderAssigneeSummary(project.tasks);
                 if (document.getElementById('view-switcher').value === 'gantt') {
                     this.renderGanttChart(filteredTasks);
+                }
+            },
+
+            // NOVA FUNÇÃO: Atualizar exibição das datas do projeto
+            updateProjectDatesDisplay: function(project) {
+                const startDateEl = document.getElementById('project-start-date-display');
+                const endDateEl = document.getElementById('project-end-date-display');
+                const autoBadge = document.getElementById('project-date-auto');
+                const manualBadge = document.getElementById('project-date-manual');
+                
+                if (project.startDate && project.endDate) {
+                    startDateEl.textContent = new Date(project.startDate).toLocaleDateString('pt-BR');
+                    endDateEl.textContent = new Date(project.endDate).toLocaleDateString('pt-BR');
+                    
+                    // Mostrar badge apropriado baseado no modo
+                    if (project.dateMode === 'auto') {
+                        autoBadge.classList.remove('hidden');
+                        manualBadge.classList.add('hidden');
+                    } else {
+                        autoBadge.classList.add('hidden');
+                        manualBadge.classList.remove('hidden');
+                    }
+                } else {
+                    startDateEl.textContent = 'Não definida';
+                    endDateEl.textContent = 'Não definida';
+                    autoBadge.classList.add('hidden');
+                    manualBadge.classList.add('hidden');
                 }
             },
 
@@ -2777,7 +3335,7 @@
                 `).join('');
             },
 
-            // CORREÇÃO: Dashboard com gráficos funcionais
+            // CORREÇÃO: Dashboard com gráficos funcionais e fontes melhoradas
             updateMainDashboard: function(projects) { 
                 const mainDashboard = document.getElementById('main-dashboard');
                 
@@ -2843,14 +3401,14 @@
                     </div>
                 `;
 
-                // CORREÇÃO: Criar gráficos com cores corretas
+                // CORREÇÃO: Criar gráficos com cores corretas e fontes melhoradas
                 this.createDashboardChart('total-projects-chart', totalProjects, 0, 'Total', '#3b82f6', projects);
                 this.createDashboardChart('in-progress-chart', inProgressCount, totalProjects - inProgressCount, 'Em Andamento', '#f59e0b', inProgressProjects);
                 this.createDashboardChart('overdue-chart', overdueCount, totalProjects - overdueCount, 'Atrasados', '#ef4444', overdueProjects);
                 this.createDashboardChart('at-risk-chart', atRiskCount, totalProjects - atRiskCount, 'Em Risco', '#f97316', atRiskProjects);
             },
 
-            // CORREÇÃO: Função para criar gráficos do dashboard
+            // CORREÇÃO: Função para criar gráficos do dashboard com fontes melhoradas
             createDashboardChart: function(canvasId, value, remaining, label, color, projects) {
                 const ctx = document.getElementById(canvasId);
                 if (!ctx) return;
@@ -2906,13 +3464,16 @@
                         afterDraw(chart) {
                             const { ctx, chartArea: { width, height } } = chart;
                             ctx.save();
-                            ctx.font = 'bold 20px Inter';
+                            
+                            // FONTE MELHORADA para o valor central
+                            ctx.font = 'bold 24px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
                             ctx.fillStyle = chart.config.data.datasets[0].backgroundColor[0];
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
-                            ctx.fillText(value.toString(), width / 2, height / 2 - 10);
+                            ctx.fillText(value.toString(), width / 2, height / 2 - 12);
                             
-                            ctx.font = '12px Inter';
+                            // FONTE MELHORADA para o label
+                            ctx.font = '600 14px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
                             ctx.fillStyle = '#6b7280';
                             ctx.fillText(label, width / 2, height / 2 + 15);
                             ctx.restore();
@@ -2947,8 +3508,18 @@
                     // CORREÇÃO: Usar nome do responsável em vez de UID
                     const managerName = dataService.getManagerName(project.manager);
                     
+                    // NOVO: Exibir datas do projeto no card
+                    const startDate = project.startDate ? new Date(project.startDate).toLocaleDateString('pt-BR') : 'Não definida';
+                    const endDate = project.endDate ? new Date(project.endDate).toLocaleDateString('pt-BR') : 'Não definida';
+                    
+                    // Verificar se o projeto está atrasado
+                    const today = new Date();
+                    const endDateObj = project.endDate ? new Date(project.endDate) : null;
+                    const isOverdue = endDateObj && endDateObj < today && progress < 100;
+                    const cardClass = isOverdue ? 'project-overdue' : '';
+                    
                     return `
-                        <div class="project-card-link bg-[var(--card-bg)] rounded-lg shadow-md p-6 border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer" data-project-id="${project.id}">
+                        <div class="project-card-link bg-[var(--card-bg)] rounded-lg shadow-md p-6 border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer ${cardClass}" data-project-id="${project.id}">
                             <div class="flex justify-between items-start mb-4">
                                 <h3 class="text-xl font-semibold text-[var(--text-color)]">${project.name}</h3>
                                 ${canDelete ? `
@@ -2970,10 +3541,22 @@
                                 </div>
                             </div>
                             
+                            <!-- NOVO: Datas do projeto -->
+                            <div class="mb-3 text-xs text-gray-500">
+                                <div class="flex justify-between">
+                                    <span>Início:</span>
+                                    <span>${startDate}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Conclusão:</span>
+                                    <span>${endDate}</span>
+                                </div>
+                            </div>
+                            
                             <div class="flex justify-between items-center text-sm">
                                 <div class="flex items-center gap-4">
-                                    <span class="px-2 py-1 rounded-full text-xs ${statusInfo.badge}">
-                                        ${progress === 100 ? 'Concluído' : progress > 0 ? 'Em Andamento' : 'Não Iniciado'}
+                                    <span class="px-2 py-1 rounded-full text-xs ${isOverdue ? 'bg-red-600 text-white' : statusInfo.badge}">
+                                        ${isOverdue ? 'Atrasado' : progress === 100 ? 'Concluído' : progress > 0 ? 'Em Andamento' : 'Não Iniciado'}
                                     </span>
                                     <span class="text-gray-400">${project.tasks?.length || 0} tarefas</span>
                                 </div>
