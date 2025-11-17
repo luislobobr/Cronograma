@@ -97,6 +97,57 @@
             font-weight: 500;
             font-size: 12px;
         }
+
+        /* NOVO: Estilos para tarefas em execução hoje */
+        .today-running-task {
+            background-color: rgba(34, 197, 94, 0.1) !important;
+            border-left: 4px solid #10b981 !important;
+            animation: pulse-highlight 2s infinite;
+        }
+        
+        html.dark .today-running-task {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            border-left: 4px solid #34d399 !important;
+        }
+        
+        @keyframes pulse-highlight {
+            0%, 100% {
+                background-color: rgba(34, 197, 94, 0.1);
+            }
+            50% {
+                background-color: rgba(34, 197, 94, 0.2);
+            }
+        }
+        
+        html.dark @keyframes pulse-highlight {
+            0%, 100% {
+                background-color: rgba(34, 197, 94, 0.2);
+            }
+            50% {
+                background-color: rgba(34, 197, 94, 0.3);
+            }
+        }
+        
+        .today-running-task:hover {
+            background-color: rgba(34, 197, 94, 0.3) !important;
+        }
+        
+        html.dark .today-running-task:hover {
+            background-color: rgba(34, 197, 94, 0.4) !important;
+        }
+
+        /* NOVO: Estilo para a logo */
+        .logo-header {
+            height: 40px;
+            margin-bottom: 1rem;
+        }
+        
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            padding-top: 1rem;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -107,8 +158,12 @@
     <!-- Modal de Autenticação -->
     <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 modal-transition modal-visible">
         <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl p-8 w-full max-w-md">
-            <h2 class="text-3xl font-bold mb-2 text-blue-600">Vinci Highways Projects</h2>
-            <p class="text-gray-400 mb-6">Acesso restrito ao domínio @vinci-highways.com.br</p>
+            <!-- NOVO: Logo no modal de autenticação -->
+            <div class="logo-container">
+                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png" alt="Vinci Highways" class="logo-header">
+            </div>
+            <h2 class="text-3xl font-bold mb-2 text-blue-600 text-center">Vinci Highways Projects</h2>
+            <p class="text-gray-400 mb-6 text-center">Acesso restrito ao domínio @vinci-highways.com.br</p>
 
             <form id="auth-form" class="space-y-4">
                 <input type="email" id="auth-email" placeholder="E-mail (@vinci-highways.com.br)" class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-3 bg-transparent" required>
@@ -432,6 +487,11 @@
         
         <!-- Vista de Projetos -->
         <div id="project-view" class="container mx-auto p-4 md:p-8 hidden">
+            <!-- NOVO: Logo na página principal -->
+            <div class="logo-container">
+                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png" alt="Vinci Highways" class="logo-header">
+            </div>
+            
             <header class="mb-8">
                 <h1 class="text-4xl font-bold">Cronogramas</h1>
                 <p class="text-gray-400">Selecione um projeto para gerenciar ou crie um novo.</p>
@@ -488,6 +548,11 @@
 
         <!-- Vista do Dashboard do Projeto -->
         <div id="dashboard-view" class="container mx-auto p-4 md:p-8 hidden">
+            <!-- NOVO: Logo na página do dashboard -->
+            <div class="logo-container">
+                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png" alt="Vinci Highways" class="logo-header">
+            </div>
+            
              <header class="mb-8">
                 <button id="back-to-projects-btn" class="text-sm text-blue-500 hover:underline mb-2 flex items-center gap-1 no-print">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -512,6 +577,8 @@
                     <span id="project-date-auto" class="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hidden">Datas automáticas</span>
                     <span id="project-date-manual" class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded hidden">Datas manuais</span>
                 </div>
+                <!-- NOVO: Informação das tarefas de hoje -->
+                <div id="today-tasks-info" class="mt-2"></div>
             </header>
             <div id="kpi-dashboard" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"></div>
             
@@ -521,6 +588,13 @@
                         <button id="add-task-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2">Nova Tarefa</button>
                         <button id="import-excel-btn" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 flex items-center gap-2">Importar</button>
                         <button id="download-template-btn" class="text-sm text-blue-500 hover:underline">Baixar Template</button>
+                        <!-- NOVO: Botão para filtrar tarefas de hoje -->
+                        <button id="filter-today-btn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                            </svg>
+                            Tarefas de Hoje
+                        </button>
                     </div>
                     <div class="relative">
                         <input type="text" id="task-filter-input" placeholder="Filtrar tarefas..." class="border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2 pl-8 text-sm">
@@ -600,6 +674,30 @@
             appId: "1:802190123207:web:adaf51b25010f677bbdee2"
         };
 
+        // NOVO: Serviço para gerenciar tarefas
+        const taskService = {
+            isTaskRunningToday: function(task) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const latestDates = dataService.getLatestDates(task);
+                if (!latestDates.startDate || !latestDates.endDate) return false;
+                
+                const startDate = new Date(latestDates.startDate + 'T00:00:00');
+                const endDate = new Date(latestDates.endDate + 'T00:00:00');
+                
+                // Verificar se hoje está entre início e término E status é "Em Andamento"
+                return task.status === 'Em Andamento' && 
+                       today >= startDate && 
+                       today <= endDate;
+            },
+            
+            getTodayRunningTasks: function(project) {
+                if (!project || !project.tasks) return [];
+                return project.tasks.filter(task => this.isTaskRunningToday(task));
+            }
+        };
+
         // dataService Interface
         const dataService = {
             projects: [],
@@ -608,6 +706,7 @@
             userId: null,
             userRole: null, 
             isAuthReady: false,
+            taskService: taskService, // NOVO: Adicionar serviço de tarefas
             
             // --- FIREBASE IMPLEMENTATIONS ---
             initFirebase: async () => {
@@ -1988,6 +2087,22 @@
                 
                 document.getElementById('back-to-projects-btn').addEventListener('click', () => this.showProjectView());
                 document.getElementById('add-task-btn').addEventListener('click', () => uiService.openTaskModal('add'));
+                
+                // NOVO: Event listener para o botão de filtrar tarefas de hoje
+                document.getElementById('filter-today-btn').addEventListener('click', () => {
+                    const project = dataService.getCurrentProject();
+                    if (!project) return;
+                    
+                    const todayTasks = dataService.taskService.getTodayRunningTasks(project);
+                    uiService.renderTaskTable(todayTasks);
+                    
+                    // Atualizar o contador no filtro
+                    const taskFilterInput = document.getElementById('task-filter-input');
+                    taskFilterInput.value = '';
+                    taskFilterInput.placeholder = `Filtrando: ${todayTasks.length} tarefa(s) de hoje`;
+                    
+                    uiService.showToast(`Mostrando ${todayTasks.length} tarefa(s) em execução hoje`, 'success');
+                });
                 
                 document.getElementById('task-form').addEventListener('submit', async event => {
                     event.preventDefault();
@@ -3569,6 +3684,40 @@
                 }).join('');
             },
 
+            // NOVA FUNÇÃO: Atualizar informações das tarefas de hoje no header
+            updateTodayTasksInfo: function(todayTasksCount) {
+                let todayInfoEl = document.getElementById('today-tasks-info');
+                
+                if (!todayInfoEl) {
+                    // Criar elemento se não existir
+                    const projectTitle = document.getElementById('project-title');
+                    if (projectTitle && projectTitle.parentNode) {
+                        const headerContainer = projectTitle.parentNode;
+                        todayInfoEl = document.createElement('div');
+                        todayInfoEl.id = 'today-tasks-info';
+                        todayInfoEl.className = 'mt-2 text-sm';
+                        headerContainer.appendChild(todayInfoEl);
+                    }
+                }
+                
+                if (todayInfoEl) {
+                    const today = new Date().toLocaleDateString('pt-BR');
+                    if (todayTasksCount > 0) {
+                        todayInfoEl.innerHTML = `
+                            <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full font-medium animate-pulse">
+                                📅 Hoje (${today}): ${todayTasksCount} tarefa(s) em execução
+                            </span>
+                        `;
+                    } else {
+                        todayInfoEl.innerHTML = `
+                            <span class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full">
+                                📅 Hoje (${today}): Nenhuma tarefa em execução
+                            </span>
+                        `;
+                    }
+                }
+            },
+
             renderTaskTable: function(tasks) {
                 const tableBody = document.getElementById('task-table-body');
                 
@@ -3606,6 +3755,9 @@
                         const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
                         const isParent = tasks.some(t => t.parentId === task.id);
                         
+                        // NOVO: Verificar se a tarefa está em execução hoje
+                        const isRunningToday = dataService.taskService.isTaskRunningToday(task);
+                        
                         // CORREÇÃO: Usar nomes em vez de UIDs
                         const assignedUsersText = dataService.getAssignedUserNames(task.assignedUsers);
 
@@ -3614,12 +3766,17 @@
                             .map(c => `${c.author || 'Utilizador'}: ${c.text.substring(0, 30)}${c.text.length > 30 ? '...' : ''}`)
                             .join('; ');
 
-                        // NOVO: Adicionar classes CSS para drag and drop
+                        // NOVO: Adicionar classe de destaque para tarefas em execução hoje
                         const rowClass = level > 0 ? 'subtask-row draggable-subtask' : '';
+                        const todayHighlightClass = isRunningToday ? 'today-running-task' : '';
                         const dragHandle = level > 0 ? '<span class="drag-handle" title="Arrastar para reordenar">⋮⋮</span>' : '';
 
+                        // NOVO: Ícone de "hoje" para tarefas em execução
+                        const todayIcon = isRunningToday ? 
+                            '<span class="ml-2 text-green-500 animate-pulse" title="Em execução hoje">🟢</span>' : '';
+
                         html += `
-                            <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700 ${rowClass}" data-task-id="${task.id}">
+                            <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700 ${rowClass} ${todayHighlightClass}" data-task-id="${task.id}">
                                 <td class="p-3">
                                     <div style="padding-left: ${level * 20}px" class="flex items-center gap-2">
                                         ${dragHandle}
@@ -3627,6 +3784,7 @@
                                         <span class="task-edit-trigger cursor-pointer hover:text-blue-500 hover:underline" data-task-id="${task.id}">
                                             ${task.name}
                                         </span>
+                                        ${todayIcon}
                                         ${task.risk ? '<span class="text-red-500 text-xs" title="Tarefa em risco">⚠️</span>' : ''}
                                     </div>
                                 </td>
@@ -3678,7 +3836,15 @@
 
                 tableBody.innerHTML = processTasksForTable(null, 0);
                 
-                // NOVO: Configurar drag and drop após renderizar a tabela
+                // NOVO: Adicionar contador de tarefas em execução hoje
+                const todayTasksCount = tasks.filter(task => 
+                    dataService.taskService.isTaskRunningToday(task)
+                ).length;
+                
+                // Atualizar o header do dashboard com informação das tarefas de hoje
+                this.updateTodayTasksInfo(todayTasksCount);
+                
+                // Configurar drag and drop após renderizar a tabela
                 setTimeout(() => {
                     this.setupSubtasksDragAndDrop();
                     
