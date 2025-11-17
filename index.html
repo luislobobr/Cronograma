@@ -148,6 +148,29 @@
             margin-bottom: 1.5rem;
             padding-top: 1rem;
         }
+
+        /* NOVO: Estilo para informações de tarefas no card */
+        .task-info-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+        }
+        
+        .today-task-badge {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .overdue-task-badge {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .task-info-container {
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -695,6 +718,34 @@
             getTodayRunningTasks: function(project) {
                 if (!project || !project.tasks) return [];
                 return project.tasks.filter(task => this.isTaskRunningToday(task));
+            },
+
+            // NOVA FUNÇÃO: Obter tarefas atrasadas
+            getOverdueTasks: function(project) {
+                if (!project || !project.tasks) return [];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                return project.tasks.filter(task => {
+                    const latestDates = dataService.getLatestDates(task);
+                    if (!latestDates.endDate) return false;
+                    
+                    const endDate = new Date(latestDates.endDate + 'T00:00:00');
+                    return task.status !== 'Concluída' && endDate < today;
+                });
+            },
+
+            // NOVA FUNÇÃO: Obter primeira tarefa do dia
+            getFirstTodayTask: function(project) {
+                const todayTasks = this.getTodayRunningTasks(project);
+                if (todayTasks.length === 0) return null;
+                
+                // Ordenar por data de início e retornar a primeira
+                return todayTasks.sort((a, b) => {
+                    const aStart = new Date(dataService.getLatestDates(a).startDate);
+                    const bStart = new Date(dataService.getLatestDates(b).startDate);
+                    return aStart - bStart;
+                })[0];
             }
         };
 
@@ -3633,6 +3684,10 @@
                     const isOverdue = endDateObj && endDateObj < today && progress < 100;
                     const cardClass = isOverdue ? 'project-overdue' : '';
                     
+                    // NOVO: Obter informações das tarefas
+                    const todayTask = dataService.taskService.getFirstTodayTask(project);
+                    const overdueTasks = dataService.taskService.getOverdueTasks(project);
+                    
                     return `
                         <div class="project-card-link bg-[var(--card-bg)] rounded-lg shadow-md p-6 border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer ${cardClass}" data-project-id="${project.id}">
                             <div class="flex justify-between items-start mb-4">
@@ -3668,7 +3723,34 @@
                                 </div>
                             </div>
                             
-                            <div class="flex justify-between items-center text-sm">
+                            <!-- NOVO: Informações das tarefas -->
+                            <div class="task-info-container">
+                                ${todayTask ? `
+                                    <div class="flex items-center text-xs text-green-600 mb-1">
+                                        <span class="mr-1">📅</span>
+                                        <span class="font-medium">Hoje:</span>
+                                        <span class="ml-1 truncate">${todayTask.name}</span>
+                                        <span class="today-task-badge task-info-badge">Hoje</span>
+                                    </div>
+                                ` : ''}
+                                
+                                ${overdueTasks.length > 0 ? `
+                                    <div class="flex items-center text-xs text-red-600">
+                                        <span class="mr-1">⚠️</span>
+                                        <span class="font-medium">Atrasadas:</span>
+                                        <span class="ml-1">${overdueTasks.length} tarefa(s)</span>
+                                        <span class="overdue-task-badge task-info-badge">${overdueTasks.length}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                ${!todayTask && overdueTasks.length === 0 ? `
+                                    <div class="text-xs text-gray-500">
+                                        Nenhuma tarefa em execução hoje
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-sm mt-3">
                                 <div class="flex items-center gap-4">
                                     <span class="px-2 py-1 rounded-full text-xs ${isOverdue ? 'bg-red-600 text-white' : statusInfo.badge}">
                                         ${isOverdue ? 'Atrasado' : progress === 100 ? 'Concluído' : progress > 0 ? 'Em Andamento' : 'Não Iniciado'}
