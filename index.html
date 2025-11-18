@@ -171,6 +171,197 @@
             margin-top: 8px;
             font-size: 0.8rem;
         }
+
+        /* MELHORIA: Estilos para o modal de tarefa melhorado */
+        @media (max-width: 768px) {
+            #task-modal .max-w-4xl {
+                margin: 1rem;
+                max-height: calc(100vh - 2rem);
+            }
+            
+            #task-modal .grid-cols-1 {
+                grid-template-columns: 1fr;
+            }
+            
+            #task-modal .md\:grid-cols-2 > * {
+                grid-column: span 1;
+            }
+            
+            #task-modal .md\:col-span-2 {
+                grid-column: span 1;
+            }
+        }
+
+        /* Melhorias visuais para os campos */
+        #task-modal input, 
+        #task-modal select, 
+        #task-modal textarea {
+            transition: all 0.2s ease;
+        }
+
+        #task-modal input:focus, 
+        #task-modal select:focus, 
+        #task-modal textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        /* Estilo para o range de progresso */
+        #task-progress-range {
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+        }
+
+        #task-progress-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+
+        #task-progress-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Estilo para seções do formulário */
+        #task-modal .bg-gray-50 {
+            transition: all 0.2s ease;
+        }
+
+        #task-modal .bg-gray-50:hover {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* NOVO: Estilos para o sistema de notificações */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: none;
+        }
+        
+        .notification-dropdown.show {
+            display: block;
+        }
+        
+        .notification-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .notification-item:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .notification-item.unread {
+            background-color: rgba(59, 130, 246, 0.05);
+            font-weight: 500;
+        }
+        
+        .notification-item.read {
+            opacity: 0.7;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notification-message {
+            font-size: 14px;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+        
+        .notification-time {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        
+        .notification-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .notification-empty {
+            padding: 24px;
+            text-align: center;
+            color: #6b7280;
+        }
+        
+        .notification-icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .notification-project {
+            font-size: 12px;
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        
+        html.dark .notification-project {
+            background-color: #4b5563;
+            color: #d1d5db;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -382,78 +573,152 @@
         </div>
     </div>
 
-    <!-- Modal de Tarefa -->
+    <!-- Modal de Tarefa - VERSÃO MELHORADA -->
     <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
-        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-8 w-full max-w-3xl">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
             <h2 id="modal-title" class="text-2xl font-bold mb-6 text-[var(--text-color)]">Adicionar Nova Tarefa</h2>
-            <form id="task-form" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <form id="task-form" class="space-y-6">
+                <input type="hidden" id="task-id">
+                <input type="hidden" id="parent-id">
                 
-                <div class="lg:col-span-2 space-y-4">
-                    <input type="hidden" id="task-id"><input type="hidden" id="parent-id">
-                     <div class="mb-4">
-                        <label for="task-name" class="block text-sm font-medium text-gray-400">Nome da Tarefa</label>
-                        <input type="text" id="task-name" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required>
+                <!-- SEÇÃO 1: Informações Básicas -->
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Informações Básicas</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Nome da Tarefa -->
+                        <div class="md:col-span-2">
+                            <label for="task-name" class="block text-sm font-medium text-gray-400 mb-1">Nome da Tarefa *</label>
+                            <input type="text" id="task-name" class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3" required placeholder="Digite o nome da tarefa">
+                        </div>
+                        
+                        <!-- Prioridade e Status -->
+                        <div>
+                            <label for="task-priority" class="block text-sm font-medium text-gray-400 mb-1">Prioridade</label>
+                            <select id="task-priority" class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
+                                <option value="Baixa">Baixa</option>
+                                <option value="Média">Média</option>
+                                <option value="Alta">Alta</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="task-status" class="block text-sm font-medium text-gray-400 mb-1">Status</label>
+                            <select id="task-status" class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
+                                <option value="Não Iniciada">Não Iniciada</option>
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Concluída">Concluída</option>
+                            </select>
+                        </div>
                     </div>
-
+                </div>
+                
+                <!-- SEÇÃO 2: Datas e Prazos -->
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Datas e Prazos</h3>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-2">Atribuído a (Utilizadores)</label>
-                            <div id="assigned-users-container" class="assigned-users-container">
-                                <!-- Checkboxes serão inseridos aqui dinamicamente -->
-                            </div>
+                            <label for="start-date" class="block text-sm font-medium text-gray-400 mb-1">Data de Início *</label>
+                            <input type="date" id="start-date" class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3" required>
                         </div>
-                        <div><label for="task-priority" class="block text-sm font-medium text-gray-400">Prioridade</label><select id="task-priority" class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2"><option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option></select></div>
-                    </div>
-
-                    <div id="date-section">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div><label for="start-date" class="block text-sm font-medium text-gray-400">Data de Início</label><input type="date" id="start-date" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required></div>
-                            <div><label for="end-date" class="block text-sm font-medium text-gray-400">Data de Término</label><input type="date" id="end-date" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required></div>
-                        </div>
-                        <div id="reschedule-button-container" class="mt-2 hidden">
-                             <button type="button" id="reschedule-btn" class="text-sm text-blue-500 hover:underline">Reprogramar Datas</button>
+                        
+                        <div>
+                            <label for="end-date" class="block text-sm font-medium text-gray-400 mb-1">Data de Término *</label>
+                            <input type="date" id="end-date" class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3" required>
                         </div>
                     </div>
-    
+                    
+                    <div id="reschedule-button-container" class="mt-2 hidden">
+                        <button type="button" id="reschedule-btn" class="text-sm text-blue-500 hover:underline flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            </svg>
+                            Reprogramar Datas
+                        </button>
+                    </div>
+                    
                     <div id="date-history-container" class="mt-4 hidden">
                         <h4 class="text-sm font-medium text-gray-400 mb-2">Histórico de Prazos</h4>
                         <div id="date-history-list" class="text-xs text-gray-500 max-h-20 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-2 rounded"></div>
                     </div>
-    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div><label for="task-status" class="block text-sm font-medium text-gray-400">Status</label><select id="task-status" class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2"><option value="Não Iniciada">Não Iniciada</option><option value="Em Andamento">Em Andamento</option><option value="Concluída">Concluída</option></select></div>
+                </div>
+                
+                <!-- SEÇÃO 3: Atribuição e Dependências -->
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Atribuição e Dependências</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Responsáveis -->
                         <div>
-                            <label for="task-progress" class="block text-sm font-medium text-gray-400">Progresso (%)</label>
-                            <input type="number" id="task-progress" min="0" max="100" class="mt-1 block w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" required>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Atribuído a (Utilizadores)</label>
+                            <div id="assigned-users-container" class="assigned-users-container border border-[var(--border-color)] rounded-md p-3 bg-[var(--card-bg)] max-h-40 overflow-y-auto">
+                                <!-- Checkboxes serão inseridos aqui dinamicamente -->
+                            </div>
+                        </div>
+                        
+                        <!-- Dependências e Risco -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="task-dependency" class="block text-sm font-medium text-gray-400 mb-1">Depende de</label>
+                                <select id="task-dependency" class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
+                                    <option value="">Nenhuma</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="task-risk" class="h-5 w-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <label for="task-risk" class="ml-2 text-sm font-medium text-gray-400">Marcar como Tarefa em Risco</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SEÇÃO 4: Progresso e Comentários -->
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Progresso e Comentários</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Progresso -->
+                        <div>
+                            <label for="task-progress" class="block text-sm font-medium text-gray-400 mb-1">Progresso (%)</label>
+                            <div class="flex items-center space-x-3">
+                                <input type="range" id="task-progress-range" min="0" max="100" class="flex-1" value="0">
+                                <input type="number" id="task-progress" min="0" max="100" class="w-20 border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2 text-center" value="0" required>
+                                <span class="text-gray-400">%</span>
+                            </div>
                             <p id="progress-info" class="text-xs text-gray-500 mt-1 hidden">O progresso de tarefas-pai é calculado automaticamente.</p>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        
+                        <!-- Comentários -->
                         <div>
-                            <label for="task-dependency" class="block text-sm font-medium text-gray-400">Depende de</label>
-                            <select id="task-dependency" class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2">
-                                <option value="">Nenhuma</option>
-                            </select>
-                        </div>
-                        <div class="flex items-end pb-2">
-                            <label class="flex items-center"><input type="checkbox" id="task-risk" class="h-4 w-4 text-red-600 border-gray-300 rounded"><span class="ml-2 text-sm font-medium">Tarefa em Risco</span></label>
+                            <h4 class="text-sm font-medium text-gray-400 mb-2">Comentários</h4>
+                            <div id="comments-list" class="text-sm text-gray-500 max-h-40 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 rounded shadow-inner mb-3"></div>
+                            
+                            <div class="flex gap-2">
+                                <input type="text" id="new-comment-input" class="flex-grow border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" placeholder="Adicionar comentário...">
+                                <button type="button" id="add-comment-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="lg:col-span-1 border-t lg:border-t-0 lg:border-l lg:pl-6 pt-4 lg:pt-0 border-[var(--border-color)] flex flex-col space-y-4">
-                    <h4 class="text-sm font-medium text-gray-400">Comentários</h4>
-                    <div id="comments-list" class="flex-grow text-sm text-gray-500 max-h-64 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 rounded shadow-inner"></div>
-                    <div class="flex gap-2">
-                        <input type="text" id="new-comment-input" class="flex-grow border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" placeholder="Adicionar comentário (Enter)">
-                        <button type="button" id="add-comment-btn" class="bg-gray-200 dark:bg-gray-600 px-3 rounded-md text-[var(--text-color)] hover:bg-gray-300 dark:hover:bg-gray-500" title="Adicionar Comentário">&rarr;</button>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-3 flex justify-end gap-2 pt-4 border-t border-[var(--border-color)]">
-                    <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Salvar Tarefa</button>
+                
+                <!-- Botões de Ação -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-[var(--border-color)]">
+                    <button type="button" class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors font-medium">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Salvar Tarefa
+                    </button>
                 </div>
             </form>
         </div>
@@ -496,6 +761,28 @@
     <div class="relative min-h-screen">
         <input type="file" id="import-excel-input" class="hidden" accept=".xlsx, .xls">
         <div id="logged-in-container" class="hidden">
+            <!-- NOVO: Botão de notificações -->
+            <div class="notification-bell no-print fixed top-4 right-40 z-50">
+                <button id="notification-btn" class="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <div id="notification-badge" class="notification-badge hidden">0</div>
+                </button>
+                <div id="notification-dropdown" class="notification-dropdown">
+                    <div class="notification-header p-4 border-b border-[var(--border-color)]">
+                        <h3 class="font-bold text-lg">Notificações</h3>
+                    </div>
+                    <div id="notification-list" class="max-h-80 overflow-y-auto">
+                        <!-- Notificações serão inseridas aqui -->
+                    </div>
+                    <div class="notification-actions">
+                        <button id="mark-all-read-btn" class="text-sm text-blue-500 hover:underline">Marcar todas como lidas</button>
+                        <button id="clear-notifications-btn" class="text-sm text-gray-500 hover:underline">Limpar</button>
+                    </div>
+                </div>
+            </div>
+            
             <button id="theme-toggle" class="no-print fixed top-4 right-4 z-50 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                 <svg id="theme-icon-sun" class="h-6 w-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <svg id="theme-icon-moon" class="h-6 w-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -673,7 +960,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // Variáveis Globais de Firebase
         let firebaseApp;
@@ -681,6 +968,7 @@
         let auth;
         let unsubscribeProjects = () => {};
         let unsubscribeUsers = () => {};
+        let unsubscribeNotifications = () => {};
         
         // --- CONSTANTES E CONFIGURAÇÃO ---
         const ALLOWED_DOMAIN = "@vinci-highways.com.br";
@@ -758,6 +1046,7 @@
             userRole: null, 
             isAuthReady: false,
             taskService: taskService, // NOVO: Adicionar serviço de tarefas
+            notifications: [], // NOVO: Array para armazenar notificações
             
             // --- FIREBASE IMPLEMENTATIONS ---
             initFirebase: async () => {
@@ -782,6 +1071,7 @@
 
                             dataService.listenToUsers();
                             dataService.listenToProjects();
+                            dataService.listenToNotifications(); // NOVO: Iniciar listener de notificações
 
                             uiService.updateUserRoleDisplay();
                         } else {
@@ -790,12 +1080,14 @@
                             dataService.isAuthReady = true; 
                             dataService.projects = [];
                             dataService.userRole = null;
+                            dataService.notifications = []; // NOVO: Limpar notificações
                             
                             document.getElementById('logged-in-container').classList.add('hidden');
                             uiService.openModal('auth-modal');
                             document.getElementById('loader').style.display = 'none';
                             unsubscribeProjects();
                             unsubscribeUsers();
+                            unsubscribeNotifications(); // NOVO: Parar listener de notificações
                         }
                     });
                 } catch (error) {
@@ -995,6 +1287,7 @@
                         newProjects.push(project); 
                     });
 
+                    // NOVO: Filtragem automática para usuários comuns
                     if (dataService.userRole === 'Usuario') {
                         newProjects = newProjects.filter(project => {
                             const isCreator = project.creatorId === dataService.userId;
@@ -1238,31 +1531,28 @@
                     
                     if (shouldUpdateParent) {
                         // Atualizar a tarefa pai para acomodar a subtarefa
-                        const updatedParentDates = {
-                            startDate: movingTaskDates.startDate,
-                            endDate: new Date(Math.max(
-                                new Date(parentDates.endDate).getTime(),
-                                new Date(movingTaskDates.endDate).getTime()
-                            )).toISOString().split('T')[0]
-                        };
-
-                        // Atualizar tarefa pai
                         const updatedTasks = project.tasks.map(t => {
                             if (t.id === newParentId) {
                                 const updatedTask = { ...t };
+                                const newParentStart = new Date(Math.min(
+                                    parentStart.getTime(),
+                                    childStart.getTime()
+                                )).toISOString().split('T')[0];
+                                const newParentEnd = new Date(Math.max(
+                                    parentEnd.getTime(),
+                                    childEnd.getTime()
+                                )).toISOString().split('T')[0];
+                                
                                 if (updatedTask.dateHistory && updatedTask.dateHistory.length > 0) {
                                     const latestDates = updatedTask.dateHistory[updatedTask.dateHistory.length - 1];
-                                    if (latestDates.startDate !== updatedParentDates.startDate || latestDates.endDate !== updatedParentDates.endDate) {
+                                    if (latestDates.startDate !== newParentStart || latestDates.endDate !== newParentEnd) {
                                         updatedTask.dateHistory = [
                                             ...updatedTask.dateHistory,
-                                            { startDate: updatedParentDates.startDate, endDate: updatedParentDates.endDate }
+                                            { startDate: newParentStart, endDate: newParentEnd }
                                         ];
                                     }
                                 } else {
-                                    updatedTask.dateHistory = [{ 
-                                        startDate: updatedParentDates.startDate, 
-                                        endDate: updatedParentDates.endDate 
-                                    }];
+                                    updatedTask.dateHistory = [{ startDate: newParentStart, endDate: newParentEnd }];
                                 }
                                 return updatedTask;
                             }
@@ -1457,6 +1747,17 @@
                 
                 dataService.recalculateAllProgress();
                 await dataService.saveProjectDocument(project);
+                
+                // NOVO: Enviar notificações para usuários atribuídos
+                if (restOfTaskData.assignedUsers && restOfTaskData.assignedUsers.length > 0) {
+                    await dataService.sendTaskAssignmentNotifications(
+                        restOfTaskData.id || newTask.id,
+                        restOfTaskData.name,
+                        project.id,
+                        project.name,
+                        restOfTaskData.assignedUsers
+                    );
+                }
             },
 
             // NOVA FUNÇÃO: Reordenar subtarefas via drag and drop
@@ -1865,6 +2166,114 @@
                     );
                     return user?.id || null;
                 }).filter(id => id !== null);
+            },
+
+            // --- NOVO: SISTEMA DE NOTIFICAÇÕES ---
+            
+            // Função para escutar notificações do usuário atual
+            listenToNotifications: function() {
+                unsubscribeNotifications();
+                if (!dataService.isAuthReady || !dataService.userId) return;
+
+                const notificationsRef = collection(db, 'users_data', dataService.userId, 'notifications');
+                
+                unsubscribeNotifications = onSnapshot(notificationsRef, (snapshot) => {
+                    dataService.notifications = [];
+                    snapshot.forEach(doc => {
+                        dataService.notifications.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Ordenar notificações por data (mais recentes primeiro)
+                    dataService.notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    
+                    // Atualizar a UI das notificações
+                    uiService.updateNotificationUI();
+                }, (error) => {
+                    console.error("Erro ao ouvir notificações:", error);
+                });
+            },
+
+            // Função para enviar notificações de atribuição de tarefas
+            sendTaskAssignmentNotifications: async function(taskId, taskName, projectId, projectName, assignedUserIds) {
+                try {
+                    const currentUser = dataService.users.find(u => u.id === dataService.userId);
+                    const currentUserName = currentUser?.name || currentUser?.email.split('@')[0] || 'Um utilizador';
+                    
+                    for (const userId of assignedUserIds) {
+                        // Não enviar notificação para o próprio usuário
+                        if (userId === dataService.userId) continue;
+                        
+                        const notification = {
+                            type: 'task_assignment',
+                            title: 'Nova tarefa atribuída',
+                            message: `${currentUserName} atribuiu a tarefa "${taskName}" a você`,
+                            projectId: projectId,
+                            projectName: projectName,
+                            taskId: taskId,
+                            taskName: taskName,
+                            read: false,
+                            createdAt: new Date().toISOString(),
+                            createdBy: dataService.userId
+                        };
+                        
+                        const userNotificationsRef = collection(db, 'users_data', userId, 'notifications');
+                        await addDoc(userNotificationsRef, notification);
+                    }
+                    
+                    console.log(`📨 Notificações de atribuição enviadas para ${assignedUserIds.length - (assignedUserIds.includes(dataService.userId) ? 1 : 0)} utilizadores`);
+                } catch (error) {
+                    console.error("Erro ao enviar notificações:", error);
+                }
+            },
+
+            // Função para marcar notificação como lida
+            markNotificationAsRead: async function(notificationId) {
+                try {
+                    const notificationRef = doc(db, 'users_data', dataService.userId, 'notifications', notificationId);
+                    await updateDoc(notificationRef, {
+                        read: true,
+                        readAt: new Date().toISOString()
+                    });
+                } catch (error) {
+                    console.error("Erro ao marcar notificação como lida:", error);
+                }
+            },
+
+            // Função para marcar todas as notificações como lidas
+            markAllNotificationsAsRead: async function() {
+                try {
+                    const unreadNotifications = dataService.notifications.filter(n => !n.read);
+                    
+                    for (const notification of unreadNotifications) {
+                        await dataService.markNotificationAsRead(notification.id);
+                    }
+                    
+                    uiService.showToast('Todas as notificações marcadas como lidas', 'success');
+                } catch (error) {
+                    console.error("Erro ao marcar todas as notificações como lidas:", error);
+                    uiService.showToast('Erro ao marcar notificações como lidas', 'error');
+                }
+            },
+
+            // Função para limpar todas as notificações
+            clearAllNotifications: async function() {
+                try {
+                    const notificationsRef = collection(db, 'users_data', dataService.userId, 'notifications');
+                    const snapshot = await getDocs(notificationsRef);
+                    
+                    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+                    await Promise.all(deletePromises);
+                    
+                    uiService.showToast('Todas as notificações foram removidas', 'success');
+                } catch (error) {
+                    console.error("Erro ao limpar notificações:", error);
+                    uiService.showToast('Erro ao limpar notificações', 'error');
+                }
+            },
+
+            // Função para obter o número de notificações não lidas
+            getUnreadNotificationCount: function() {
+                return dataService.notifications.filter(n => !n.read).length;
             }
         };
 
@@ -1904,6 +2313,11 @@
                 document.getElementById('theme-toggle').addEventListener('click', () => uiService.toggleTheme());
                 document.getElementById('logout-btn').addEventListener('click', () => App.logout());
                 document.getElementById('user-management-btn').addEventListener('click', () => uiService.openUserManagementModal());
+                
+                // NOVO: Event listeners para o sistema de notificações
+                document.getElementById('notification-btn').addEventListener('click', () => uiService.toggleNotificationDropdown());
+                document.getElementById('mark-all-read-btn').addEventListener('click', () => dataService.markAllNotificationsAsRead());
+                document.getElementById('clear-notifications-btn').addEventListener('click', () => dataService.clearAllNotifications());
                 
                 // CORREÇÃO: Fechar modal de gestão antes de abrir cadastro
                 document.getElementById('add-user-btn').addEventListener('click', () => {
@@ -2302,6 +2716,15 @@
                 document.getElementById('view-list-btn').addEventListener('click', () => {
                     uiService.switchProjectView('list');
                 });
+
+                // NOVO: Sincronizar range com input numérico de progresso
+                document.getElementById('task-progress-range').addEventListener('input', function() {
+                    document.getElementById('task-progress').value = this.value;
+                });
+
+                document.getElementById('task-progress').addEventListener('input', function() {
+                    document.getElementById('task-progress-range').value = this.value;
+                });
             }
         };
 
@@ -2310,6 +2733,7 @@
             mainDashboardCharts: {},
             editingCommentId: null, // Para controle de edição de comentários
             subtaskDateConfirmResolve: null, // Para resolver a Promise do modal de confirmação
+            notificationDropdownVisible: false, // NOVO: Controla visibilidade do dropdown de notificações
 
             // --- AUTH UI ---
             updateUserRoleDisplay: () => {
@@ -3017,6 +3441,155 @@
                 }
             },
 
+            // --- NOVO: SISTEMA DE NOTIFICAÇÕES ---
+            
+            // Função para atualizar a UI das notificações
+            updateNotificationUI: function() {
+                const badge = document.getElementById('notification-badge');
+                const notificationList = document.getElementById('notification-list');
+                const unreadCount = dataService.getUnreadNotificationCount();
+                
+                // Atualizar badge
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+                
+                // Atualizar lista de notificações
+                if (dataService.notifications.length === 0) {
+                    notificationList.innerHTML = `
+                        <div class="notification-empty">
+                            <p>Nenhuma notificação</p>
+                            <p class="text-sm mt-2">Você será notificado quando houver novas atividades</p>
+                        </div>
+                    `;
+                } else {
+                    notificationList.innerHTML = dataService.notifications.map(notification => {
+                        const timeAgo = this.getTimeAgo(notification.createdAt);
+                        const icon = this.getNotificationIcon(notification.type);
+                        const projectBadge = notification.projectName ? 
+                            `<span class="notification-project">${notification.projectName}</span>` : '';
+                        
+                        return `
+                            <div class="notification-item ${notification.read ? 'read' : 'unread'}" data-id="${notification.id}">
+                                <div class="notification-title">
+                                    ${icon}
+                                    ${notification.title}
+                                    ${projectBadge}
+                                </div>
+                                <div class="notification-message">${notification.message}</div>
+                                <div class="notification-time">${timeAgo}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    // Adicionar event listeners para as notificações
+                    notificationList.querySelectorAll('.notification-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            const notificationId = item.dataset.id;
+                            this.handleNotificationClick(notificationId, item);
+                        });
+                    });
+                }
+            },
+            
+            // Função para obter o ícone da notificação baseado no tipo
+            getNotificationIcon: function(type) {
+                const icons = {
+                    'task_assignment': '📋',
+                    'project_update': '📁',
+                    'deadline': '⏰',
+                    'comment': '💬',
+                    'system': '🔔'
+                };
+                
+                return `<span class="notification-icon">${icons[type] || '🔔'}</span>`;
+            },
+            
+            // Função para calcular tempo relativo
+            getTimeAgo: function(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+                
+                if (diffMins < 1) return 'Agora mesmo';
+                if (diffMins < 60) return `${diffMins} min atrás`;
+                if (diffHours < 24) return `${diffHours} h atrás`;
+                if (diffDays < 7) return `${diffDays} dias atrás`;
+                
+                return date.toLocaleDateString('pt-BR');
+            },
+            
+            // Função para lidar com clique em notificação
+            handleNotificationClick: function(notificationId, element) {
+                const notification = dataService.notifications.find(n => n.id === notificationId);
+                if (!notification) return;
+                
+                // Marcar como lida
+                if (!notification.read) {
+                    dataService.markNotificationAsRead(notificationId);
+                    element.classList.remove('unread');
+                    element.classList.add('read');
+                }
+                
+                // Fechar dropdown
+                this.hideNotificationDropdown();
+                
+                // Navegar para o projeto/tarefa se aplicável
+                if (notification.projectId && dataService.currentProjectId !== notification.projectId) {
+                    App.openProject(notification.projectId);
+                }
+                
+                // Mostrar toast de confirmação
+                uiService.showToast('Notificação marcada como lida', 'success');
+            },
+            
+            // Função para alternar visibilidade do dropdown de notificações
+            toggleNotificationDropdown: function() {
+                if (this.notificationDropdownVisible) {
+                    this.hideNotificationDropdown();
+                } else {
+                    this.showNotificationDropdown();
+                }
+            },
+            
+            // Função para mostrar dropdown de notificações
+            showNotificationDropdown: function() {
+                const dropdown = document.getElementById('notification-dropdown');
+                dropdown.classList.add('show');
+                this.notificationDropdownVisible = true;
+                
+                // Adicionar event listener para fechar ao clicar fora
+                setTimeout(() => {
+                    document.addEventListener('click', this.handleClickOutsideNotifications);
+                }, 10);
+            },
+            
+            // Função para esconder dropdown de notificações
+            hideNotificationDropdown: function() {
+                const dropdown = document.getElementById('notification-dropdown');
+                dropdown.classList.remove('show');
+                this.notificationDropdownVisible = false;
+                
+                // Remover event listener
+                document.removeEventListener('click', this.handleClickOutsideNotifications);
+            },
+            
+            // Função para lidar com clique fora do dropdown de notificações
+            handleClickOutsideNotifications: function(event) {
+                const notificationBell = document.querySelector('.notification-bell');
+                const dropdown = document.getElementById('notification-dropdown');
+                
+                if (!notificationBell.contains(event.target) && !dropdown.contains(event.target)) {
+                    uiService.hideNotificationDropdown();
+                }
+            },
+
             // --- VIEW/MODAL MANAGEMENT ---
             showView(viewId) {
                 document.getElementById('project-view').classList.add('hidden');
@@ -3090,6 +3663,8 @@
             closeAllModals() {
                 document.querySelectorAll('.modal-transition').forEach(modal => this.closeModal(modal.id));
             },
+
+            // FUNÇÃO openTaskModal ATUALIZADA para o novo layout
             openTaskModal(mode, data = {}) {
                 document.getElementById('task-form').reset();
                 this.populateAssignedUsersCheckboxes(); 
@@ -3119,6 +3694,7 @@
 
                 document.getElementById('progress-info').classList.toggle('hidden', !isParent);
                 document.getElementById('task-progress').disabled = isParent;
+                document.getElementById('task-progress-range').disabled = isParent;
 
                 document.getElementById('modal-title').textContent = mode === 'add' ? 'Adicionar Tarefa' : 'Editar Tarefa';
                 document.getElementById('task-id').value = task.id || '';
@@ -3127,6 +3703,7 @@
                 document.getElementById('task-priority').value = task.priority || 'Média';
                 document.getElementById('task-status').value = task.status || 'Não Iniciada';
                 document.getElementById('task-progress').value = task.progress || 0;
+                document.getElementById('task-progress-range').value = task.progress || 0;
                 document.getElementById('task-risk').checked = task.risk || false;
                 
                 const dependencySelect = document.getElementById('task-dependency');
@@ -3177,6 +3754,7 @@
                 
                 this.openModal('task-modal');
             },
+
             getTaskFormData() {
                 const startDateInput = document.getElementById('start-date');
                 const endDateInput = document.getElementById('end-date');
@@ -4294,50 +4872,47 @@
                         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;">
                             <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
                                 <div style="font-size: 18px; font-weight: bold;">${overallProgress}%</div>
-                                <div style="font-size: 12px;">Progresso Geral</div>
+                                <div style="font-size: 12px; color: #666;">Progresso Geral</div>
                             </div>
                             <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
                                 <div style="font-size: 18px; font-weight: bold;">${project.tasks.length}</div>
-                                <div style="font-size: 12px;">Total de Tarefas</div>
+                                <div style="font-size: 12px; color: #666;">Total de Tarefas</div>
                             </div>
                             <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
                                 <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => t.status === 'Concluída').length}</div>
-                                <div style="font-size: 12px;">Concluídas</div>
+                                <div style="font-size: 12px; color: #666;">Concluídas</div>
                             </div>
                             <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
                                 <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => this.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada').length}</div>
-                                <div style="font-size: 12px;">Atrasadas</div>
+                                <div style="font-size: 12px; color: #666;">Atrasadas</div>
                             </div>
                             <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
                                 <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => t.risk).length}</div>
-                                <div style="font-size: 12px;">Em Risco</div>
+                                <div style="font-size: 12px; color: #666;">Em Risco</div>
                             </div>
                         </div>
                     `;
                     
                     // Tabela de tarefas
                     let tasksTable = `
-                        <div style="margin-top: 20px;">
-                            <h2 style="font-size: 18px; margin-bottom: 10px;">Tarefas do Projeto</h2>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
-                                <thead>
-                                    <tr style="background-color: #333; color: white;">
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Tarefa</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Duração</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Início</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Término</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Status</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Progresso</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Responsáveis</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                        <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Tarefas do Projeto</h2>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <thead>
+                                <tr style="background-color: #f0f0f0;">
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Tarefa</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Duração</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Início</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Término</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Status</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Progresso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                     `;
                     
-                    // Processar tarefas para a tabela
                     const processTasksForPdf = (parentId, level) => {
                         project.tasks.filter(t => t.parentId === parentId)
-                            .sort((a, b) => {
+                            .sort((a,b) => {
                                 const dateA = new Date(dataService.getLatestDates(a).startDate);
                                 const dateB = new Date(dataService.getLatestDates(b).startDate);
                                 return dateA - dateB;
@@ -4346,25 +4921,17 @@
                                 const latestDates = dataService.getLatestDates(task);
                                 const duration = this.calculateDuration(latestDates.startDate, latestDates.endDate);
                                 const statusInfo = this.getTaskStatusClass(task.status, latestDates.endDate);
-                                const assignedUsersText = dataService.getAssignedUserNames(task.assignedUsers);
-                                
-                                const statusColor = statusInfo.name === 'Concluída' ? '#10b981' : 
-                                                 statusInfo.name === 'Atrasada' ? '#ef4444' : 
-                                                 statusInfo.name === 'Em Andamento' ? '#f59e0b' : '#6b7280';
                                 
                                 tasksTable += `
                                     <tr>
-                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: left; padding-left: ${level * 15 + 8}px;">
-                                            ${task.name} ${task.risk ? '⚠️' : ''}
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left; padding-left: ${level * 15 + 8}px">
+                                            ${task.name}
                                         </td>
-                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${duration}d</td>
-                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center; background-color: ${statusColor}; color: white; font-weight: bold;">
-                                            ${statusInfo.name}
-                                        </td>
-                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${task.progress}%</td>
-                                        <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${assignedUsersText}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${duration} dias</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${statusInfo.name}</td>
+                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${task.progress}%</td>
                                     </tr>
                                 `;
                                 
@@ -4375,64 +4942,45 @@
                     processTasksForPdf(null, 0);
                     
                     tasksTable += `
-                                </tbody>
-                            </table>
-                        </div>
+                            </tbody>
+                        </table>
                     `;
                     
-                    // Montar o conteúdo completo
+                    // Montar conteúdo completo
                     pdfContainer.innerHTML = header + kpis + tasksTable;
                     
                     // Adicionar ao DOM temporariamente
-                    pdfContainer.style.position = 'absolute';
-                    pdfContainer.style.left = '-9999px';
                     document.body.appendChild(pdfContainer);
                     
-                    // Configurações do PDF
-                    const opt = {
+                    // Configurar opções do PDF
+                    const options = {
                         margin: 10,
-                        filename: `${project.name.replace(/ /g, '_')}_Relatorio.pdf`,
+                        filename: `${project.name.replace(/ /g,"_")}_Relatorio.pdf`,
                         image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { 
-                            scale: 2,
-                            useCORS: true,
-                            logging: false,
-                            backgroundColor: '#FFFFFF',
-                            width: pdfContainer.scrollWidth,
-                            height: pdfContainer.scrollHeight
-                        },
-                        jsPDF: { 
-                            unit: 'mm', 
-                            format: 'a4', 
-                            orientation: 'portrait' 
-                        }
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                     };
-
-                    // Gerar PDF com timeout para garantir que o conteúdo seja renderizado
-                    setTimeout(() => {
-                        html2pdf().set(opt).from(pdfContainer).save().then(() => {
-                            loader.style.display = 'none';
-                            document.body.removeChild(pdfContainer);
-                            uiService.showToast('PDF gerado com sucesso!', 'success');
-                        }).catch(err => {
-                            console.error('Erro ao gerar PDF:', err);
-                            loader.style.display = 'none';
-                            document.body.removeChild(pdfContainer);
-                            uiService.showToast('Erro ao gerar PDF. Tente novamente.', 'error');
-                        });
-                    }, 500);
-
+                    
+                    // Gerar PDF
+                    html2pdf().set(options).from(pdfContainer).save().then(() => {
+                        // Remover elemento temporário
+                        document.body.removeChild(pdfContainer);
+                        loader.style.display = 'none';
+                        uiService.showToast('PDF gerado com sucesso!', 'success');
+                    });
+                    
                 } catch (error) {
-                    console.error('Erro no processo de PDF:', error);
+                    console.error('Erro ao gerar PDF:', error);
                     loader.style.display = 'none';
-                    uiService.showToast('Erro ao gerar PDF.', 'error');
+                    uiService.showToast('Erro ao gerar PDF. Tente novamente.', 'error');
                 }
-            }
+            },
         };
 
-        // --- Kick off the app ---
-        document.addEventListener('DOMContentLoaded', () => App.init());
-        
+        // Inicializar a aplicação
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
     </script>
 </body>
 </html>
