@@ -362,6 +362,204 @@
             background-color: #4b5563;
             color: #d1d5db;
         }
+
+        /* NOVO: Estilos para anexos */
+        .attachments-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+        }
+        
+        .attachment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+        
+        .attachment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .attachment-item:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .attachment-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .attachment-icon {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .attachment-name {
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+        
+        .attachment-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        
+        .attachment-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .attachment-download {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .attachment-download:hover {
+            background-color: #2563eb;
+        }
+        
+        .attachment-delete {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .attachment-delete:hover {
+            background-color: #dc2626;
+        }
+        
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+        
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #6b7280;
+        }
+        
+        .upload-text {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .upload-input {
+            display: none;
+        }
+
+        /* NOVO: Estilos para menções */
+        .mention-suggestions {
+            position: absolute;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .mention-suggestion {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .mention-suggestion:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .mention-suggestion.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        
+        .mention-highlight {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        
+        html.dark .mention-highlight {
+            background-color: #78350f;
+            color: #fef3c7;
+        }
+
+        /* NOVO: Estilos para abas de atividade */
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .activity-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-time {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -573,7 +771,7 @@
         </div>
     </div>
 
-    <!-- Modal de Tarefa - VERSÃO MELHORADA -->
+    <!-- Modal de Tarefa - VERSÃO MELHORADA COM ANEXOS E ATIVIDADE -->
     <div id="task-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
             <h2 id="modal-title" class="text-2xl font-bold mb-6 text-[var(--text-color)]">Adicionar Nova Tarefa</h2>
@@ -675,9 +873,9 @@
                     </div>
                 </div>
                 
-                <!-- SEÇÃO 4: Progresso e Comentários -->
+                <!-- SEÇÃO 4: Progresso e Comentários/Atividade -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Progresso e Comentários</h3>
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Progresso e Comunicação</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Progresso -->
@@ -691,20 +889,50 @@
                             <p id="progress-info" class="text-xs text-gray-500 mt-1 hidden">O progresso de tarefas-pai é calculado automaticamente.</p>
                         </div>
                         
-                        <!-- Comentários -->
+                        <!-- Abas de Comentários e Atividade -->
                         <div>
-                            <h4 class="text-sm font-medium text-gray-400 mb-2">Comentários</h4>
-                            <div id="comments-list" class="text-sm text-gray-500 max-h-40 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 rounded shadow-inner mb-3"></div>
+                            <div class="tab-container">
+                                <div class="tab active" data-tab="comments">Comentários</div>
+                                <div class="tab" data-tab="activity">Atividade</div>
+                            </div>
                             
-                            <div class="flex gap-2">
-                                <input type="text" id="new-comment-input" class="flex-grow border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" placeholder="Adicionar comentário...">
-                                <button type="button" id="add-comment-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
+                            <!-- Conteúdo das Abas -->
+                            <div class="tab-content active" id="comments-tab">
+                                <div id="comments-list" class="text-sm text-gray-500 max-h-40 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 rounded shadow-inner mb-3"></div>
+                                
+                                <div class="flex gap-2 relative">
+                                    <input type="text" id="new-comment-input" class="flex-grow border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2" placeholder="Adicionar comentário...">
+                                    <button type="button" id="add-comment-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <!-- Sugestões de Menções -->
+                                    <div id="mention-suggestions" class="mention-suggestions"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-content" id="activity-tab">
+                                <div id="activity-list" class="text-sm text-gray-500 max-h-40 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 rounded shadow-inner">
+                                    <!-- Histórico de atividade será inserido aqui -->
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- NOVA SEÇÃO: Anexos -->
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Anexos</h3>
+                    
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📎</div>
+                        <div class="upload-text">Arraste arquivos aqui ou clique para fazer upload</div>
+                        <input type="file" id="file-upload" class="upload-input" multiple>
+                    </div>
+                    
+                    <div id="attachments-container" class="attachments-container">
+                        <!-- Lista de anexos será inserida aqui -->
                     </div>
                 </div>
                 
@@ -961,11 +1189,13 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
         
         // Variáveis Globais de Firebase
         let firebaseApp;
         let db;
         let auth;
+        let storage;
         let unsubscribeProjects = () => {};
         let unsubscribeUsers = () => {};
         let unsubscribeNotifications = () => {};
@@ -1054,6 +1284,7 @@
                     firebaseApp = initializeApp(firebaseConfig);
                     db = getFirestore(firebaseApp);
                     auth = getAuth(firebaseApp);
+                    storage = getStorage(firebaseApp); // NOVO: Inicializar Storage
 
                     // Listener do estado de autenticação inicia o fluxo da UI
                     onAuthStateChanged(auth, async (user) => {
@@ -2274,6 +2505,172 @@
             // Função para obter o número de notificações não lidas
             getUnreadNotificationCount: function() {
                 return dataService.notifications.filter(n => !n.read).length;
+            },
+
+            // --- NOVO: SISTEMA DE ANEXOS ---
+            
+            // Função para fazer upload de arquivo
+            uploadAttachment: async function(file, taskId, projectId) {
+                try {
+                    // Criar referência no Storage
+                    const storageRef = ref(storage, `projetos/${projectId}/${taskId}/${file.name}`);
+                    
+                    // Fazer upload do arquivo
+                    const snapshot = await uploadBytes(storageRef, file);
+                    
+                    // Obter URL de download
+                    const downloadURL = await getDownloadURL(snapshot.ref);
+                    
+                    return {
+                        name: file.name,
+                        url: downloadURL,
+                        size: file.size,
+                        type: file.type,
+                        uploadedAt: new Date().toISOString(),
+                        uploadedBy: dataService.userId
+                    };
+                } catch (error) {
+                    console.error("Erro ao fazer upload do arquivo:", error);
+                    throw error;
+                }
+            },
+
+            // Função para excluir anexo
+            deleteAttachment: async function(fileName, taskId, projectId) {
+                try {
+                    // Criar referência no Storage
+                    const storageRef = ref(storage, `projetos/${projectId}/${taskId}/${fileName}`);
+                    
+                    // Excluir arquivo
+                    await deleteObject(storageRef);
+                    
+                    return true;
+                } catch (error) {
+                    console.error("Erro ao excluir arquivo:", error);
+                    throw error;
+                }
+            },
+
+            // Função para obter ícone do arquivo baseado na extensão
+            getFileIcon: function(fileName) {
+                const extension = fileName.split('.').pop().toLowerCase();
+                const iconMap = {
+                    'pdf': '📕',
+                    'doc': '📘',
+                    'docx': '📘',
+                    'xls': '📗',
+                    'xlsx': '📗',
+                    'ppt': '📙',
+                    'pptx': '📙',
+                    'jpg': '🖼️',
+                    'jpeg': '🖼️',
+                    'png': '🖼️',
+                    'gif': '🖼️',
+                    'zip': '📦',
+                    'rar': '📦',
+                    'txt': '📄',
+                    'csv': '📊'
+                };
+                
+                return iconMap[extension] || '📎';
+            },
+
+            // --- NOVO: SISTEMA DE MENÇÕES ---
+            
+            // Função para enviar notificação de menção
+            sendMentionNotification: async function(mentionedUserId, taskId, taskName, projectId, projectName, commentText) {
+                try {
+                    const currentUser = dataService.users.find(u => u.id === dataService.userId);
+                    const currentUserName = currentUser?.name || currentUser?.email.split('@')[0] || 'Um utilizador';
+                    
+                    const notification = {
+                        type: 'mention',
+                        title: 'Você foi mencionado',
+                        message: `${currentUserName} mencionou você em um comentário na tarefa "${taskName}": "${commentText.substring(0, 100)}${commentText.length > 100 ? '...' : ''}"`,
+                        projectId: projectId,
+                        projectName: projectName,
+                        taskId: taskId,
+                        taskName: taskName,
+                        read: false,
+                        createdAt: new Date().toISOString(),
+                        createdBy: dataService.userId
+                    };
+                    
+                    const userNotificationsRef = collection(db, 'users_data', mentionedUserId, 'notifications');
+                    await addDoc(userNotificationsRef, notification);
+                    
+                    console.log(`📨 Notificação de menção enviada para ${mentionedUserId}`);
+                } catch (error) {
+                    console.error("Erro ao enviar notificação de menção:", error);
+                }
+            },
+
+            // Função para processar menções em comentários
+            processMentions: async function(commentText, taskId, taskName, projectId, projectName) {
+                const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+                let match;
+                const mentionedUserIds = [];
+                
+                while ((match = mentionRegex.exec(commentText)) !== null) {
+                    const userId = match[2];
+                    mentionedUserIds.push(userId);
+                    
+                    // Enviar notificação para o usuário mencionado
+                    await this.sendMentionNotification(userId, taskId, taskName, projectId, projectName, commentText);
+                }
+                
+                return mentionedUserIds;
+            },
+
+            // --- NOVO: SISTEMA DE HISTÓRICO DE ATIVIDADE ---
+            
+            // Função para registrar atividade
+            logActivity: async function(taskId, projectId, action, details, oldValue = null, newValue = null) {
+                try {
+                    const currentUser = dataService.users.find(u => u.id === dataService.userId);
+                    const currentUserName = currentUser?.name || currentUser?.email.split('@')[0] || 'Um utilizador';
+                    
+                    const activity = {
+                        action: action,
+                        details: details,
+                        oldValue: oldValue,
+                        newValue: newValue,
+                        userId: dataService.userId,
+                        userName: currentUserName,
+                        timestamp: new Date().toISOString(),
+                        taskId: taskId,
+                        projectId: projectId
+                    };
+                    
+                    // Salvar atividade no Firestore (subcoleção da tarefa)
+                    const activityRef = collection(db, 'artifacts', appId, 'users', dataService.getProjectOwnerUid(projectId), 'projects', projectId, 'tasks', taskId.toString(), 'activity');
+                    await addDoc(activityRef, activity);
+                    
+                    console.log(`📝 Atividade registrada: ${action} para tarefa ${taskId}`);
+                } catch (error) {
+                    console.error("Erro ao registrar atividade:", error);
+                }
+            },
+
+            // Função para obter histórico de atividade
+            getActivityHistory: async function(taskId, projectId) {
+                try {
+                    const activityRef = collection(db, 'artifacts', appId, 'users', dataService.getProjectOwnerUid(projectId), 'projects', projectId, 'tasks', taskId.toString(), 'activity');
+                    const snapshot = await getDocs(activityRef);
+                    
+                    const activities = [];
+                    snapshot.forEach(doc => {
+                        activities.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Ordenar por data (mais recente primeiro)
+                    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    return activities;
+                } catch (error) {
+                    console.error("Erro ao obter histórico de atividade:", error);
+                    return [];
+                }
             }
         };
 
@@ -2725,6 +3122,49 @@
                 document.getElementById('task-progress').addEventListener('input', function() {
                     document.getElementById('task-progress-range').value = this.value;
                 });
+
+                // NOVO: Event listeners para abas de comentários/atividade
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        uiService.switchTab(tabName);
+                    });
+                });
+
+                // NOVO: Event listeners para sistema de anexos
+                document.getElementById('upload-area').addEventListener('click', () => {
+                    document.getElementById('file-upload').click();
+                });
+
+                document.getElementById('file-upload').addEventListener('change', (event) => {
+                    uiService.handleFileUpload(event.target.files);
+                });
+
+                // NOVO: Drag and drop para área de upload
+                const uploadArea = document.getElementById('upload-area');
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    uiService.handleFileUpload(e.dataTransfer.files);
+                });
+
+                // NOVO: Event listener para menções
+                document.getElementById('new-comment-input').addEventListener('input', (e) => {
+                    uiService.handleMentionInput(e);
+                });
+
+                document.getElementById('new-comment-input').addEventListener('keydown', (e) => {
+                    uiService.handleMentionKeydown(e);
+                });
             }
         };
 
@@ -2734,6 +3174,9 @@
             editingCommentId: null, // Para controle de edição de comentários
             subtaskDateConfirmResolve: null, // Para resolver a Promise do modal de confirmação
             notificationDropdownVisible: false, // NOVO: Controla visibilidade do dropdown de notificações
+            mentionSuggestionsVisible: false, // NOVO: Controla visibilidade das sugestões de menção
+            currentMentionStart: -1, // NOVO: Posição inicial da menção atual
+            mentionedUsers: [], // NOVO: Usuários mencionados no comentário atual
 
             // --- AUTH UI ---
             updateUserRoleDisplay: () => {
@@ -3590,6 +4033,419 @@
                 }
             },
 
+            // --- NOVO: SISTEMA DE ANEXOS ---
+            
+            // Função para lidar com upload de arquivos
+            handleFileUpload: async function(files) {
+                if (!files || files.length === 0) return;
+                
+                const taskId = document.getElementById('task-id').value;
+                const projectId = dataService.currentProjectId;
+                
+                if (!taskId) {
+                    uiService.showToast('Salve a tarefa antes de adicionar anexos.', 'error');
+                    return;
+                }
+                
+                document.getElementById('loader').style.display = 'flex';
+                
+                try {
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        
+                        // Verificar tamanho do arquivo (limite de 10MB)
+                        if (file.size > 10 * 1024 * 1024) {
+                            uiService.showToast(`Arquivo ${file.name} é muito grande (máximo 10MB)`, 'error');
+                            continue;
+                        }
+                        
+                        // Fazer upload do arquivo
+                        const attachment = await dataService.uploadAttachment(file, taskId, projectId);
+                        
+                        // Adicionar à lista de anexos na UI
+                        this.addAttachmentToUI(attachment);
+                        
+                        uiService.showToast(`Arquivo ${file.name} adicionado com sucesso!`, 'success');
+                    }
+                } catch (error) {
+                    console.error('Erro ao fazer upload de arquivos:', error);
+                    uiService.showToast('Erro ao fazer upload dos arquivos', 'error');
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('file-upload').value = '';
+                }
+            },
+            
+            // Função para adicionar anexo à UI
+            addAttachmentToUI: function(attachment) {
+                const container = document.getElementById('attachments-container');
+                
+                const attachmentItem = document.createElement('div');
+                attachmentItem.className = 'attachment-item';
+                attachmentItem.dataset.fileName = attachment.name;
+                
+                const fileIcon = dataService.getFileIcon(attachment.name);
+                const fileSize = this.formatFileSize(attachment.size);
+                
+                attachmentItem.innerHTML = `
+                    <div class="attachment-info">
+                        <span class="attachment-icon">${fileIcon}</span>
+                        <span class="attachment-name" title="${attachment.name}">${attachment.name}</span>
+                        <span class="text-xs text-gray-500">(${fileSize})</span>
+                    </div>
+                    <div class="attachment-actions">
+                        <a href="${attachment.url}" target="_blank" class="attachment-btn attachment-download" download="${attachment.name}">
+                            Baixar
+                        </a>
+                        <button class="attachment-btn attachment-delete" data-file-name="${attachment.name}">
+                            Excluir
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(attachmentItem);
+                
+                // Adicionar event listener para o botão de exclusão
+                attachmentItem.querySelector('.attachment-delete').addEventListener('click', async (e) => {
+                    const fileName = e.target.dataset.fileName;
+                    await this.deleteAttachment(fileName);
+                });
+            },
+            
+            // Função para excluir anexo
+            deleteAttachment: async function(fileName) {
+                const taskId = document.getElementById('task-id').value;
+                const projectId = dataService.currentProjectId;
+                
+                if (!taskId) {
+                    uiService.showToast('Erro: ID da tarefa não encontrado', 'error');
+                    return;
+                }
+                
+                const confirmed = await this.showConfirmModalPromise(`Excluir o arquivo ${fileName}?`);
+                
+                if (confirmed) {
+                    document.getElementById('loader').style.display = 'flex';
+                    
+                    try {
+                        await dataService.deleteAttachment(fileName, taskId, projectId);
+                        
+                        // Remover da UI
+                        const attachmentItem = document.querySelector(`.attachment-item[data-file-name="${fileName}"]`);
+                        if (attachmentItem) {
+                            attachmentItem.remove();
+                        }
+                        
+                        uiService.showToast('Arquivo excluído com sucesso!', 'success');
+                    } catch (error) {
+                        console.error('Erro ao excluir arquivo:', error);
+                        uiService.showToast('Erro ao excluir arquivo', 'error');
+                    } finally {
+                        document.getElementById('loader').style.display = 'none';
+                    }
+                }
+            },
+            
+            // Função para formatar tamanho do arquivo
+            formatFileSize: function(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+            
+            // Função para renderizar anexos existentes
+            renderAttachments: function(attachments) {
+                const container = document.getElementById('attachments-container');
+                container.innerHTML = '';
+                
+                if (!attachments || attachments.length === 0) {
+                    container.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum arquivo anexado</div>';
+                    return;
+                }
+                
+                attachments.forEach(attachment => {
+                    this.addAttachmentToUI(attachment);
+                });
+            },
+
+            // --- NOVO: SISTEMA DE MENÇÕES ---
+            
+            // Função para lidar com input de menções
+            handleMentionInput: function(e) {
+                const input = e.target;
+                const value = input.value;
+                const cursorPosition = input.selectionStart;
+                
+                // Verificar se o usuário está digitando uma menção (@)
+                const lastAtSymbol = value.lastIndexOf('@', cursorPosition - 1);
+                
+                if (lastAtSymbol !== -1) {
+                    // Encontrar o texto após o @
+                    const textAfterAt = value.substring(lastAtSymbol + 1, cursorPosition);
+                    
+                    // Se não há espaço após o @, mostrar sugestões
+                    if (!textAfterAt.includes(' ')) {
+                        this.showMentionSuggestions(textAfterAt, lastAtSymbol, input);
+                        return;
+                    }
+                }
+                
+                // Esconder sugestões se não está digitando uma menção
+                this.hideMentionSuggestions();
+            },
+            
+            // Função para mostrar sugestões de menção
+            showMentionSuggestions: function(searchText, mentionStart, input) {
+                const suggestionsContainer = document.getElementById('mention-suggestions');
+                suggestionsContainer.innerHTML = '';
+                
+                // Filtrar usuários baseado no texto de busca
+                const filteredUsers = dataService.users.filter(user => 
+                    user.name?.toLowerCase().includes(searchText.toLowerCase()) || 
+                    user.email.toLowerCase().includes(searchText.toLowerCase())
+                );
+                
+                if (filteredUsers.length === 0) {
+                    this.hideMentionSuggestions();
+                    return;
+                }
+                
+                // Adicionar sugestões ao container
+                filteredUsers.forEach((user, index) => {
+                    const suggestion = document.createElement('div');
+                    suggestion.className = 'mention-suggestion';
+                    suggestion.dataset.userId = user.id;
+                    suggestion.dataset.userName = user.name || user.email.split('@')[0];
+                    
+                    if (index === 0) {
+                        suggestion.classList.add('active');
+                    }
+                    
+                    suggestion.innerHTML = `
+                        <strong>${user.name || user.email.split('@')[0]}</strong>
+                        <span class="text-xs text-gray-500">${user.email}</span>
+                    `;
+                    
+                    suggestion.addEventListener('click', () => {
+                        this.selectMention(user, mentionStart, input);
+                    });
+                    
+                    suggestionsContainer.appendChild(suggestion);
+                });
+                
+                // Posicionar o container de sugestões
+                this.positionMentionSuggestions(input, suggestionsContainer);
+                suggestionsContainer.style.display = 'block';
+                this.mentionSuggestionsVisible = true;
+                this.currentMentionStart = mentionStart;
+            },
+            
+            // Função para posicionar o container de sugestões
+            positionMentionSuggestions: function(input, suggestionsContainer) {
+                const rect = input.getBoundingClientRect();
+                suggestionsContainer.style.top = `${rect.bottom + window.scrollY}px`;
+                suggestionsContainer.style.left = `${rect.left + window.scrollX}px`;
+                suggestionsContainer.style.width = `${rect.width}px`;
+            },
+            
+            // Função para esconder sugestões de menção
+            hideMentionSuggestions: function() {
+                const suggestionsContainer = document.getElementById('mention-suggestions');
+                suggestionsContainer.style.display = 'none';
+                suggestionsContainer.innerHTML = '';
+                this.mentionSuggestionsVisible = false;
+                this.currentMentionStart = -1;
+            },
+            
+            // Função para lidar com teclas no input de menções
+            handleMentionKeydown: function(e) {
+                if (!this.mentionSuggestionsVisible) return;
+                
+                const suggestionsContainer = document.getElementById('mention-suggestions');
+                const activeSuggestion = suggestionsContainer.querySelector('.mention-suggestion.active');
+                const suggestions = suggestionsContainer.querySelectorAll('.mention-suggestion');
+                
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        this.selectNextSuggestion(suggestions, activeSuggestion);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        this.selectPreviousSuggestion(suggestions, activeSuggestion);
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (activeSuggestion) {
+                            const userId = activeSuggestion.dataset.userId;
+                            const userName = activeSuggestion.dataset.userName;
+                            const user = dataService.users.find(u => u.id === userId);
+                            if (user) {
+                                this.selectMention(user, this.currentMentionStart, e.target);
+                            }
+                        }
+                        break;
+                    case 'Escape':
+                        e.preventDefault();
+                        this.hideMentionSuggestions();
+                        break;
+                }
+            },
+            
+            // Função para selecionar próxima sugestão
+            selectNextSuggestion: function(suggestions, activeSuggestion) {
+                const currentIndex = Array.from(suggestions).indexOf(activeSuggestion);
+                const nextIndex = (currentIndex + 1) % suggestions.length;
+                
+                activeSuggestion.classList.remove('active');
+                suggestions[nextIndex].classList.add('active');
+            },
+            
+            // Função para selecionar sugestão anterior
+            selectPreviousSuggestion: function(suggestions, activeSuggestion) {
+                const currentIndex = Array.from(suggestions).indexOf(activeSuggestion);
+                const prevIndex = (currentIndex - 1 + suggestions.length) % suggestions.length;
+                
+                activeSuggestion.classList.remove('active');
+                suggestions[prevIndex].classList.add('active');
+            },
+            
+            // Função para selecionar uma menção
+            selectMention: function(user, mentionStart, input) {
+                const value = input.value;
+                const userName = user.name || user.email.split('@')[0];
+                
+                // Substituir o texto da menção pelo formato [Nome](ID)
+                const newValue = value.substring(0, mentionStart) + 
+                               `@[${userName}](${user.id})` + 
+                               value.substring(input.selectionStart);
+                
+                input.value = newValue;
+                
+                // Adicionar o usuário à lista de mencionados
+                this.mentionedUsers.push(user.id);
+                
+                // Esconder sugestões
+                this.hideMentionSuggestions();
+                
+                // Focar no input novamente
+                input.focus();
+                
+                // Posicionar o cursor após a menção
+                const newCursorPosition = mentionStart + `@[${userName}](${user.id})`.length;
+                input.setSelectionRange(newCursorPosition, newCursorPosition);
+            },
+            
+            // Função para processar menções em comentários
+            processMentionsInComment: async function(commentText, taskId, taskName, projectId, projectName) {
+                // Extrair menções do formato [Nome](ID)
+                const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+                let match;
+                const mentionedUserIds = [];
+                
+                while ((match = mentionRegex.exec(commentText)) !== null) {
+                    const userId = match[2];
+                    mentionedUserIds.push(userId);
+                }
+                
+                // Enviar notificações para usuários mencionados
+                for (const userId of mentionedUserIds) {
+                    await dataService.sendMentionNotification(userId, taskId, taskName, projectId, projectName, commentText);
+                }
+                
+                return mentionedUserIds;
+            },
+
+            // --- NOVO: SISTEMA DE ATIVIDADE ---
+            
+            // Função para alternar entre abas
+            switchTab: function(tabName) {
+                // Atualizar abas
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.tab === tabName);
+                });
+                
+                // Atualizar conteúdo
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('active', content.id === `${tabName}-tab`);
+                });
+                
+                // Se for a aba de atividade, carregar o histórico
+                if (tabName === 'activity') {
+                    this.loadActivityHistory();
+                }
+            },
+            
+            // Função para carregar histórico de atividade
+            loadActivityHistory: async function() {
+                const taskId = document.getElementById('task-id').value;
+                const projectId = dataService.currentProjectId;
+                
+                if (!taskId) return;
+                
+                document.getElementById('loader').style.display = 'flex';
+                
+                try {
+                    const activities = await dataService.getActivityHistory(taskId, projectId);
+                    this.renderActivityHistory(activities);
+                } catch (error) {
+                    console.error('Erro ao carregar histórico de atividade:', error);
+                    uiService.showToast('Erro ao carregar histórico de atividade', 'error');
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                }
+            },
+            
+            // Função para renderizar histórico de atividade
+            renderActivityHistory: function(activities) {
+                const container = document.getElementById('activity-list');
+                
+                if (!activities || activities.length === 0) {
+                    container.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhuma atividade registrada</div>';
+                    return;
+                }
+                
+                container.innerHTML = activities.map(activity => {
+                    const time = new Date(activity.timestamp).toLocaleString('pt-BR');
+                    let actionText = '';
+                    
+                    switch (activity.action) {
+                        case 'created':
+                            actionText = `criou a tarefa`;
+                            break;
+                        case 'updated':
+                            actionText = `alterou ${activity.details}`;
+                            if (activity.oldValue && activity.newValue) {
+                                actionText += ` de "${activity.oldValue}" para "${activity.newValue}"`;
+                            }
+                            break;
+                        case 'commented':
+                            actionText = `comentou: "${activity.details}"`;
+                            break;
+                        case 'attachment_added':
+                            actionText = `adicionou o anexo "${activity.details}"`;
+                            break;
+                        case 'attachment_deleted':
+                            actionText = `removeu o anexo "${activity.details}"`;
+                            break;
+                        default:
+                            actionText = activity.details;
+                    }
+                    
+                    return `
+                        <div class="activity-item">
+                            <div class="font-medium">${activity.userName}</div>
+                            <div>${actionText}</div>
+                            <div class="activity-time">${time}</div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
             // --- VIEW/MODAL MANAGEMENT ---
             showView(viewId) {
                 document.getElementById('project-view').classList.add('hidden');
@@ -3664,10 +4520,12 @@
                 document.querySelectorAll('.modal-transition').forEach(modal => this.closeModal(modal.id));
             },
 
-            // FUNÇÃO openTaskModal ATUALIZADA para o novo layout
+            // FUNÇÃO openTaskModal ATUALIZADA para o novo layout com anexos e atividade
             openTaskModal(mode, data = {}) {
                 document.getElementById('task-form').reset();
                 this.populateAssignedUsersCheckboxes(); 
+                this.hideMentionSuggestions();
+                this.mentionedUsers = [];
                 
                 const { parentId, taskId } = data;
                 const project = dataService.getCurrentProject();
@@ -3721,6 +4579,12 @@
                 this.renderComments(task.comments || []);
                 document.getElementById('new-comment-input').value = '';
 
+                // NOVO: Renderizar anexos
+                this.renderAttachments(task.attachments || []);
+
+                // NOVO: Resetar aba para comentários
+                this.switchTab('comments');
+
                 if (mode === 'edit') {
                     const latestDates = dataService.getLatestDates(task);
                     startDateInput.value = latestDates.startDate;
@@ -3772,6 +4636,13 @@
                     author: item.dataset.author
                 }));
 
+                // NOVO: Coletar anexos
+                const attachmentsContainer = document.getElementById('attachments-container');
+                const attachments = Array.from(attachmentsContainer.querySelectorAll('.attachment-item')).map(item => ({
+                    name: item.dataset.fileName,
+                    // Outras informações dos anexos seriam coletadas de um data attribute
+                }));
+
                 const data = {
                     id: document.getElementById('task-id').value ? parseFloat(document.getElementById('task-id').value) : null, // CORREÇÃO: Usar parseFloat
                     parentId: document.getElementById('parent-id').value ? parseFloat(document.getElementById('parent-id').value) : null, // CORREÇÃO: Usar parseFloat
@@ -3783,6 +4654,7 @@
                     risk: document.getElementById('task-risk').checked,
                     dependsOn: document.getElementById('task-dependency').value ? parseFloat(document.getElementById('task-dependency').value) : null, // CORREÇÃO: Usar parseFloat
                     comments: comments,
+                    attachments: attachments, // NOVO: Incluir anexos
                     newStartDate: startDateInput.value,
                     newEndDate: endDateInput.value,
                 };
@@ -3953,14 +4825,27 @@
                 commentItem.remove();
             },
 
-            // MELHORIA: Função para adicionar comentário (atualizada com autor)
-            addComment: function(text) {
+            // MELHORIA: Função para adicionar comentário (atualizada com autor e menções)
+            addComment: async function(text) {
+                if (!text.trim()) return;
+                
                 const listEl = document.getElementById('comments-list');
                 const commentItem = document.createElement('div');
                 const commentId = Date.now() + Math.random();
                 const timestamp = new Date().toISOString();
                 const currentUser = dataService.users.find(u => u.id === dataService.userId);
                 const authorName = currentUser?.name || currentUser?.email.split('@')[0] || 'Utilizador';
+                
+                // NOVO: Processar menções no comentário
+                const taskId = document.getElementById('task-id').value;
+                const taskName = document.getElementById('task-name').value;
+                const projectId = dataService.currentProjectId;
+                const project = dataService.getCurrentProject();
+                const projectName = project ? project.name : '';
+                
+                if (taskId && projectId) {
+                    await dataService.processMentions(text, taskId, taskName, projectId, projectName);
+                }
                 
                 commentItem.className = "comment-item border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0 relative";
                 commentItem.dataset.commentId = commentId;
@@ -3971,6 +4856,11 @@
                 const dateString = new Date(timestamp).toLocaleDateString('pt-BR');
                 const timeString = new Date(timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 
+                // NOVO: Processar texto para destacar menções
+                let processedText = text;
+                const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+                processedText = processedText.replace(mentionRegex, '<span class="mention-highlight">@$1</span>');
+                
                 commentItem.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
@@ -3978,7 +4868,7 @@
                                 <span class="font-semibold text-gray-500">${authorName}</span>
                                 <span class="text-gray-400 text-xs">${dateString} ${timeString}</span>
                             </div>
-                            <span class="comment-text">${text}</span>
+                            <span class="comment-text">${processedText}</span>
                         </div>
                         <div class="comment-actions flex gap-1 ml-2">
                             <button class="edit-comment-btn text-blue-500 hover:text-blue-700" title="Editar comentário">
@@ -4004,6 +4894,18 @@
                 commentItem.querySelector('.delete-comment-btn').addEventListener('click', (e) => {
                     this.deleteComment(commentItem);
                 });
+                
+                // NOVO: Registrar atividade de comentário
+                if (taskId && projectId) {
+                    await dataService.logActivity(
+                        taskId, 
+                        projectId, 
+                        'commented', 
+                        text,
+                        null,
+                        null
+                    );
+                }
             },
 
             showToast(message, type = 'success') {
@@ -4560,427 +5462,115 @@
                     }).forEach(task => { taskOrder.push({ ...task, level }); processGanttTasks(task.id, level + 1); });
                 };
                 processGanttTasks(null, 0);
-                
-                const taskPositions = new Map();
-                taskOrder.forEach((task, index) => {
-                    const isParent = tasks.some(t => t.parentId === task.id);
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = `gantt-task-name h-10 flex items-center border-b border-[var(--border-color)] p-2 ${isParent ? 'font-bold' : ''}`;
-                    nameDiv.style.paddingLeft = `${task.level * 15 + 8}px`;
-                    nameDiv.textContent = task.name;
-                    taskNamesContainer.appendChild(nameDiv);
 
-                    const latestDates = dataService.getLatestDates(task);
-                    const startDate = new Date(latestDates.startDate + 'T00:00:00');
-                    const endDate = new Date(latestDates.endDate + 'T00:00:00');
-                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) { return; }
-
-                    const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
-                    const startDay = reportService.calculateDuration(minDate.toISOString().split('T')[0], latestDates.startDate);
-                    const bar = document.createElement('div');
-                    const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
-                    
-                    let barColor;
-                    if (isParent) { barColor = 'bg-gray-500 dark:bg-gray-600'; 
-                    } else if (statusInfo.name === 'Atrasada') { barColor = 'bg-red-500';
-                    } else if (statusInfo.name === 'Concluída') { barColor = 'bg-green-500';
-                    } else { barColor = 'bg-blue-500'; }
-
-                    bar.className = `gantt-bar ${isParent ? 'gantt-bar-parent' : ''} ${barColor}`;
-                    bar.style.left = `${(startDay - 1) * dayWidth}px`;
-                    bar.style.width = `${duration * dayWidth}px`;
-                    bar.style.top = `${index * 40}px`;
-                    bar.title = `${task.name}\nProgresso: ${task.progress}%\nInício: ${startDate.toLocaleDateString('pt-BR')}\nTérmino: ${endDate.toLocaleDateString('pt-BR')}`;
-                    
-                    if (!isParent) {
-                        const progressOverlay = document.createElement('div');
-                        progressOverlay.style.width = `${task.progress}%`;
-                        progressOverlay.style.height = '100%';
-                        progressOverlay.className = `absolute top-0 left-0 bg-opacity-70 ${barColor}`;
-                        progressOverlay.style.backgroundColor = barColor.replace('bg-', 'bg-');
-                        const progressText = document.createElement('span');
-                        progressText.className = 'absolute inset-0 text-white flex items-center justify-center';
-                        progressText.textContent = `${task.progress}%`;
-                        
-                        bar.innerHTML = '';
-                        bar.style.backgroundColor = '#ccc'; 
-                        bar.style.color = '#1f2937'; 
-                        bar.appendChild(progressOverlay);
-                        bar.appendChild(progressText);
-                    } else {
-                        bar.textContent = task.name;
-                        bar.classList.add('text-xs');
-                    }
-
-                    timelineBody.appendChild(bar);
-                    
-                    taskPositions.set(task.id, {
-                        x_start: (startDay - 1) * dayWidth,
-                        x_end: ((startDay - 1) + duration) * dayWidth,
-                        y: (index * 40) + (isParent ? 14 : 20) 
-                    });
-                });
-                
                 taskOrder.forEach(task => {
-                    if (task.dependsOn && taskPositions.has(task.dependsOn) && taskPositions.has(task.id)) {
-                        const fromTask = taskPositions.get(task.dependsOn);
-                        const toTask = taskPositions.get(task.id);
-                        const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        const x1 = fromTask.x_end;
-                        const y1 = fromTask.y;
-                        const x2 = toTask.x_start;
-                        const y2 = toTask.y;
-                        const curve = `M ${x1} ${y1} C ${x1 + 25} ${y1} ${x2 - 25} ${y2} ${x2} ${y2}`;
-                        
-                        line.setAttribute("d", curve);
-                        line.setAttribute("stroke", "#6b7280");
-                        line.setAttribute("stroke-width", "1.5");
-                        line.setAttribute("fill", "none");
-                        line.setAttribute("marker-end", "url(#arrow)");
-                        dependencyLines.appendChild(line);
-                    }
+                    const latestDates = dataService.getLatestDates(task);
+                    if (!latestDates.startDate || !latestDates.endDate) return;
+
+                    const taskNameDiv = document.createElement('div');
+                    taskNameDiv.className = 'gantt-task-name h-8 flex items-center border-b border-[var(--border-color)] text-sm';
+                    taskNameDiv.style.paddingLeft = `${task.level * 16 + 8}px`;
+                    taskNameDiv.textContent = task.name;
+                    taskNamesContainer.appendChild(taskNameDiv);
+
+                    const start = new Date(latestDates.startDate + 'T00:00:00');
+                    const end = new Date(latestDates.endDate + 'T00:00:00');
+                    const startOffset = reportService.calculateDuration(minDate.toISOString().split('T')[0], latestDates.startDate);
+                    const taskDuration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
+
+                    const taskBar = document.createElement('div');
+                    taskBar.className = `gantt-bar ${task.level === 0 ? 'gantt-bar-parent' : ''}`;
+                    taskBar.style.left = `${startOffset * dayWidth}px`;
+                    taskBar.style.width = `${taskDuration * dayWidth}px`;
+                    taskBar.style.top = `${taskOrder.indexOf(task) * 32 + (task.level === 0 ? 8 : 20)}px`;
+                    taskBar.style.backgroundColor = task.risk ? '#ef4444' : (task.status === 'Concluída' ? '#10b981' : (task.status === 'Em Andamento' ? '#f59e0b' : '#6b7280'));
+                    taskBar.textContent = taskDuration > 2 ? task.name : '';
+                    taskBar.title = `${task.name}: ${latestDates.startDate} a ${latestDates.endDate}`;
+                    taskBar.addEventListener('click', () => uiService.openTaskModal('edit', { taskId: task.id }));
+                    timelineBody.appendChild(taskBar);
                 });
-                if (dependencyLines.innerHTML !== '') {
-                    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-                    defs.innerHTML = `<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" /></marker>`;
-                    dependencyLines.prepend(defs); 
-                }
-            },
+            }
         };
-        
-        // Report Service - Handles PDF, Excel generation and Template
+
+        // Report Service - Handles exports and reporting
         const reportService = {
-            downloadExcelTemplate() {
-                const headers = ['Tarefa', 'Duração (dias)', 'Data Início', 'Data Termino', 'Status', 'Progresso (%)', 'Prioridade', 'Atribuído a (Nomes Separados por Vírgula)', 'Risco (Sim/Nao)', 'Tarefa Pai (Nome)'];
-                const exampleData = [
-                    { 
-                        'Tarefa': 'Planejamento Geral', 
-                        'Duração (dias)': 5, 
-                        'Data Início': '2025-11-01', 
-                        'Data Termino': '2025-11-05', 
-                        'Status': 'Não Iniciada', 
-                        'Progresso (%)': 0, 
-                        'Prioridade': 'Alta', 
-                        'Atribuído a (Nomes Separados por Vírgula)': 'João Silva, Maria Santos', 
-                        'Risco (Sim/Nao)': 'Nao', 
-                        'Tarefa Pai (Nome)': '' 
-                    },
-                    { 
-                        'Tarefa': 'Definir Escopo', 
-                        'Duração (dias)': 2, 
-                        'Data Início': '2025-11-01', 
-                        'Data Termino': '2025-11-02', 
-                        'Status': 'Não Iniciada', 
-                        'Progresso (%)': 0, 
-                        'Prioridade': 'Alta', 
-                        'Atribuído a (Nomes Separados por Vírgula)': 'João Silva', 
-                        'Risco (Sim/Nao)': 'Nao', 
-                        'Tarefa Pai (Nome)': 'Planejamento Geral' 
+            calculateDuration: (startDate, endDate) => {
+                if (!startDate || !endDate) return 0;
+                const start = new Date(startDate + 'T00:00:00');
+                const end = new Date(endDate + 'T00:00:00');
+                const timeDiff = end.getTime() - start.getTime();
+                return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+            },
+            getTaskStatusClass: (status, endDate) => {
+                const today = new Date();
+                const end = new Date(endDate + 'T00:00:00');
+                if (status === 'Concluída') return { name: 'Concluída', badge: 'bg-green-600 text-white' };
+                if (status === 'Em Andamento' && end < today) return { name: 'Atrasada', badge: 'bg-red-600 text-white' };
+                if (status === 'Em Andamento') return { name: 'Em Andamento', badge: 'bg-yellow-500 text-black' };
+                if (end < today) return { name: 'Atrasada', badge: 'bg-red-600 text-white' };
+                return { name: 'Não Iniciada', badge: 'bg-gray-500 text-white' };
+            },
+            exportExcel: (project) => {
+                if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
+                const tasks = project.tasks || [];
+                const data = tasks.map(t => {
+                    const latestDates = dataService.getLatestDates(t);
+                    return {
+                        'Tarefa': t.name,
+                        'Data Início': latestDates.startDate,
+                        'Data Termino': latestDates.endDate,
+                        'Duração (dias)': reportService.calculateDuration(latestDates.startDate, latestDates.endDate),
+                        'Status': t.status,
+                        'Progresso (%)': t.progress,
+                        'Prioridade': t.priority,
+                        'Responsável': dataService.getAssignedUserNames(t.assignedUsers),
+                        'Risco': t.risk ? 'Sim' : 'Não',
+                        'Tarefa Pai': tasks.find(pt => pt.id === t.parentId)?.name || ''
+                    };
+                });
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Tarefas');
+                XLSX.writeFile(workbook, `${project.name}_tarefas.xlsx`);
+                uiService.showToast('Exportado para Excel com sucesso!');
+            },
+            generatePdf: (project) => {
+                if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
+                const element = document.getElementById('content-area');
+                const opt = {
+                    margin: [10, 10, 10, 10],
+                    filename: `${project.name}_relatorio.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                };
+                html2pdf().set(opt).from(element).save();
+                uiService.showToast('PDF gerado com sucesso!');
+            },
+            downloadExcelTemplate: () => {
+                const template = [
+                    {
+                        'Tarefa': 'Nome da tarefa',
+                        'Data Início': '2024-01-01',
+                        'Data Termino': '2024-01-05',
+                        'Status': 'Não Iniciada',
+                        'Progresso (%)': 0,
+                        'Prioridade': 'Média',
+                        'Atribuído a (Nomes Separados por Vírgula)': 'nome1, nome2',
+                        'Risco (Sim/Nao)': 'Nao',
+                        'Tarefa Pai (Nome)': 'Nome da tarefa pai (opcional)'
                     }
                 ];
-                
+                const worksheet = XLSX.utils.json_to_sheet(template);
                 const workbook = XLSX.utils.book_new();
-                
-                // Garantir a ordem das colunas
-                const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
-                
-                worksheet['!cols'] = [
-                    { wch: 40 }, // Tarefa
-                    { wch: 15 }, // Duração (dias)
-                    { wch: 15 }, // Data Início
-                    { wch: 15 }, // Data Termino
-                    { wch: 15 }, // Status
-                    { wch: 15 }, // Progresso (%)
-                    { wch: 15 }, // Prioridade
-                    { wch: 40 }, // Atribuído a (Nomes Separados por Vírgula)
-                    { wch: 15 }, // Risco (Sim/Nao)
-                    { wch: 40 }  // Tarefa Pai (Nome)
-                ];
-                
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Template Importação");
-                
-                // Adicionar uma aba de instruções
-                const instructions = [
-                    ['INSTRUÇÕES DE PREENCHIMENTO'],
-                    [''],
-                    ['Campo', 'Descrição', 'Exemplo'],
-                    ['Tarefa', 'Nome completo da tarefa', 'Planejamento Geral'],
-                    ['Duração (dias)', 'Número de dias da tarefa', '5'],
-                    ['Data Início', 'Data de início (YYYY-MM-DD)', '2025-11-01'],
-                    ['Data Termino', 'Data de término (YYYY-MM-DD)', '2025-11-05'],
-                    ['Status', 'Não Iniciada, Em Andamento ou Concluída', 'Não Iniciada'],
-                    ['Progresso (%)', '0 a 100', '0'],
-                    ['Prioridade', 'Baixa, Média ou Alta', 'Alta'],
-                    ['Atribuído a', 'Nomes separados por vírgula', 'João Silva, Maria Santos'],
-                    ['Risco', 'Sim ou Nao', 'Nao'],
-                    ['Tarefa Pai', 'Nome da tarefa pai (deixe vazio para tarefas de nível superior)', 'Planejamento Geral'],
-                    [''],
-                    ['IMPORTANTE:'],
-                    ['- Use o formato YYYY-MM-DD para datas'],
-                    ['- Para tarefas subtarefas, preencha o nome da tarefa pai na última coluna'],
-                    ['- Os nomes dos responsáveis devem corresponder exatamente aos cadastrados no sistema']
-                ];
-                
-                const instructionSheet = XLSX.utils.aoa_to_sheet(instructions);
-                instructionSheet['!cols'] = [
-                    { wch: 25 },
-                    { wch: 50 },
-                    { wch: 30 }
-                ];
-                
-                XLSX.utils.book_append_sheet(workbook, instructionSheet, "Instruções");
-                
-                XLSX.writeFile(workbook, "template_importacao_correto.xlsx");
-            },
-            
-            calculateDuration: (start, end) => {
-                if (!start || !end) return 0;
-                const diffTime = new Date(end) - new Date(start);
-                return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            },
-            
-            getTaskStatusClass: (status, endDate) => {
-                const today = new Date(); today.setHours(0,0,0,0);
-                const taskEndDate = new Date(endDate + 'T00:00:00');
-                if (status !== 'Concluída' && taskEndDate < today) return { badge: 'bg-red-600 text-white', name: 'Atrasada' };
-                switch (status) {
-                    case 'Concluída': return { badge: 'bg-green-600 text-white', name: 'Concluída' };
-                    case 'Em Andamento': return { badge: 'bg-yellow-500 text-black', name: 'Em Andamento' };
-                    default: return { badge: 'bg-gray-500 text-white', name: 'Não Iniciada' };
-                }
-            },
-            
-            exportExcel: function(project) {
-                if (!project) return;
-                
-                const workbook = XLSX.utils.book_new();
-                
-                // Dados para exportação
-                const dataToExport = [];
-                const processTasksForExport = (parentId, level) => {
-                    project.tasks.filter(t => t.parentId === parentId)
-                        .sort((a,b) => {
-                            const dateA = new Date(dataService.getLatestDates(a).startDate);
-                            const dateB = new Date(dataService.getLatestDates(b).startDate);
-                            return dateA - dateB;
-                        })
-                        .forEach(task => {
-                            const latestDates = dataService.getLatestDates(task);
-                            const duration = this.calculateDuration(latestDates.startDate, latestDates.endDate);
-                            const statusInfo = this.getTaskStatusClass(task.status, latestDates.endDate);
-                            const commentsString = (task.comments || [])
-                                .map(c => `${c.author || 'Utilizador'}: ${c.text} (${new Date(c.timestamp).toLocaleDateString('pt-BR')})`)
-                                .join(' | ');
-
-                            // CORREÇÃO: Usar nomes em vez de UIDs
-                            const assignedUserNames = dataService.getAssignedUserNames(task.assignedUsers);
-
-                            dataToExport.push({
-                                'Tarefa': `${'  '.repeat(level)}${task.name}`, 
-                                'Duração (dias)': duration, 
-                                'Data de Início': new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR'), 
-                                'Data de Término': new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR'),
-                                'Status': statusInfo.name, 
-                                'Progresso (%)': task.progress,
-                                'Prioridade': task.priority,
-                                'Responsáveis': assignedUserNames, // Nomes em vez de UIDs
-                                'Em Risco': task.risk ? 'Sim' : 'Não',
-                                'Comentários': commentsString
-                            });
-                            processTasksForExport(task.id, level + 1);
-                        });
-                };
-                processTasksForExport(null, 0);
-                
-                // Criar worksheet principal
-                const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-                
-                // Aplicar formatação
-                worksheet['!cols'] = [
-                    { wch: 40 }, // Tarefa
-                    { wch: 15 }, // Duração
-                    { wch: 15 }, // Data Início
-                    { wch: 15 }, // Data Término
-                    { wch: 15 }, // Status
-                    { wch: 15 }, // Progresso
-                    { wch: 15 }, // Prioridade
-                    { wch: 30 }, // Responsáveis
-                    { wch: 15 }, // Em Risco
-                    { wch: 50 }  // Comentários
-                ];
-                
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Cronograma");
-                
-                // Adicionar resumo do projeto
-                const summaryData = [
-                    ['RELATÓRIO DO PROJETO'],
-                    [''],
-                    ['Nome do Projeto:', project.name],
-                    ['Responsável:', dataService.getManagerName(project.manager)],
-                    ['Progresso Geral:', `${dataService.getProjectProgress(project.tasks)}%`],
-                    ['Total de Tarefas:', project.tasks.length],
-                    ['Tarefas Concluídas:', project.tasks.filter(t => t.status === 'Concluída').length],
-                    ['Tarefas Atrasadas:', project.tasks.filter(t => this.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada').length],
-                    ['Tarefas em Risco:', project.tasks.filter(t => t.risk).length],
-                    [''],
-                    ['Gerado em:', new Date().toLocaleDateString('pt-BR')]
-                ];
-                
-                const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-                summarySheet['!cols'] = [
-                    { wch: 25 },
-                    { wch: 30 }
-                ];
-                
-                XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumo");
-                
-                XLSX.writeFile(workbook, `${project.name.replace(/ /g,"_")}_Relatorio_Formatado.xlsx`);
-            },
-            
-            // CORREÇÃO COMPLETA: Função generatePdf corrigida para não gerar PDF em branco
-            generatePdf: function(project) {
-                const loader = document.getElementById('loader');
-                loader.style.display = 'flex';
-                
-                if (!project) { 
-                    loader.style.display = 'none'; 
-                    uiService.showToast('Nenhum projeto selecionado para gerar PDF', 'error');
-                    return; 
-                }
-
-                try {
-                    // Criar um elemento HTML específico para o PDF
-                    const pdfContainer = document.createElement('div');
-                    pdfContainer.style.padding = '20px';
-                    pdfContainer.style.backgroundColor = 'white';
-                    pdfContainer.style.color = 'black';
-                    pdfContainer.style.fontFamily = 'Arial, sans-serif';
-                    pdfContainer.style.width = '100%';
-                    
-                    // Cabeçalho do relatório
-                    const header = `
-                        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                            <h1 style="font-size: 24px; font-weight: bold; margin: 0;">${project.name}</h1>
-                            <p style="color: #666; margin: 5px 0;">Relatório Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
-                            <p style="color: #666; margin: 0;">Responsável: ${dataService.getManagerName(project.manager)}</p>
-                        </div>
-                    `;
-                    
-                    // KPIs
-                    const overallProgress = dataService.getProjectProgress(project.tasks);
-                    const kpis = `
-                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px;">
-                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
-                                <div style="font-size: 18px; font-weight: bold;">${overallProgress}%</div>
-                                <div style="font-size: 12px; color: #666;">Progresso Geral</div>
-                            </div>
-                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
-                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.length}</div>
-                                <div style="font-size: 12px; color: #666;">Total de Tarefas</div>
-                            </div>
-                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
-                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => t.status === 'Concluída').length}</div>
-                                <div style="font-size: 12px; color: #666;">Concluídas</div>
-                            </div>
-                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
-                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => this.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada').length}</div>
-                                <div style="font-size: 12px; color: #666;">Atrasadas</div>
-                            </div>
-                            <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 5px;">
-                                <div style="font-size: 18px; font-weight: bold;">${project.tasks.filter(t => t.risk).length}</div>
-                                <div style="font-size: 12px; color: #666;">Em Risco</div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    // Tabela de tarefas
-                    let tasksTable = `
-                        <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Tarefas do Projeto</h2>
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                            <thead>
-                                <tr style="background-color: #f0f0f0;">
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Tarefa</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Duração</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Início</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Término</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Status</th>
-                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Progresso</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    
-                    const processTasksForPdf = (parentId, level) => {
-                        project.tasks.filter(t => t.parentId === parentId)
-                            .sort((a,b) => {
-                                const dateA = new Date(dataService.getLatestDates(a).startDate);
-                                const dateB = new Date(dataService.getLatestDates(b).startDate);
-                                return dateA - dateB;
-                            })
-                            .forEach(task => {
-                                const latestDates = dataService.getLatestDates(task);
-                                const duration = this.calculateDuration(latestDates.startDate, latestDates.endDate);
-                                const statusInfo = this.getTaskStatusClass(task.status, latestDates.endDate);
-                                
-                                tasksTable += `
-                                    <tr>
-                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left; padding-left: ${level * 15 + 8}px">
-                                            ${task.name}
-                                        </td>
-                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${duration} dias</td>
-                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${statusInfo.name}</td>
-                                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${task.progress}%</td>
-                                    </tr>
-                                `;
-                                
-                                processTasksForPdf(task.id, level + 1);
-                            });
-                    };
-                    
-                    processTasksForPdf(null, 0);
-                    
-                    tasksTable += `
-                            </tbody>
-                        </table>
-                    `;
-                    
-                    // Montar conteúdo completo
-                    pdfContainer.innerHTML = header + kpis + tasksTable;
-                    
-                    // Adicionar ao DOM temporariamente
-                    document.body.appendChild(pdfContainer);
-                    
-                    // Configurar opções do PDF
-                    const options = {
-                        margin: 10,
-                        filename: `${project.name.replace(/ /g,"_")}_Relatorio.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-                    
-                    // Gerar PDF
-                    html2pdf().set(options).from(pdfContainer).save().then(() => {
-                        // Remover elemento temporário
-                        document.body.removeChild(pdfContainer);
-                        loader.style.display = 'none';
-                        uiService.showToast('PDF gerado com sucesso!', 'success');
-                    });
-                    
-                } catch (error) {
-                    console.error('Erro ao gerar PDF:', error);
-                    loader.style.display = 'none';
-                    uiService.showToast('Erro ao gerar PDF. Tente novamente.', 'error');
-                }
-            },
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+                XLSX.writeFile(workbook, 'template_importacao_tarefas.xlsx');
+                uiService.showToast('Template baixado com sucesso!');
+            }
         };
 
-        // Inicializar a aplicação
-        document.addEventListener('DOMContentLoaded', () => {
-            App.init();
-        });
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => App.init());
     </script>
 </body>
 </html>
