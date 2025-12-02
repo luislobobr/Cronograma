@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR" class="">
 
@@ -658,14 +657,32 @@
         .dashboard-project-item {
             display: flex;
             align-items: center;
-            padding: 6px 0;
+            padding: 8px 10px;
+            margin: 2px -10px;
             font-size: 13px;
             color: #6b7280;
-            transition: color 0.2s ease;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+            cursor: pointer;
         }
 
         .dashboard-project-item:hover {
             color: var(--card-accent);
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateX(4px);
+        }
+        
+        .dark .dashboard-project-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .dashboard-project-name {
+            text-decoration: none;
+            transition: text-decoration 0.2s ease;
+        }
+        
+        .dashboard-project-item:hover .dashboard-project-name {
+            text-decoration: underline;
         }
 
         .dashboard-project-dot {
@@ -790,16 +807,18 @@
             }
         }
 
-        html.dark @keyframes pulse-highlight {
-
+        @keyframes pulse-highlight-dark {
             0%,
             100% {
                 background-color: rgba(34, 197, 94, 0.2);
             }
-
             50% {
                 background-color: rgba(34, 197, 94, 0.3);
             }
+        }
+        
+        html.dark .today-running-task {
+            animation: pulse-highlight-dark 2s infinite;
         }
 
         .today-running-task:hover {
@@ -856,6 +875,68 @@
         .task-info-container {
             margin-top: 8px;
             font-size: 0.8rem;
+        }
+
+        /* Estilos para o modal de alertas */
+        .alerts-modal-content {
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-task-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .alert-task-item:hover {
+            border-color: #3b82f6;
+            transform: translateX(4px);
+        }
+
+        .alert-task-item.overdue {
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-task-item.today {
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-task-project {
+            font-size: 0.7rem;
+            color: #6b7280;
+            background: rgba(107, 114, 128, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .alert-task-name {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .alert-task-date {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .alert-task-date.overdue-date {
+            color: #ef4444;
         }
 
         /* MELHORIA: Estilos para o modal de tarefa melhorado */
@@ -1635,7 +1716,14 @@
     <div id="task-modal"
         class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 no-print modal-transition modal-hidden">
         <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 id="modal-title" class="text-2xl font-bold mb-6 text-[var(--text-color)]">Adicionar Nova Tarefa</h2>
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="modal-title" class="text-2xl font-bold text-[var(--text-color)]">Adicionar Nova Tarefa</h2>
+                <button type="button" class="cancel-btn text-gray-400 hover:text-gray-600 p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
 
             <form id="task-form" class="space-y-6">
                 <input type="hidden" id="task-id">
@@ -1643,38 +1731,59 @@
 
                 <!-- SEÇÃO 1: Informações Básicas -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Informações Básicas
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
+                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                        Informações Básicas
                     </h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Nome da Tarefa -->
                         <div class="md:col-span-2">
-                            <label for="task-name" class="block text-sm font-medium text-gray-400 mb-1">Nome da Tarefa
-                                *</label>
+                            <label for="task-name" class="block text-sm font-medium text-gray-400 mb-1">
+                                Nome da Tarefa <span class="text-red-500">*</span>
+                            </label>
                             <input type="text" id="task-name"
-                                class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3"
-                                required placeholder="Digite o nome da tarefa">
+                                class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                required placeholder="Ex: Elaborar relatório mensal, Revisar documentação...">
+                            <p class="text-xs text-gray-500 mt-1">Descreva de forma clara o que precisa ser feito</p>
+                        </div>
+
+                        <!-- Tarefa Pai (Nova opção) -->
+                        <div class="md:col-span-2">
+                            <label for="task-parent-select" class="block text-sm font-medium text-gray-400 mb-1">
+                                Tarefa Pai (opcional)
+                            </label>
+                            <select id="task-parent-select"
+                                class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
+                                <option value="">Nenhuma (tarefa principal)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Selecione uma tarefa pai para criar uma subtarefa</p>
                         </div>
 
                         <!-- Prioridade e Status -->
                         <div>
-                            <label for="task-priority"
-                                class="block text-sm font-medium text-gray-400 mb-1">Prioridade</label>
-                            <select id="task-priority"
-                                class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
-                                <option value="Baixa">Baixa</option>
-                                <option value="Média">Média</option>
-                                <option value="Alta">Alta</option>
-                            </select>
+                            <label for="task-priority" class="block text-sm font-medium text-gray-400 mb-1">
+                                Prioridade
+                            </label>
+                            <div class="relative">
+                                <select id="task-priority"
+                                    class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3 appearance-none">
+                                    <option value="Baixa">🟢 Baixa</option>
+                                    <option value="Média" selected>🟡 Média</option>
+                                    <option value="Alta">🔴 Alta</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div>
-                            <label for="task-status" class="block text-sm font-medium text-gray-400 mb-1">Status</label>
+                            <label for="task-status" class="block text-sm font-medium text-gray-400 mb-1">
+                                Status Inicial
+                            </label>
                             <select id="task-status"
                                 class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
-                                <option value="Não Iniciada">Não Iniciada</option>
-                                <option value="Em Andamento">Em Andamento</option>
-                                <option value="Concluída">Concluída</option>
+                                <option value="Não Iniciada">⏳ Não Iniciada</option>
+                                <option value="Em Andamento">🔄 Em Andamento</option>
+                                <option value="Concluída">✅ Concluída</option>
                             </select>
                         </div>
                     </div>
@@ -1682,24 +1791,41 @@
 
                 <!-- SEÇÃO 2: Datas e Prazos -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Datas e Prazos</h3>
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
+                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                        Datas e Prazos
+                    </h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="start-date" class="block text-sm font-medium text-gray-400 mb-1">Data de Início
-                                *</label>
+                            <label for="start-date" class="block text-sm font-medium text-gray-400 mb-1">
+                                Data de Início <span class="text-red-500">*</span>
+                            </label>
                             <input type="date" id="start-date"
-                                class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3"
+                                class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3 focus:ring-2 focus:ring-blue-500"
                                 required>
+                            <p class="text-xs text-gray-500 mt-1">Quando a tarefa deve começar</p>
                         </div>
 
                         <div>
-                            <label for="end-date" class="block text-sm font-medium text-gray-400 mb-1">Data de Término
-                                *</label>
+                            <label for="end-date" class="block text-sm font-medium text-gray-400 mb-1">
+                                Data de Término <span class="text-red-500">*</span>
+                            </label>
                             <input type="date" id="end-date"
-                                class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3"
+                                class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-3 focus:ring-2 focus:ring-blue-500"
                                 required>
+                            <p class="text-xs text-gray-500 mt-1">Prazo final para conclusão</p>
                         </div>
+                    </div>
+
+                    <!-- Botão para definir mesma data -->
+                    <div class="mt-3 flex gap-2">
+                        <button type="button" id="same-day-btn" class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
+                            Mesmo dia (início = término)
+                        </button>
+                        <button type="button" id="today-btn" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800">
+                            Definir para hoje
+                        </button>
                     </div>
 
                     <div id="reschedule-button-container" class="mt-2 hidden">
@@ -1725,36 +1851,63 @@
 
                 <!-- SEÇÃO 3: Atribuição e Dependências -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Atribuição e
-                        Dependências</h3>
+                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
+                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                        Responsáveis e Dependências
+                    </h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Responsáveis -->
+                        <!-- Responsáveis - Layout melhorado -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-2">Atribuído a
-                                (Utilizadores)</label>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">
+                                Atribuir a (pode selecionar vários)
+                            </label>
+                            
+                            <!-- Busca de usuários -->
+                            <div class="relative mb-2">
+                                <input type="text" id="user-search-input" 
+                                    class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2 pl-8 text-sm"
+                                    placeholder="Buscar usuário...">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-2 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            
+                            <!-- Usuários selecionados (badges) -->
+                            <div id="selected-users-badges" class="flex flex-wrap gap-1 mb-2 min-h-[28px]">
+                                <!-- Badges dos usuários selecionados aparecerão aqui -->
+                            </div>
+                            
+                            <!-- Lista de usuários -->
                             <div id="assigned-users-container"
-                                class="assigned-users-container border border-[var(--border-color)] rounded-md p-3 bg-[var(--card-bg)] max-h-40 overflow-y-auto">
+                                class="assigned-users-container border border-[var(--border-color)] rounded-md p-2 bg-[var(--card-bg)] max-h-32 overflow-y-auto">
                                 <!-- Checkboxes serão inseridos aqui dinamicamente -->
                             </div>
+                            <p class="text-xs text-gray-500 mt-1">Clique para selecionar/deselecionar responsáveis</p>
                         </div>
 
                         <!-- Dependências e Risco -->
                         <div class="space-y-4">
                             <div>
-                                <label for="task-dependency"
-                                    class="block text-sm font-medium text-gray-400 mb-1">Depende de</label>
+                                <label for="task-dependency" class="block text-sm font-medium text-gray-400 mb-1">
+                                    Depende de (bloqueador)
+                                </label>
                                 <select id="task-dependency"
                                     class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
-                                    <option value="">Nenhuma</option>
+                                    <option value="">Nenhuma dependência</option>
                                 </select>
+                                <p class="text-xs text-gray-500 mt-1">Esta tarefa só pode iniciar após a tarefa selecionada</p>
                             </div>
 
-                            <div class="flex items-center">
+                            <div class="flex items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                                 <input type="checkbox" id="task-risk"
                                     class="h-5 w-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
-                                <label for="task-risk" class="ml-2 text-sm font-medium text-gray-400">Marcar como Tarefa
-                                    em Risco</label>
+                                <div class="ml-3">
+                                    <label for="task-risk" class="text-sm font-medium text-red-600 dark:text-red-400">
+                                        Tarefa em Risco
+                                    </label>
+                                    <p class="text-xs text-gray-500">Marque se houver impedimentos ou riscos</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1898,6 +2051,62 @@
         </div>
     </div>
 
+    <!-- Modal de Alertas/Lembretes -->
+    <div id="alerts-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-[100] no-print modal-transition modal-hidden">
+        <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden alerts-modal-content">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-5">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    Lembretes do Dia
+                </h2>
+                <p class="text-blue-100 text-sm mt-1" id="alerts-date"></p>
+            </div>
+            
+            <div class="p-5 max-h-[60vh] overflow-y-auto">
+                <!-- Tarefas Atrasadas -->
+                <div id="alerts-overdue-section" class="mb-5 hidden">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-2xl">⚠️</span>
+                        <h3 class="font-bold text-red-600 dark:text-red-400 text-lg">Tarefas Atrasadas</h3>
+                        <span id="alerts-overdue-count" class="bg-red-600 text-white text-xs px-2 py-1 rounded-full"></span>
+                    </div>
+                    <div id="alerts-overdue-list" class="space-y-2">
+                        <!-- Lista de tarefas atrasadas -->
+                    </div>
+                </div>
+                
+                <!-- Tarefas de Hoje -->
+                <div id="alerts-today-section" class="hidden">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-2xl">📅</span>
+                        <h3 class="font-bold text-green-600 dark:text-green-400 text-lg">Tarefas para Hoje</h3>
+                        <span id="alerts-today-count" class="bg-green-600 text-white text-xs px-2 py-1 rounded-full"></span>
+                    </div>
+                    <div id="alerts-today-list" class="space-y-2">
+                        <!-- Lista de tarefas de hoje -->
+                    </div>
+                </div>
+                
+                <!-- Nenhum alerta -->
+                <div id="alerts-empty" class="text-center py-8 hidden">
+                    <span class="text-5xl mb-4 block">🎉</span>
+                    <h3 class="font-bold text-lg text-[var(--text-color)]">Tudo em dia!</h3>
+                    <p class="text-gray-500 mt-2">Você não tem tarefas atrasadas ou para hoje.</p>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-[var(--border-color)] flex justify-end">
+                <button id="alerts-close-btn"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Conteúdo Principal -->
     <div class="relative min-h-screen">
         <input type="file" id="import-excel-input" class="hidden" accept=".xlsx, .xls">
@@ -1982,6 +2191,22 @@
                 <!-- Os gráficos serão inseridos aqui dinamicamente -->
             </div>
 
+            <!-- Abas de Projetos Ativos e Finalizados -->
+            <div class="mb-6 border-b border-gray-300 dark:border-gray-700">
+                <nav class="flex gap-4" aria-label="Tabs">
+                    <button id="tab-active-projects" 
+                        class="project-tab active px-4 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                        <span>📁</span> Projetos Ativos
+                        <span id="active-projects-count" class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button id="tab-finalized-projects" 
+                        class="project-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-2">
+                        <span>✅</span> Projetos Finalizados
+                        <span id="finalized-projects-count" class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-0.5 rounded-full">0</span>
+                    </button>
+                </nav>
+            </div>
+
             <div class="flex justify-between items-center mb-6">
                 <button id="add-project-btn"
                     class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2">
@@ -2053,16 +2278,36 @@
                         <h1 id="project-title" class="text-4xl font-bold">Nome do Projeto</h1>
                         <p class="text-gray-400">Painel de controle do projeto.</p>
                     </div>
-                    <!-- NOVO: Botão para editar datas do projeto -->
-                    <button id="edit-project-dates-btn"
-                        class="no-print bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        Editar Datas do Projeto
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <!-- Botão para editar datas do projeto -->
+                        <button id="edit-project-dates-btn"
+                            class="no-print bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            Editar Datas
+                        </button>
+                        
+                        <!-- Botão para finalizar projeto (só aparece quando 100%) -->
+                        <button id="finalize-project-btn"
+                            class="no-print hidden bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            Finalizar Projeto
+                        </button>
+                        
+                        <!-- Botão para reabrir projeto (só aparece em projetos finalizados) -->
+                        <button id="reopen-project-btn"
+                            class="no-print hidden bg-amber-600 text-white px-3 py-2 rounded-md hover:bg-amber-700 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            </svg>
+                            Reabrir Projeto
+                        </button>
+                    </div>
                 </div>
                 <!-- NOVO: Exibição das datas do projeto -->
                 <div id="project-dates-display" class="mt-2 text-sm text-gray-500">
@@ -2090,17 +2335,6 @@
                             class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 flex items-center gap-2">Importar</button>
                         <button id="download-template-btn" class="text-sm text-blue-500 hover:underline">Baixar
                             Template</button>
-                        <!-- NOVO: Botão para filtrar tarefas de hoje -->
-                        <button id="filter-today-btn"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            Tarefas de Hoje
-                        </button>
                     </div>
                     <div class="relative">
                         <input type="text" id="task-filter-input" placeholder="Filtrar tarefas..."
@@ -2552,6 +2786,11 @@
                     } else {
                         App.showProjectView();
                     }
+                    
+                    // Mostrar alertas de tarefas atrasadas e de hoje ao carregar
+                    setTimeout(() => {
+                        uiService.showLoginAlerts();
+                    }, 500);
                 }, (error) => {
                     console.error("Erro ao ouvir projetos:", error);
                     uiService.showToast('Erro de sincronização em tempo real.', 'error');
@@ -2621,6 +2860,42 @@
                 } catch (error) {
                     console.error("Erro ao deletar projeto:", error);
                     uiService.showToast('Falha ao deletar projeto. Verifique suas permissões.', 'error');
+                }
+            },
+
+            // Finalizar projeto (mover para finalizados)
+            finalizeProject: async (projectId) => {
+                try {
+                    const project = dataService.getProjectById(projectId);
+                    if (!project) return;
+                    
+                    const progress = dataService.getProjectProgress(project.tasks);
+                    if (progress < 100) {
+                        uiService.showToast('O projeto precisa estar 100% concluído para ser finalizado.', 'error');
+                        return;
+                    }
+                    
+                    project.finalized = true;
+                    project.finalizedAt = new Date().toISOString();
+                    await dataService.saveProjectDocument(project);
+                } catch (error) {
+                    console.error("Erro ao finalizar projeto:", error);
+                    uiService.showToast('Falha ao finalizar projeto.', 'error');
+                }
+            },
+
+            // Reabrir projeto (mover de volta para ativos)
+            reopenProject: async (projectId) => {
+                try {
+                    const project = dataService.getProjectById(projectId);
+                    if (!project) return;
+                    
+                    project.finalized = false;
+                    project.finalizedAt = null;
+                    await dataService.saveProjectDocument(project);
+                } catch (error) {
+                    console.error("Erro ao reabrir projeto:", error);
+                    uiService.showToast('Falha ao reabrir projeto.', 'error');
                 }
             },
 
@@ -3901,8 +4176,10 @@ saveTask: async (taskData) => {
             showProjectView() {
                 dataService.currentProjectId = null;
                 uiService.showView('project-view');
-                uiService.renderProjectList(dataService.projects);
-                uiService.updateMainDashboard(dataService.projects);
+                uiService.updateProjectTabCounts();
+                const filteredProjects = uiService.getFilteredProjects();
+                uiService.renderProjectList(filteredProjects);
+                uiService.updateMainDashboard(dataService.projects.filter(p => !p.finalized));
             },
 
             openProject(projectId) {
@@ -4081,6 +4358,11 @@ saveTask: async (taskData) => {
                     }
                 });
 
+                // Event listener para fechar modal de alertas
+                document.getElementById('alerts-close-btn').addEventListener('click', () => {
+                    uiService.closeModal('alerts-modal');
+                });
+
                 document.getElementById('add-project-btn').addEventListener('click', () => {
                     uiService.populateProjectManagerSelect(); // NOVA LINHA - Popula o select de responsáveis
                     uiService.openModal('project-modal');
@@ -4110,6 +4392,40 @@ saveTask: async (taskData) => {
                 // NOVO: Event listener para edição de datas do projeto
                 document.getElementById('edit-project-dates-btn').addEventListener('click', () => {
                     uiService.openProjectDateModal();
+                });
+
+                // Event listener para finalizar projeto
+                document.getElementById('finalize-project-btn').addEventListener('click', async () => {
+                    const project = dataService.getProjectById(dataService.currentProjectId);
+                    if (!project) return;
+                    
+                    const confirmed = await uiService.showConfirmModalPromise(
+                        `Tem certeza que deseja finalizar o projeto "${project.name}"? O projeto será movido para a aba de Projetos Finalizados.`,
+                        'Finalizar Projeto'
+                    );
+                    
+                    if (confirmed) {
+                        await dataService.finalizeProject(dataService.currentProjectId);
+                        uiService.showToast('Projeto finalizado com sucesso!', 'success');
+                        App.showProjectView();
+                    }
+                });
+
+                // Event listener para reabrir projeto
+                document.getElementById('reopen-project-btn').addEventListener('click', async () => {
+                    const project = dataService.getProjectById(dataService.currentProjectId);
+                    if (!project) return;
+                    
+                    const confirmed = await uiService.showConfirmModalPromise(
+                        `Tem certeza que deseja reabrir o projeto "${project.name}"? O projeto voltará para a aba de Projetos Ativos.`,
+                        'Reabrir Projeto'
+                    );
+                    
+                    if (confirmed) {
+                        await dataService.reopenProject(dataService.currentProjectId);
+                        uiService.showToast('Projeto reaberto com sucesso!', 'success');
+                        App.showProjectView();
+                    }
                 });
 
                 // NOVO: Event listener para formulário de edição de datas do projeto
@@ -4166,20 +4482,32 @@ saveTask: async (taskData) => {
                 document.getElementById('back-to-projects-btn').addEventListener('click', () => this.showProjectView());
                 document.getElementById('add-task-btn').addEventListener('click', () => uiService.openTaskModal('add'));
 
-                // NOVO: Event listener para o botão de filtrar tarefas de hoje
-                document.getElementById('filter-today-btn').addEventListener('click', () => {
-                    const project = dataService.getCurrentProject();
-                    if (!project) return;
-
-                    const todayTasks = dataService.taskService.getTodayRunningTasks(project);
-                    uiService.renderTaskTable(todayTasks);
-
-                    // Atualizar o contador no filtro
-                    const taskFilterInput = document.getElementById('task-filter-input');
-                    taskFilterInput.value = '';
-                    taskFilterInput.placeholder = `Filtrando: ${todayTasks.length} tarefa(s) de hoje`;
-
-                    uiService.showToast(`Mostrando ${todayTasks.length} tarefa(s) em execução hoje`, 'success');
+                // Event listeners para novas funcionalidades do modal de tarefa
+                document.getElementById('user-search-input').addEventListener('input', (e) => {
+                    uiService.filterUserCheckboxes(e.target.value);
+                });
+                
+                document.getElementById('same-day-btn').addEventListener('click', () => {
+                    const startDate = document.getElementById('start-date').value;
+                    if (startDate) {
+                        document.getElementById('end-date').value = startDate;
+                    } else {
+                        uiService.showToast('Preencha a data de início primeiro', 'error');
+                    }
+                });
+                
+                document.getElementById('today-btn').addEventListener('click', () => {
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('start-date').value = today;
+                    document.getElementById('end-date').value = today;
+                });
+                
+                // Quando a data de início muda, ajustar a data de término se necessário
+                document.getElementById('start-date').addEventListener('change', (e) => {
+                    const endDate = document.getElementById('end-date').value;
+                    if (!endDate || new Date(endDate) < new Date(e.target.value)) {
+                        document.getElementById('end-date').value = e.target.value;
+                    }
                 });
 
                 document.getElementById('task-form').addEventListener('submit', async event => {
@@ -4329,6 +4657,15 @@ saveTask: async (taskData) => {
 
                 document.getElementById('view-list-btn').addEventListener('click', () => {
                     uiService.switchProjectView('list');
+                });
+
+                // Event listeners para abas de projetos ativos/finalizados
+                document.getElementById('tab-active-projects').addEventListener('click', () => {
+                    uiService.switchProjectTab('active');
+                });
+                
+                document.getElementById('tab-finalized-projects').addEventListener('click', () => {
+                    uiService.switchProjectTab('finalized');
                 });
 
                 // NOVO: Sincronizar range com input numérico de progresso
@@ -4605,26 +4942,136 @@ saveTask: async (taskData) => {
             // --- TASK UI HELPERS ---
             populateAssignedUsersCheckboxes: function () {
                 const container = document.getElementById('assigned-users-container');
+                const badgesContainer = document.getElementById('selected-users-badges');
                 container.innerHTML = '';
+                if (badgesContainer) badgesContainer.innerHTML = '';
 
-                dataService.users.filter(u => u.email).forEach(user => {
+                const activeUsers = dataService.users.filter(u => u.email && u.active !== false);
+                
+                activeUsers.forEach(user => {
                     const checkboxItem = document.createElement('div');
-                    checkboxItem.className = 'user-checkbox-item';
+                    checkboxItem.className = 'user-checkbox-item flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors';
+                    checkboxItem.dataset.userId = user.id;
+                    checkboxItem.dataset.userName = (user.name || user.email.split('@')[0]).toLowerCase();
 
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.value = user.id;
                     checkbox.id = `user-${user.id}`;
-                    checkbox.className = 'user-checkbox';
+                    checkbox.className = 'user-checkbox h-4 w-4 text-blue-600 rounded focus:ring-blue-500';
 
-                    const label = document.createElement('label');
-                    label.htmlFor = `user-${user.id}`;
-                    label.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
-                    label.className = 'text-sm text-gray-700 dark:text-gray-300';
+                    // Avatar/inicial do usuário
+                    const avatar = document.createElement('div');
+                    const initial = (user.name || user.email)[0].toUpperCase();
+                    avatar.className = 'w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0';
+                    avatar.textContent = initial;
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'flex-1 min-w-0';
+                    
+                    const nameSpan = document.createElement('div');
+                    nameSpan.textContent = user.name || user.email.split('@')[0];
+                    nameSpan.className = 'text-sm font-medium text-gray-700 dark:text-gray-300 truncate';
+                    
+                    const roleSpan = document.createElement('div');
+                    roleSpan.textContent = user.role || 'Usuario';
+                    roleSpan.className = 'text-xs text-gray-500';
+                    
+                    infoDiv.appendChild(nameSpan);
+                    infoDiv.appendChild(roleSpan);
 
                     checkboxItem.appendChild(checkbox);
-                    checkboxItem.appendChild(label);
+                    checkboxItem.appendChild(avatar);
+                    checkboxItem.appendChild(infoDiv);
+                    
+                    // Clicar no item inteiro marca o checkbox
+                    checkboxItem.addEventListener('click', (e) => {
+                        if (e.target !== checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                        }
+                        this.updateSelectedUsersBadges();
+                    });
+                    
+                    checkbox.addEventListener('change', () => {
+                        this.updateSelectedUsersBadges();
+                    });
+
                     container.appendChild(checkboxItem);
+                });
+            },
+            
+            // Atualiza os badges dos usuários selecionados
+            updateSelectedUsersBadges: function() {
+                const badgesContainer = document.getElementById('selected-users-badges');
+                if (!badgesContainer) return;
+                
+                const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+                badgesContainer.innerHTML = '';
+                
+                if (selectedCheckboxes.length === 0) {
+                    badgesContainer.innerHTML = '<span class="text-xs text-gray-400">Nenhum responsável selecionado</span>';
+                    return;
+                }
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const user = dataService.users.find(u => u.id === checkbox.value);
+                    if (!user) return;
+                    
+                    const badge = document.createElement('span');
+                    badge.className = 'inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-full';
+                    badge.innerHTML = `
+                        ${user.name || user.email.split('@')[0]}
+                        <button type="button" class="hover:text-blue-900 dark:hover:text-blue-100" data-user-id="${user.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    `;
+                    
+                    // Botão de remover
+                    badge.querySelector('button').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        checkbox.checked = false;
+                        this.updateSelectedUsersBadges();
+                    });
+                    
+                    badgesContainer.appendChild(badge);
+                });
+            },
+            
+            // Filtra usuários pela busca
+            filterUserCheckboxes: function(searchTerm) {
+                const items = document.querySelectorAll('.user-checkbox-item');
+                const term = searchTerm.toLowerCase();
+                
+                items.forEach(item => {
+                    const userName = item.dataset.userName || '';
+                    if (userName.includes(term) || term === '') {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            },
+            
+            // Popula o select de tarefas pai
+            populateParentTaskSelect: function(currentTaskId = null) {
+                const select = document.getElementById('task-parent-select');
+                if (!select) return;
+                
+                const project = dataService.getCurrentProject();
+                if (!project) return;
+                
+                select.innerHTML = '<option value="">Nenhuma (tarefa principal)</option>';
+                
+                // Apenas tarefas que não são subtarefas podem ser pai
+                const parentTasks = project.tasks.filter(t => !t.parentId && t.id !== currentTaskId);
+                
+                parentTasks.forEach(task => {
+                    const option = document.createElement('option');
+                    option.value = task.id;
+                    option.textContent = task.name;
+                    select.appendChild(option);
                 });
             },
 
@@ -4900,8 +5347,66 @@ saveTask: async (taskData) => {
                     cardView.classList.add('hidden');
 
                     // Renderizar a lista se necessário
-                    this.renderProjectListTable(dataService.projects);
+                    this.renderProjectListTable(this.getFilteredProjects());
                 }
+            },
+
+            // Estado atual da aba de projetos
+            currentProjectTab: 'active',
+
+            // Função para obter projetos filtrados por aba
+            getFilteredProjects: function() {
+                if (this.currentProjectTab === 'finalized') {
+                    return dataService.projects.filter(p => p.finalized === true);
+                } else {
+                    return dataService.projects.filter(p => !p.finalized);
+                }
+            },
+
+            // Função para alternar entre abas de projetos
+            switchProjectTab: function(tabType) {
+                this.currentProjectTab = tabType;
+                
+                const activeTab = document.getElementById('tab-active-projects');
+                const finalizedTab = document.getElementById('tab-finalized-projects');
+                const addProjectBtn = document.getElementById('add-project-btn');
+                
+                if (tabType === 'active') {
+                    // Ativar aba de projetos ativos
+                    activeTab.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+                    activeTab.classList.remove('border-transparent', 'text-gray-500');
+                    
+                    finalizedTab.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+                    finalizedTab.classList.add('border-transparent', 'text-gray-500');
+                    
+                    // Mostrar botão de adicionar projeto
+                    addProjectBtn.classList.remove('hidden');
+                    
+                } else if (tabType === 'finalized') {
+                    // Ativar aba de projetos finalizados
+                    finalizedTab.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+                    finalizedTab.classList.remove('border-transparent', 'text-gray-500');
+                    
+                    activeTab.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+                    activeTab.classList.add('border-transparent', 'text-gray-500');
+                    
+                    // Ocultar botão de adicionar projeto na aba de finalizados
+                    addProjectBtn.classList.add('hidden');
+                }
+                
+                // Atualizar lista de projetos
+                const filteredProjects = this.getFilteredProjects();
+                this.renderProjectList(filteredProjects);
+                this.renderProjectListTable(filteredProjects);
+            },
+
+            // Atualizar contadores das abas
+            updateProjectTabCounts: function() {
+                const activeCount = dataService.projects.filter(p => !p.finalized).length;
+                const finalizedCount = dataService.projects.filter(p => p.finalized === true).length;
+                
+                document.getElementById('active-projects-count').textContent = activeCount;
+                document.getElementById('finalized-projects-count').textContent = finalizedCount;
             },
 
             // NOVA FUNÇÃO: Renderizar lista de projetos em formato de tabela
@@ -5202,9 +5707,16 @@ saveTask: async (taskData) => {
                     // Salvar no Firebase
                     await dataService.saveProjectDocument(project);
                     
-                    // Re-renderizar a tabela
+                    // Re-renderizar a tabela com filtro aplicado
                     const currentFilter = document.getElementById('task-filter-input').value;
-                    this.renderTaskTable(dataService.filterTasks(project.tasks, currentFilter));
+                    const filteredTasks = project.tasks.filter(t =>
+                        t.name.toLowerCase().includes(currentFilter.toLowerCase()) ||
+                        (t.assignedUsers && t.assignedUsers.some(uid => {
+                            const user = dataService.users.find(u => u.id === uid);
+                            return user && user.email.toLowerCase().includes(currentFilter.toLowerCase());
+                        }))
+                    );
+                    this.renderTaskTable(filteredTasks);
                     
                     uiService.showToast('Tarefas reordenadas com sucesso!');
                 } catch (error) {
@@ -5368,6 +5880,148 @@ saveTask: async (taskData) => {
                 if (!notificationBell.contains(event.target) && !dropdown.contains(event.target)) {
                     uiService.hideNotificationDropdown();
                 }
+            },
+
+            // --- SISTEMA DE ALERTAS/LEMBRETES ---
+            
+            // Flag para controlar se os alertas já foram mostrados nesta sessão
+            alertsShownThisSession: false,
+
+            // Função para mostrar alertas ao fazer login
+            showLoginAlerts: function () {
+                // Só mostrar alertas uma vez por sessão
+                if (this.alertsShownThisSession) return;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const overdueTasks = [];
+                const todayTasks = [];
+                
+                // Percorrer todos os projetos e suas tarefas
+                dataService.projects.forEach(project => {
+                    if (!project.tasks) return;
+                    
+                    project.tasks.forEach(task => {
+                        // Verificar se o usuário está atribuído a esta tarefa
+                        const isAssigned = task.assignedUsers && task.assignedUsers.includes(dataService.userId);
+                        const isGestor = dataService.userRole === 'Gestor';
+                        
+                        // Só mostrar tarefas se for gestor ou se estiver atribuído
+                        if (!isGestor && !isAssigned) return;
+                        
+                        // Ignorar tarefas concluídas
+                        if (task.status === 'Concluída') return;
+                        
+                        const taskDates = dataService.getLatestDates(task);
+                        const endDate = new Date(taskDates.endDate);
+                        endDate.setHours(0, 0, 0, 0);
+                        const startDate = new Date(taskDates.startDate);
+                        startDate.setHours(0, 0, 0, 0);
+                        
+                        // Verificar se está atrasada
+                        if (endDate < today) {
+                            overdueTasks.push({
+                                ...task,
+                                projectName: project.name,
+                                projectId: project.id,
+                                endDate: taskDates.endDate
+                            });
+                        }
+                        // Verificar se é tarefa de hoje (em execução hoje)
+                        else if (startDate <= today && endDate >= today) {
+                            todayTasks.push({
+                                ...task,
+                                projectName: project.name,
+                                projectId: project.id,
+                                startDate: taskDates.startDate,
+                                endDate: taskDates.endDate
+                            });
+                        }
+                    });
+                });
+                
+                // Se não houver alertas, não mostrar o modal
+                if (overdueTasks.length === 0 && todayTasks.length === 0) {
+                    this.alertsShownThisSession = true;
+                    return;
+                }
+                
+                // Atualizar a data no modal
+                const todayStr = today.toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                document.getElementById('alerts-date').textContent = todayStr.charAt(0).toUpperCase() + todayStr.slice(1);
+                
+                // Renderizar tarefas atrasadas
+                const overdueSection = document.getElementById('alerts-overdue-section');
+                const overdueList = document.getElementById('alerts-overdue-list');
+                const overdueCount = document.getElementById('alerts-overdue-count');
+                
+                if (overdueTasks.length > 0) {
+                    overdueSection.classList.remove('hidden');
+                    overdueCount.textContent = overdueTasks.length;
+                    overdueList.innerHTML = overdueTasks.map(task => {
+                        const daysOverdue = Math.ceil((today - new Date(task.endDate)) / (1000 * 60 * 60 * 24));
+                        return `
+                            <div class="alert-task-item overdue" data-project-id="${task.projectId}">
+                                <span class="alert-task-project">${task.projectName}</span>
+                                <div class="alert-task-name">${task.name}</div>
+                                <div class="alert-task-date overdue-date">
+                                    Vencida há ${daysOverdue} dia(s) - ${new Date(task.endDate).toLocaleDateString('pt-BR')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    overdueSection.classList.add('hidden');
+                }
+                
+                // Renderizar tarefas de hoje
+                const todaySection = document.getElementById('alerts-today-section');
+                const todayList = document.getElementById('alerts-today-list');
+                const todayCount = document.getElementById('alerts-today-count');
+                
+                if (todayTasks.length > 0) {
+                    todaySection.classList.remove('hidden');
+                    todayCount.textContent = todayTasks.length;
+                    todayList.innerHTML = todayTasks.map(task => `
+                        <div class="alert-task-item today" data-project-id="${task.projectId}">
+                            <span class="alert-task-project">${task.projectName}</span>
+                            <div class="alert-task-name">${task.name}</div>
+                            <div class="alert-task-date">
+                                ${new Date(task.startDate).toLocaleDateString('pt-BR')} a ${new Date(task.endDate).toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    todaySection.classList.add('hidden');
+                }
+                
+                // Mostrar seção vazia se necessário
+                const emptySection = document.getElementById('alerts-empty');
+                if (overdueTasks.length === 0 && todayTasks.length === 0) {
+                    emptySection.classList.remove('hidden');
+                } else {
+                    emptySection.classList.add('hidden');
+                }
+                
+                // Mostrar o modal
+                this.openModal('alerts-modal');
+                this.alertsShownThisSession = true;
+                
+                // Adicionar event listeners para os itens de tarefa
+                document.querySelectorAll('#alerts-modal .alert-task-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const projectId = item.dataset.projectId;
+                        this.closeModal('alerts-modal');
+                        App.openProject(projectId);
+                    });
+                    item.style.cursor = 'pointer';
+                });
             },
 
             // --- NOVO: SISTEMA DE ANEXOS ---
@@ -5805,6 +6459,25 @@ saveTask: async (taskData) => {
 
                 document.getElementById('project-title').textContent = project.name;
 
+                // Atualizar visibilidade dos botões de finalizar/reabrir
+                const progress = dataService.getProjectProgress(project.tasks);
+                const finalizeBtn = document.getElementById('finalize-project-btn');
+                const reopenBtn = document.getElementById('reopen-project-btn');
+                
+                if (project.finalized) {
+                    // Projeto já finalizado: mostrar botão de reabrir
+                    finalizeBtn.classList.add('hidden');
+                    reopenBtn.classList.remove('hidden');
+                } else if (progress === 100) {
+                    // Projeto 100% completo: mostrar botão de finalizar
+                    finalizeBtn.classList.remove('hidden');
+                    reopenBtn.classList.add('hidden');
+                } else {
+                    // Projeto não completo: esconder ambos
+                    finalizeBtn.classList.add('hidden');
+                    reopenBtn.classList.add('hidden');
+                }
+
                 // NOVO: Atualizar exibição das datas do projeto
                 this.updateProjectDatesDisplay(project);
 
@@ -5861,8 +6534,13 @@ saveTask: async (taskData) => {
             openTaskModal(mode, data = {}) {
                 document.getElementById('task-form').reset();
                 this.populateAssignedUsersCheckboxes();
+                this.populateParentTaskSelect(data.taskId);
                 this.hideMentionSuggestions();
                 this.mentionedUsers = [];
+                
+                // Limpar busca de usuários
+                const userSearchInput = document.getElementById('user-search-input');
+                if (userSearchInput) userSearchInput.value = '';
 
                 const { parentId, taskId } = data;
                 const project = dataService.getCurrentProject();
@@ -5879,6 +6557,21 @@ saveTask: async (taskData) => {
                     document.querySelectorAll('.user-checkbox').forEach(checkbox => {
                         checkbox.checked = false;
                     });
+                }
+                
+                // Atualizar badges de usuários selecionados
+                this.updateSelectedUsersBadges();
+                
+                // Preencher select de tarefa pai
+                const parentSelect = document.getElementById('task-parent-select');
+                if (parentSelect) {
+                    if (parentId) {
+                        parentSelect.value = parentId;
+                    } else if (task && task.parentId) {
+                        parentSelect.value = task.parentId;
+                    } else {
+                        parentSelect.value = '';
+                    }
                 }
 
                 const startDateInput = document.getElementById('start-date');
@@ -5980,9 +6673,20 @@ saveTask: async (taskData) => {
                     // Outras informações dos anexos seriam coletadas de um data attribute
                 }));
 
+                // Obter parentId do select ou do campo hidden
+                const parentSelect = document.getElementById('task-parent-select');
+                const parentIdHidden = document.getElementById('parent-id');
+                let parentId = null;
+                
+                if (parentSelect && parentSelect.value) {
+                    parentId = parseFloat(parentSelect.value);
+                } else if (parentIdHidden && parentIdHidden.value) {
+                    parentId = parseFloat(parentIdHidden.value);
+                }
+
                 const data = {
-                    id: document.getElementById('task-id').value ? parseFloat(document.getElementById('task-id').value) : null, // CORREÇÃO: Usar parseFloat
-                    parentId: document.getElementById('parent-id').value ? parseFloat(document.getElementById('parent-id').value) : null, // CORREÇÃO: Usar parseFloat
+                    id: document.getElementById('task-id').value ? parseFloat(document.getElementById('task-id').value) : null,
+                    parentId: parentId,
                     name: document.getElementById('task-name').value,
                     assignedUsers: selectedUsers,
                     priority: document.getElementById('task-priority').value,
@@ -6384,7 +7088,7 @@ saveTask: async (taskData) => {
                     if (projectList.length === 0) return '<div class="dashboard-projects-empty">Nenhum projeto nesta categoria</div>';
                     
                     const items = projectList.slice(0, maxShow).map(p => `
-                        <div class="dashboard-project-item">
+                        <div class="dashboard-project-item" data-project-id="${p.id}" title="Clique para abrir: ${p.name}">
                             <span class="dashboard-project-dot"></span>
                             <span class="dashboard-project-name">${p.name}</span>
                         </div>
@@ -6454,12 +7158,23 @@ saveTask: async (taskData) => {
                                 <div class="dashboard-card-label">${card.label}</div>
                             </div>
                         </div>
-                        ${createProgressBar(card.percentage, totalProjects, 'do total')}
+                        ${card.id !== 'total' ? createProgressBar(card.percentage, totalProjects, 'do total') : ''}
                         <div class="dashboard-card-projects">
                             ${createProjectList(card.projects, card.id)}
                         </div>
                     </div>
                 `).join('');
+                
+                // Adicionar event listeners para cliques nos projetos
+                mainDashboard.querySelectorAll('.dashboard-project-item[data-project-id]').forEach(item => {
+                    item.style.cursor = 'pointer';
+                    item.addEventListener('click', (e) => {
+                        const projectId = item.dataset.projectId;
+                        if (projectId) {
+                            appController.openProject(projectId);
+                        }
+                    });
+                });
 
                 // Adicionar animação de contagem e barra de progresso
                 setTimeout(() => {
@@ -6497,12 +7212,13 @@ saveTask: async (taskData) => {
             // FUNÇÕES ADICIONADAS PARA CORRIGIR OS ERROS
             renderProjectList: function (projects) {
                 const projectListContainer = document.getElementById('project-list');
+                const isFinalized = this.currentProjectTab === 'finalized';
 
                 if (!projects || projects.length === 0) {
                     projectListContainer.innerHTML = `
                         <div class="col-span-full text-center py-8">
-                            <p class="text-gray-400">Nenhum projeto encontrado.</p>
-                            <p class="text-sm text-gray-500 mt-2">Crie seu primeiro projeto clicando no botão acima.</p>
+                            <p class="text-gray-400">${isFinalized ? 'Nenhum projeto finalizado.' : 'Nenhum projeto encontrado.'}</p>
+                            <p class="text-sm text-gray-500 mt-2">${isFinalized ? 'Projetos 100% concluídos podem ser finalizados e aparecerão aqui.' : 'Crie seu primeiro projeto clicando no botão acima.'}</p>
                         </div>
                     `;
                     return;
@@ -6526,16 +7242,59 @@ saveTask: async (taskData) => {
 
                     // Verificar se o projeto está atrasado
                     const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const startDateObj = project.startDate ? new Date(project.startDate) : null;
                     const endDateObj = project.endDate ? new Date(project.endDate) : null;
                     const isOverdue = endDateObj && endDateObj < today && progress < 100;
                     const cardClass = isOverdue ? 'project-overdue' : '';
+
+                    // Calcular duração e dias
+                    let totalDays = 0;
+                    let currentDay = 0;
+                    let daysDelayed = 0;
+                    let durationInfo = '';
+                    
+                    if (startDateObj && endDateObj) {
+                        startDateObj.setHours(0, 0, 0, 0);
+                        endDateObj.setHours(0, 0, 0, 0);
+                        
+                        // Duração total do projeto em dias
+                        totalDays = Math.ceil((endDateObj - startDateObj) / (1000 * 60 * 60 * 24)) + 1;
+                        
+                        // Qual dia estamos (desde o início)
+                        if (today >= startDateObj) {
+                            currentDay = Math.ceil((today - startDateObj) / (1000 * 60 * 60 * 24)) + 1;
+                            if (currentDay > totalDays) currentDay = totalDays;
+                        } else {
+                            currentDay = 0; // Projeto ainda não iniciou
+                        }
+                        
+                        // Dias de atraso (se passou da data de término e não está 100%)
+                        if (today > endDateObj && progress < 100) {
+                            daysDelayed = Math.ceil((today - endDateObj) / (1000 * 60 * 60 * 24));
+                        }
+                    }
 
                     // NOVO: Obter informações das tarefas
                     const todayTask = dataService.taskService.getFirstTodayTask(project);
                     const overdueTasks = dataService.taskService.getOverdueTasks(project);
 
+                    // Verificar se é projeto finalizado
+                    const isFinalizedProject = project.finalized === true;
+                    const finalizedCardClass = isFinalizedProject ? 'border-green-500 bg-green-50/50 dark:bg-green-900/10' : '';
+                    const finalizedDate = project.finalizedAt ? new Date(project.finalizedAt).toLocaleDateString('pt-BR') : '';
+
                     return `
-                        <div class="project-card-link bg-[var(--card-bg)] rounded-lg shadow-md p-6 border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer ${cardClass}" data-project-id="${project.id}">
+                        <div class="project-card-link bg-[var(--card-bg)] rounded-lg shadow-md p-6 border border-[var(--border-color)] hover:shadow-lg transition-shadow cursor-pointer ${cardClass} ${finalizedCardClass}" data-project-id="${project.id}">
+                            ${isFinalizedProject ? `
+                                <div class="mb-3 flex items-center gap-2 text-green-600 dark:text-green-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="font-semibold">Projeto Finalizado</span>
+                                    ${finalizedDate ? `<span class="text-xs text-gray-500">em ${finalizedDate}</span>` : ''}
+                                </div>
+                            ` : ''}
                             <div class="flex justify-between items-start mb-4">
                                 <h3 class="text-xl font-semibold text-[var(--text-color)]">${project.name}</h3>
                                 ${canDelete ? `
@@ -6557,16 +7316,47 @@ saveTask: async (taskData) => {
                                 </div>
                             </div>
                             
-                            <!-- NOVO: Datas do projeto -->
-                            <div class="mb-3 text-xs text-gray-500">
-                                <div class="flex justify-between">
-                                    <span>Início:</span>
-                                    <span>${startDate}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Conclusão:</span>
-                                    <span>${endDate}</span>
-                                </div>
+                            <!-- Duração e dias do projeto -->
+                            <div class="mb-3 text-xs">
+                                ${totalDays > 0 ? `
+                                    <div class="flex items-center justify-between mb-2 p-2 rounded-lg ${daysDelayed > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">📆</span>
+                                            <div>
+                                                <div class="font-semibold ${daysDelayed > 0 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}">
+                                                    ${currentDay === 0 ? 'Aguardando início' : `Dia ${currentDay} de ${totalDays}`}
+                                                </div>
+                                                <div class="text-gray-500">Duração: ${totalDays} dia(s)</div>
+                                            </div>
+                                        </div>
+                                        ${daysDelayed > 0 ? `
+                                            <div class="text-right">
+                                                <div class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">
+                                                    ⚠️ ${daysDelayed} dia(s) de atraso
+                                                </div>
+                                            </div>
+                                        ` : (currentDay > 0 && progress === 100 ? `
+                                            <div class="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-bold">
+                                                ✅ Concluído
+                                            </div>
+                                        ` : '')}
+                                    </div>
+                                    
+                                    <!-- Barra de progresso de tempo -->
+                                    <div class="mb-2">
+                                        <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                            <span>${startDate}</span>
+                                            <span>${endDate}</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 relative">
+                                            <div class="${daysDelayed > 0 ? 'bg-red-500' : 'bg-blue-400'} h-1.5 rounded-full transition-all" style="width: ${Math.min((currentDay / totalDays) * 100, 100)}%"></div>
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div class="text-gray-500 text-center py-2">
+                                        Datas não definidas
+                                    </div>
+                                `}
                             </div>
                             
                             <!-- NOVO: Informações das tarefas -->
