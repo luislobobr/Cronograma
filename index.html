@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR" class="">
 
@@ -2905,15 +2906,19 @@
                     const ownerUid = project.creatorId;
                     const projectDocRef = doc(dataService.getProjectCollectionRef(ownerUid), projectId);
 
-                    await setDoc(projectDocRef, {
+                    const projectData = {
                         name: project.name,
                         manager: project.manager,
-                        startDate: project.startDate, // NOVO: Salvar data de início
-                        endDate: project.endDate,     // NOVO: Salvar data de término
-                        dateMode: project.dateMode || 'manual', // NOVO: Salvar modo de data
+                        startDate: project.startDate,
+                        endDate: project.endDate,
+                        dateMode: project.dateMode || 'manual',
                         tasks: project.tasks,
-                        creatorId: ownerUid
-                    }, { merge: true });
+                        creatorId: ownerUid,
+                        finalized: project.finalized || false,
+                        finalizedAt: project.finalizedAt || null
+                    };
+
+                    await setDoc(projectDocRef, projectData, { merge: true });
 
                 } catch (error) {
                     console.error("Erro ao salvar projeto/tarefas:", error);
