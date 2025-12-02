@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR" class="">
 
@@ -210,11 +211,11 @@
         }
 
         .modal-z-50 {
-            z-index: 50;
+            z-index: 9000;
         }
 
         .modal-z-60 {
-            z-index: 60;
+            z-index: 9100;
         }
 
         .comment-item {
@@ -325,14 +326,33 @@
             color: #f3f4f6;
         }
 
-        tr.dragging {
-            opacity: 0.6;
-            background-color: #f3f4f6 !important;
+        tr.dragging,
+        tr.draggable-task.dragging {
+            opacity: 0.5;
+            background-color: #f0f9ff !important;
         }
 
-        tr.drag-over {
+        html.dark tr.dragging,
+        html.dark tr.draggable-task.dragging {
+            background-color: #1e3a5f !important;
+        }
+
+        tr.drag-over,
+        tr.draggable-task.drag-over {
             background-color: #dbeafe !important;
-            border-top: 2px solid #3b82f6 !important;
+        }
+
+        html.dark tr.drag-over,
+        html.dark tr.draggable-task.drag-over {
+            background-color: #1e3a5f !important;
+        }
+
+        .draggable-task .drag-handle {
+            opacity: 0.4;
+        }
+
+        .draggable-task:hover .drag-handle {
+            opacity: 1;
         }
 
         .subtask-row {
@@ -403,6 +423,291 @@
             font-size: 12px;
         }
 
+        /* DASHBOARD MELHORADO - Estilos modernos */
+        .dashboard-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            isolation: isolate;
+            will-change: transform;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--card-accent), var(--card-accent-light));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            z-index: 10;
+        }
+
+        .dashboard-card:not(:hover) {
+            transform: translateY(0);
+        }
+
+        .dashboard-card:hover::before {
+            opacity: 1;
+        }
+
+        .dashboard-card.card-blue { --card-accent: #3b82f6; --card-accent-light: #60a5fa; }
+        .dashboard-card.card-amber { --card-accent: #f59e0b; --card-accent-light: #fbbf24; }
+        .dashboard-card.card-red { --card-accent: #ef4444; --card-accent-light: #f87171; }
+        .dashboard-card.card-orange { --card-accent: #f97316; --card-accent-light: #fb923c; }
+        .dashboard-card.card-green { --card-accent: #10b981; --card-accent-light: #34d399; }
+
+        .dashboard-card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-card:hover .dashboard-card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .dashboard-card-icon.icon-blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        .dashboard-card-icon.icon-amber { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        .dashboard-card-icon.icon-red { background: linear-gradient(135deg, #ef4444, #f87171); }
+        .dashboard-card-icon.icon-orange { background: linear-gradient(135deg, #f97316, #fb923c); }
+        .dashboard-card-icon.icon-green { background: linear-gradient(135deg, #10b981, #34d399); }
+
+        .dashboard-card-icon svg {
+            width: 28px;
+            height: 28px;
+            color: white;
+        }
+
+        .dashboard-card-value {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--card-accent), var(--card-accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .dashboard-card-info {
+            flex: 1;
+        }
+
+        .dashboard-card-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        html.dark .dashboard-card-label {
+            color: #9ca3af;
+        }
+
+        .dashboard-projects-empty {
+            font-size: 13px;
+            color: #9ca3af;
+            font-style: italic;
+            padding: 8px 0;
+        }
+
+        .dashboard-progress-bar-container {
+            margin-top: 16px;
+            width: 100%;
+        }
+
+        .dashboard-progress-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .dashboard-progress-bar-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        html.dark .dashboard-progress-bar-label {
+            color: #9ca3af;
+        }
+
+        .dashboard-progress-bar-value {
+            font-weight: 700;
+            color: var(--card-accent);
+        }
+
+        .dashboard-progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        html.dark .dashboard-progress-bar-track {
+            background: #374151;
+        }
+
+        .dashboard-progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--card-accent), var(--card-accent-light));
+            transition: width 1s ease-out;
+        }
+
+        .dashboard-card-projects {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .dashboard-card:hover .dashboard-card-projects {
+            max-height: 200px;
+            opacity: 1;
+        }
+
+        .dashboard-project-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+            color: #6b7280;
+            transition: color 0.2s ease;
+        }
+
+        .dashboard-project-item:hover {
+            color: var(--card-accent);
+        }
+
+        .dashboard-project-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--card-accent);
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .dashboard-project-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        .dashboard-card {
+            animation: slideInUp 0.6s ease forwards;
+        }
+
+        .dashboard-card:nth-child(1) { animation-delay: 0.1s; }
+        .dashboard-card:nth-child(2) { animation-delay: 0.2s; }
+        .dashboard-card:nth-child(3) { animation-delay: 0.3s; }
+        .dashboard-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .dashboard-card-value {
+            animation: countUp 0.8s ease forwards;
+        }
+
+        .dashboard-card-more {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .dashboard-tooltip {
+            position: absolute;
+            background: rgba(17, 24, 39, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: all 0.2s ease;
+            max-width: 280px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .dashboard-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dashboard-tooltip-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dashboard-tooltip-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dashboard-tooltip-list li {
+            padding: 3px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .dashboard-tooltip-list li::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background: white;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
         /* NOVO: Estilos para tarefas em execução hoje */
         .today-running-task {
             background-color: rgba(34, 197, 94, 0.1) !important;
@@ -458,6 +763,18 @@
             justify-content: center;
             margin-bottom: 1.5rem;
             padding-top: 1rem;
+        }
+
+        /* Logo maior e alinhada à esquerda na tela de login */
+        .logo-login {
+            height: 60px;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-container-login {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 1.5rem;
         }
 
         /* NOVO: Estilo para informações de tarefas no card */
@@ -879,6 +1196,80 @@
             color: #6b7280;
             margin-top: 2px;
         }
+
+        /* Estilos para Toggle Switch de Status do Utilizador */
+        .user-status-toggle {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .user-status-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .user-status-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ef4444;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .user-status-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .user-status-toggle input:checked + .user-status-slider {
+            background-color: #10b981;
+        }
+
+        .user-status-toggle input:checked + .user-status-slider:before {
+            transform: translateX(24px);
+        }
+
+        .user-status-toggle input:disabled + .user-status-slider {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .user-status-label {
+            font-size: 11px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .user-status-label.active {
+            color: #10b981;
+        }
+
+        .user-status-label.inactive {
+            color: #ef4444;
+        }
+
+        .user-row-inactive {
+            opacity: 0.6;
+            background-color: rgba(239, 68, 68, 0.05) !important;
+        }
+
+        html.dark .user-row-inactive {
+            background-color: rgba(239, 68, 68, 0.1) !important;
+        }
     </style>
 </head>
 
@@ -893,13 +1284,13 @@
     <div id="auth-modal"
         class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 modal-transition modal-visible">
         <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl p-8 w-full max-w-md">
-            <!-- NOVO: Logo no modal de autenticação -->
-            <div class="logo-container">
+            <!-- Logo maior e alinhada à esquerda -->
+            <div class="logo-container-login">
                 <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                    alt="Vinci Highways" class="logo-header">
+                    alt="Vinci Highways" class="logo-login">
             </div>
-            <h2 class="text-3xl font-bold mb-2 text-blue-600 text-center">Vinci Highways Projects</h2>
-            <p class="text-gray-400 mb-6 text-center">Acesso restrito ao domínio @vinci-highways.com.br</p>
+            <h2 class="text-3xl font-bold mb-2 text-blue-600 text-left">Vinci Highways Projects</h2>
+            <p class="text-gray-400 mb-6 text-left">Acesso restrito ao domínio @vinci-highways.com.br</p>
 
             <form id="auth-form" class="space-y-4">
                 <input type="email" id="auth-email" placeholder="E-mail (@vinci-highways.com.br)"
@@ -909,19 +1300,9 @@
                     class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-3 bg-transparent"
                     required>
 
-                <div id="secret-code-container" class="hidden">
-                    <input type="text" id="auth-secret-code" placeholder="Código de Acesso (Apenas Gestor)"
-                        class="mt-1 block w-full border border-yellow-400 rounded-md shadow-sm p-3 bg-transparent">
-                    <p class="text-xs text-yellow-500 mt-1">Use "MASTER_GESTOR" no registro para obter o papel de
-                        Gestor.</p>
-                </div>
-
-                <div class="flex justify-between items-center">
+                <div class="flex justify-center items-center">
                     <button type="button" id="toggle-auth-mode"
-                        class="text-sm text-blue-500 hover:underline transition-colors">Precisa de uma conta?
-                        Registrar</button>
-                    <button type="button" id="toggle-secret-code"
-                        class="text-xs text-gray-500 hover:underline transition-colors">Código Secreto?</button>
+                        class="text-sm text-blue-500 hover:underline transition-colors">Precisa de uma conta? Registrar</button>
                 </div>
 
                 <div class="flex justify-end gap-2">
@@ -1005,6 +1386,55 @@
                 <button type="button"
                     class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Utilizador -->
+    <div id="edit-user-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-60">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Editar Utilizador</h2>
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-user-id">
+                <div class="mb-4">
+                    <label for="edit-user-name" class="block text-sm font-medium text-gray-400">Nome</label>
+                    <input type="text" id="edit-user-name"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent"
+                        required>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-user-email" class="block text-sm font-medium text-gray-400">E-mail</label>
+                    <input type="email" id="edit-user-email"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent"
+                        required>
+                    <p class="text-xs text-gray-500 mt-1">Deve terminar com @vinci-highways.com.br</p>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-user-role" class="block text-sm font-medium text-gray-400">Papel</label>
+                    <select id="edit-user-role"
+                        class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2">
+                        <option value="Usuario">Usuário</option>
+                        <option value="Gestor">Gestor</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Status da Conta</label>
+                    <div class="flex items-center">
+                        <label class="user-status-toggle">
+                            <input type="checkbox" id="edit-user-active" checked>
+                            <span class="user-status-slider"></span>
+                        </label>
+                        <span id="edit-user-status-label" class="user-status-label active">Ativo</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Utilizadores inativos não podem aceder ao sistema</p>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button"
+                        class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Guardar Alterações</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1475,14 +1905,14 @@
 
         <!-- Vista de Projetos -->
         <div id="project-view" class="container mx-auto p-4 md:p-8 hidden">
-            <!-- NOVO: Logo na página principal -->
-            <div class="logo-container">
+            <!-- Logo maior e alinhada à esquerda -->
+            <div class="logo-container-login">
                 <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                    alt="Vinci Highways" class="logo-header">
+                    alt="Vinci Highways" class="logo-login">
             </div>
 
             <header class="mb-8">
-                <h1 class="text-4xl font-bold">Cronogramas</h1>
+                <h1 class="text-4xl font-bold">Projetos</h1>
                 <p class="text-gray-400">Selecione um projeto para gerenciar ou crie um novo.</p>
                 <p id="user-role-display"
                     class="text-sm font-semibold mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full inline-block">
@@ -1545,10 +1975,10 @@
 
         <!-- Vista do Dashboard do Projeto -->
         <div id="dashboard-view" class="container mx-auto p-4 md:p-8 hidden">
-            <!-- NOVO: Logo na página do dashboard -->
-            <div class="logo-container">
+            <!-- Logo maior e alinhada à esquerda -->
+            <div class="logo-container-login">
                 <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                    alt="Vinci Highways" class="logo-header">
+                    alt="Vinci Highways" class="logo-login">
             </div>
 
             <header class="mb-8">
@@ -1558,12 +1988,12 @@
                         stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                     </svg>
-                    Voltar para Cronogramas
+                    Voltar para Projetos
                 </button>
                 <div class="flex justify-between items-start">
                     <div>
                         <h1 id="project-title" class="text-4xl font-bold">Nome do Projeto</h1>
-                        <p class="text-gray-400">Painel de controle com o cronograma de execução.</p>
+                        <p class="text-gray-400">Painel de controle do projeto.</p>
                     </div>
                     <!-- NOVO: Botão para editar datas do projeto -->
                     <button id="edit-project-dates-btn"
@@ -1633,6 +2063,9 @@
                         <button id="export-excel-btn"
                             class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700"
                             title="Exportar para Excel">Excel</button>
+                        <button id="export-msproject-btn"
+                            class="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
+                            title="Exportar para Microsoft Project">MS Project</button>
                         <button id="generate-pdf-report-btn"
                             class="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700"
                             title="Gerar Relatório PDF">PDF</button>
@@ -1705,7 +2138,6 @@
 
         // --- CONSTANTES E CONFIGURAÇÃO ---
         const ALLOWED_DOMAIN = "@vinci-highways.com.br";
-        const GESTOR_SECRET_CODE = "MASTER_GESTOR";
 
         // SUAS CREDENCIAIS DO BANCO DE DADOS
         const appId = "cronograma-85bf4";
@@ -1880,6 +2312,27 @@
                 }
             },
 
+            updateUser: async (uid, userData) => {
+                try {
+                    const userDocRef = doc(db, 'users_data', uid);
+                    await setDoc(userDocRef, userData, { merge: true });
+                    
+                    const userIndex = dataService.users.findIndex(u => u.id === uid);
+                    if (userIndex !== -1) {
+                        dataService.users[userIndex] = { ...dataService.users[userIndex], ...userData };
+                    }
+
+                    if (uid === dataService.userId && userData.role) {
+                        dataService.userRole = userData.role;
+                        await auth.currentUser.getIdToken(true);
+                        uiService.updateUserRoleDisplay();
+                    }
+                } catch (error) {
+                    console.error("Erro ao atualizar utilizador:", error);
+                    throw error;
+                }
+            },
+
             // --- CADASTRO DE USUÁRIOS PELO GESTOR ---
             createUserByGestor: async (userData) => {
                 try {
@@ -1983,13 +2436,9 @@
                 unsubscribeProjects();
                 if (!dataService.isAuthReady) return;
 
-                let projectsQuery;
-
-                if (dataService.userRole === 'Gestor') {
-                    projectsQuery = query(collectionGroup(db, 'projects'));
-                } else {
-                    projectsQuery = query(dataService.getProjectCollectionRef());
-                }
+                // ATUALIZADO: Usuários agora também podem ver projetos de outros onde são responsáveis
+                // Usamos collectionGroup para buscar todos os projetos e filtrar depois
+                let projectsQuery = query(collectionGroup(db, 'projects'));
 
                 unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
                     console.log("📦 Dados recebidos do Firebase:", snapshot.size, "documentos");
@@ -2492,19 +2941,54 @@ saveTask: async (taskData) => {
         }
     } else {
         // NOVA tarefa
+        const parentIdForNew = dependsOn ? dependsOn : (restOfTaskData.parentId || null);
+        
+        // Calcular ordem cronológica para a nova tarefa
+        const siblingsOfNewTask = project.tasks.filter(t => 
+            (t.parentId || null) === parentIdForNew
+        );
+        
+        // Ordenar irmãos por data de início para encontrar posição cronológica
+        const sortedSiblings = siblingsOfNewTask
+            .map(t => ({
+                task: t,
+                startDate: new Date(dataService.getLatestDates(t).startDate)
+            }))
+            .sort((a, b) => a.startDate - b.startDate);
+        
+        // Encontrar posição cronológica baseada na data de início da nova tarefa
+        const newTaskStartDate = new Date(newStartDate);
+        let chronologicalOrder = 0;
+        
+        for (let i = 0; i < sortedSiblings.length; i++) {
+            if (newTaskStartDate < sortedSiblings[i].startDate) {
+                chronologicalOrder = i;
+                break;
+            }
+            chronologicalOrder = i + 1;
+        }
+        
         const newTask = {
             ...restOfTaskData,
             id: Date.now() + Math.random(),
             dependsOn: dependsOn || null,
-            // CORREÇÃO: Se tem dependsOn, converter em subtarefa
-            parentId: dependsOn ? dependsOn : (restOfTaskData.parentId || null),
+            parentId: parentIdForNew,
             dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
             comments: [],
             assignedUsers: restOfTaskData.assignedUsers || [],
-            order: project.tasks.filter(t => t.parentId === (dependsOn || restOfTaskData.parentId)).length
+            order: chronologicalOrder,
+            manualOrder: false // Nova tarefa começa com ordem cronológica
         };
         
-        updatedTasks = [...project.tasks, newTask];
+        // Reajustar ordem das tarefas irmãs que vêm depois
+        const updatedSiblings = project.tasks.map(t => {
+            if ((t.parentId || null) === parentIdForNew && (t.order || 0) >= chronologicalOrder) {
+                return { ...t, order: (t.order || 0) + 1 };
+            }
+            return t;
+        });
+        
+        updatedTasks = [...updatedSiblings, newTask];
 
         // CORREÇÃO: Validar datas se é uma nova subtarefa
         if (dependsOn) {
@@ -2568,6 +3052,26 @@ saveTask: async (taskData) => {
         }
     }
 
+    // NOVO: Capturar tarefa salva ANTES de atualizar project.tasks para notificações
+    let savedTaskForNotification = null;
+    let newAssignedUsersForNotification = [];
+    
+    if (taskId) {
+        // Editando tarefa existente
+        savedTaskForNotification = updatedTasks.find(t => t.id === taskId);
+        if (savedTaskForNotification && savedTaskForNotification.assignedUsers) {
+            const existingAssignedUsers = existingTask?.assignedUsers || [];
+            newAssignedUsersForNotification = savedTaskForNotification.assignedUsers.filter(uid => !existingAssignedUsers.includes(uid));
+        }
+    } else {
+        // Nova tarefa - encontrar a tarefa recém criada pelo ID único gerado
+        const originalTaskIds = new Set(project.tasks.map(t => t.id));
+        savedTaskForNotification = updatedTasks.find(t => !originalTaskIds.has(t.id));
+        if (savedTaskForNotification && savedTaskForNotification.assignedUsers) {
+            newAssignedUsersForNotification = savedTaskForNotification.assignedUsers;
+        }
+    }
+    
     // Atualizar projeto
     project.tasks = updatedTasks;
 
@@ -2576,6 +3080,18 @@ saveTask: async (taskData) => {
 
     // Salvar no Firebase
     await dataService.saveProjectDocument(project);
+
+    // NOVO: Enviar notificações para usuários atribuídos à tarefa
+    if (savedTaskForNotification && newAssignedUsersForNotification.length > 0) {
+        await dataService.sendTaskAssignmentNotifications(
+            savedTaskForNotification.id,
+            savedTaskForNotification.name,
+            project.id,
+            project.name,
+            newAssignedUsersForNotification
+        );
+        console.log(`📨 Notificações de atribuição enviadas para ${newAssignedUsersForNotification.length} usuário(s)`);
+    }
 
     // CORREÇÃO: Limpar estado de expansão para forçar re-renderização completa
     if (uiService.expandedTasks) {
@@ -3174,6 +3690,41 @@ saveTask: async (taskData) => {
                 return iconMap[extension] || '📎';
             },
 
+            // --- NOVO: NOTIFICAÇÕES DE COMENTÁRIOS ---
+
+            // Função para enviar notificações de comentários para responsáveis da tarefa
+            sendCommentNotification: async function (taskId, taskName, projectId, projectName, commentText, assignedUserIds) {
+                try {
+                    const currentUser = dataService.users.find(u => u.id === dataService.userId);
+                    const currentUserName = currentUser?.name || currentUser?.email.split('@')[0] || 'Um utilizador';
+
+                    for (const userId of assignedUserIds) {
+                        // Não enviar notificação para o próprio autor do comentário
+                        if (userId === dataService.userId) continue;
+
+                        const notification = {
+                            type: 'comment',
+                            title: 'Novo comentário na tarefa',
+                            message: `${currentUserName} comentou na tarefa "${taskName}": "${commentText.substring(0, 80)}${commentText.length > 80 ? '...' : ''}"`,
+                            projectId: projectId,
+                            projectName: projectName,
+                            taskId: taskId,
+                            taskName: taskName,
+                            read: false,
+                            createdAt: new Date().toISOString(),
+                            createdBy: dataService.userId
+                        };
+
+                        const userNotificationsRef = collection(db, 'users_data', userId, 'notifications');
+                        await addDoc(userNotificationsRef, notification);
+                    }
+
+                    console.log(`💬 Notificações de comentário enviadas para responsáveis`);
+                } catch (error) {
+                    console.error("Erro ao enviar notificações de comentário:", error);
+                }
+            },
+
             // --- NOVO: SISTEMA DE MENÇÕES ---
 
             // Função para enviar notificação de menção
@@ -3354,32 +3905,44 @@ saveTask: async (taskData) => {
                     uiService.closeModal('project-date-modal');
                 });
 
+                // Event listeners para o modal de edição de utilizador
+                document.querySelector('#edit-user-modal .cancel-btn').addEventListener('click', () => {
+                    uiService.closeModal('edit-user-modal');
+                });
+
+                document.getElementById('edit-user-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    uiService.saveEditUser();
+                });
+
+                document.getElementById('edit-user-active').addEventListener('change', (e) => {
+                    const statusLabel = document.getElementById('edit-user-status-label');
+                    if (e.target.checked) {
+                        statusLabel.textContent = 'Ativo';
+                        statusLabel.className = 'user-status-label active';
+                    } else {
+                        statusLabel.textContent = 'Inativo';
+                        statusLabel.className = 'user-status-label inactive';
+                    }
+                });
+
                 // --- AUTENTICAÇÃO ---
                 const authForm = document.getElementById('auth-form');
                 const authEmail = document.getElementById('auth-email');
                 const authPassword = document.getElementById('auth-password');
-                const authSecretCode = document.getElementById('auth-secret-code');
                 const authSubmitBtn = document.getElementById('auth-submit-btn');
-                const secretCodeContainer = document.getElementById('secret-code-container');
                 let isLoginMode = true;
 
                 document.getElementById('toggle-auth-mode').addEventListener('click', (e) => {
                     isLoginMode = !isLoginMode;
                     authSubmitBtn.textContent = isLoginMode ? 'Login' : 'Registrar';
                     e.target.textContent = isLoginMode ? 'Precisa de uma conta? Registrar' : 'Já tenho conta. Login';
-                    secretCodeContainer.classList.add('hidden'); // Esconde o código secreto ao alternar
-                });
-                document.getElementById('toggle-secret-code').addEventListener('click', () => {
-                    if (!isLoginMode) { // Só permite ver o campo no modo Registro
-                        secretCodeContainer.classList.toggle('hidden');
-                    }
                 });
 
                 authForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const email = authEmail.value;
                     const password = authPassword.value;
-                    const secretCode = authSecretCode.value;
 
                     if (!email.endsWith(ALLOWED_DOMAIN)) {
                         uiService.showToast(`E-mail inválido. Use o domínio ${ALLOWED_DOMAIN}.`, 'error');
@@ -3393,13 +3956,9 @@ saveTask: async (taskData) => {
                             userCredential = await signInWithEmailAndPassword(auth, email, password);
                         } else {
                             userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                            let role = 'Usuario';
-                            if (secretCode === GESTOR_SECRET_CODE) {
-                                role = 'Gestor';
-                            }
                             await setDoc(doc(db, 'users_data', userCredential.user.uid), {
                                 email: email,
-                                role: role,
+                                role: 'Usuario',
                                 appId: appId
                             });
                         }
@@ -3649,6 +4208,7 @@ saveTask: async (taskData) => {
 
                 document.getElementById('view-switcher').addEventListener('change', (e) => uiService.switchView(e.target.value));
                 document.getElementById('export-excel-btn').addEventListener('click', () => reportService.exportExcel(dataService.getCurrentProject()));
+                document.getElementById('export-msproject-btn').addEventListener('click', () => reportService.exportMSProject(dataService.getCurrentProject()));
                 document.getElementById('generate-pdf-report-btn').addEventListener('click', () => reportService.generatePdf(dataService.getCurrentProject()));
                 document.getElementById('print-view-btn').addEventListener('click', () => window.print());
                 document.getElementById('download-template-btn').addEventListener('click', () => reportService.downloadExcelTemplate());
@@ -3845,13 +4405,13 @@ saveTask: async (taskData) => {
 
                 dataService.users.forEach(user => {
                     const row = document.createElement('tr');
-                    row.className = 'border-b border-[var(--border-color)]';
+                    const isActive = user.active !== false;
+                    row.className = `border-b border-[var(--border-color)] ${!isActive ? 'user-row-inactive' : ''}`;
 
                     const roleOptions = ['Usuario', 'Gestor'].map(role =>
                         `<option value="${role}" ${user.role === role ? 'selected' : ''}>${role}</option>`
                     ).join('');
 
-                    // Desabilita a edição do próprio papel
                     const isSelf = user.id === dataService.userId;
                     const isDisabled = isSelf ? 'disabled' : '';
 
@@ -3859,35 +4419,56 @@ saveTask: async (taskData) => {
                         <td class="p-3 font-medium">${user.name || 'Não informado'}</td>
                         <td class="p-3">${user.email}</td>
                         <td class="p-3">
-                            <select data-user-id="${user.id}" class="user-role-select border border-[var(--border-color)] rounded-md p-1 bg-[var(--card-bg)] text-gray-800 dark:text-gray-200" ${isDisabled}>
-                                ${roleOptions}
-                            </select>
-                        </td>
-                        <td class="p-3">
                             <span class="px-2 py-1 rounded-full text-xs ${user.role === 'Gestor' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}">
                                 ${user.role}
                             </span>
                         </td>
+                        <td class="p-3">
+                            <div class="flex items-center">
+                                <label class="user-status-toggle">
+                                    <input type="checkbox" data-user-id="${user.id}" class="user-status-checkbox" ${isActive ? 'checked' : ''} ${isDisabled}>
+                                    <span class="user-status-slider"></span>
+                                </label>
+                                <span class="user-status-label ${isActive ? 'active' : 'inactive'}">${isActive ? 'Ativo' : 'Inativo'}</span>
+                            </div>
+                        </td>
                         <td class="p-3 text-center">
                             <div class="flex justify-center gap-2">
-                                <button data-user-id="${user.id}" class="save-role-btn bg-blue-500 text-white px-3 py-1 rounded-md text-xs ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${isDisabled}>Salvar Papel</button>
-                                <button data-user-email="${user.email}" class="reset-password-btn bg-orange-500 text-white px-3 py-1 rounded-md text-xs hover:bg-orange-600">Redefinir Senha</button>
+                                <button data-user-id="${user.id}" class="edit-user-btn bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}" ${isDisabled} title="Editar utilizador">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                    Editar
+                                </button>
+                                <button data-user-email="${user.email}" class="reset-password-btn bg-orange-500 text-white px-3 py-1 rounded-md text-xs hover:bg-orange-600" title="Redefinir senha">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    Senha
+                                </button>
                             </div>
                         </td>
                     `;
                     tbody.appendChild(row);
                 });
 
-                tbody.querySelectorAll('.save-role-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const uid = btn.dataset.userId;
-                        const selectEl = tbody.querySelector(`select[data-user-id="${uid}"]`);
-                        const newRole = selectEl.value;
+                tbody.querySelectorAll('.edit-user-btn').forEach(btn => {
+                    if (!btn.disabled) {
+                        btn.addEventListener('click', () => {
+                            const uid = btn.dataset.userId;
+                            uiService.openEditUserModal(uid);
+                        });
+                    }
+                });
 
-                        document.getElementById('loader').style.display = 'flex';
-                        await dataService.updateUserRole(uid, newRole);
-                        document.getElementById('loader').style.display = 'none';
-                    });
+                tbody.querySelectorAll('.user-status-checkbox').forEach(checkbox => {
+                    if (!checkbox.disabled) {
+                        checkbox.addEventListener('change', async (e) => {
+                            const uid = checkbox.dataset.userId;
+                            const isActive = e.target.checked;
+                            await uiService.toggleUserStatus(uid, isActive);
+                        });
+                    }
                 });
 
                 tbody.querySelectorAll('.reset-password-btn').forEach(btn => {
@@ -3900,6 +4481,67 @@ saveTask: async (taskData) => {
                         });
                     });
                 });
+            },
+
+            openEditUserModal: (userId) => {
+                if (dataService.userRole !== 'Gestor') {
+                    uiService.showToast('Acesso negado: Apenas Gestores podem editar utilizadores.', 'error');
+                    return;
+                }
+                const user = dataService.users.find(u => u.id === userId);
+                if (!user) {
+                    uiService.showToast('Utilizador não encontrado.', 'error');
+                    return;
+                }
+                document.getElementById('edit-user-id').value = user.id;
+                document.getElementById('edit-user-name').value = user.name || '';
+                document.getElementById('edit-user-email').value = user.email || '';
+                document.getElementById('edit-user-role').value = user.role || 'Usuario';
+                const isActive = user.active !== false;
+                document.getElementById('edit-user-active').checked = isActive;
+                const statusLabel = document.getElementById('edit-user-status-label');
+                statusLabel.textContent = isActive ? 'Ativo' : 'Inativo';
+                statusLabel.className = `user-status-label ${isActive ? 'active' : 'inactive'}`;
+                uiService.openModal('edit-user-modal');
+            },
+
+            saveEditUser: async () => {
+                const userId = document.getElementById('edit-user-id').value;
+                const name = document.getElementById('edit-user-name').value.trim();
+                const email = document.getElementById('edit-user-email').value.trim();
+                const role = document.getElementById('edit-user-role').value;
+                const active = document.getElementById('edit-user-active').checked;
+
+                if (!email.endsWith('@vinci-highways.com.br')) {
+                    uiService.showToast('O e-mail deve terminar com @vinci-highways.com.br', 'error');
+                    return;
+                }
+
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    await dataService.updateUser(userId, { name, email, role, active });
+                    uiService.showToast('Utilizador atualizado com sucesso!', 'success');
+                    uiService.closeModal('edit-user-modal');
+                    uiService.renderUserManagementTable();
+                } catch (error) {
+                    uiService.showToast('Erro ao atualizar utilizador: ' + error.message, 'error');
+                }
+                document.getElementById('loader').style.display = 'none';
+            },
+
+            toggleUserStatus: async (userId, isActive) => {
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    await dataService.updateUser(userId, { active: isActive });
+                    const user = dataService.users.find(u => u.id === userId);
+                    const statusText = isActive ? 'ativado' : 'desativado';
+                    uiService.showToast(`Utilizador ${user?.name || user?.email} foi ${statusText}.`, 'success');
+                    uiService.renderUserManagementTable();
+                } catch (error) {
+                    uiService.showToast('Erro ao alterar status: ' + error.message, 'error');
+                    uiService.renderUserManagementTable();
+                }
+                document.getElementById('loader').style.display = 'none';
             },
 
             // --- TASK UI HELPERS ---
@@ -4227,8 +4869,8 @@ saveTask: async (taskData) => {
                     const rowClass = isOverdue ? 'project-overdue' : '';
 
                     return `
-                        <tr class="border-b border-[var(--border-color)] ${rowClass}">
-                            <td class="p-3 font-medium">${p.name}</td>
+                        <tr class="border-b border-[var(--border-color)] ${rowClass} project-row cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" data-project-id="${p.id}">
+                            <td class="p-3 font-medium text-blue-600 dark:text-blue-400 hover:underline">${p.name}</td>
                             <td class="p-3">${manager}</td>
                             <td class="p-3">
                                 <div class="flex items-center gap-2">
@@ -4245,21 +4887,27 @@ saveTask: async (taskData) => {
                             </td>
                             <td class="p-3">${start}</td>
                             <td class="p-3">${end}</td>
-                            <td class="p-3 text-center">
-                                <button class="open-project bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700" data-id="${p.id}">Abrir</button>
-                                <button class="delete-project bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 ml-2" data-id="${p.id}">Excluir</button>
+                            <td class="p-3 text-center project-actions" onclick="event.stopPropagation()">
+                                <button class="delete-project bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700" data-id="${p.id}">Excluir</button>
                             </td>
                         </tr>`;
                 }).join("");
 
                 // Adicionar event listeners
                 setTimeout(() => {
-                    document.querySelectorAll(".open-project").forEach(btn => {
-                        btn.addEventListener("click", () => App.openProject(btn.dataset.id));
+                    // Clique na linha inteira abre o projeto
+                    document.querySelectorAll(".project-row").forEach(row => {
+                        row.addEventListener("click", () => {
+                            const projectId = row.dataset.projectId;
+                            if (projectId) {
+                                App.openProject(projectId);
+                            }
+                        });
                     });
 
                     document.querySelectorAll(".delete-project").forEach(btn => {
-                        btn.addEventListener("click", () => {
+                        btn.addEventListener("click", (e) => {
+                            e.stopPropagation(); // Evita abrir o projeto ao clicar em excluir
                             uiService.showConfirmModal("Excluir o projeto?", async () => {
                                 document.getElementById('loader').style.display = 'flex';
                                 await dataService.deleteProject(btn.dataset.id);
@@ -4271,7 +4919,7 @@ saveTask: async (taskData) => {
                 }, 20);
             },
 
-            // NOVA FUNÇÃO: Configurar drag and drop para subtarefas (CORRIGIDA)
+            // FUNÇÃO ATUALIZADA: Configurar drag and drop para TODAS as tarefas
             setupSubtasksDragAndDrop: function () {
                 const tableBody = document.getElementById('task-table-body');
 
@@ -4281,50 +4929,46 @@ saveTask: async (taskData) => {
                     row.removeEventListener('dragover', this.handleDragOver);
                     row.removeEventListener('drop', this.handleDrop);
                     row.removeEventListener('dragend', this.handleDragEnd);
+                    row.removeEventListener('dragleave', this.handleDragLeave);
                     row.draggable = false;
                 });
 
-                // Encontrar todas as linhas que são subtarefas
-                const subtaskRows = Array.from(tableBody.querySelectorAll('tr')).filter(row => {
-                    const taskNameCell = row.querySelector('td:first-child');
-                    if (!taskNameCell) return false;
+                // Encontrar TODAS as linhas de tarefas (não apenas subtarefas)
+                const allTaskRows = Array.from(tableBody.querySelectorAll('tr.draggable-task'));
 
-                    // Verificar se tem o ícone de drag handle
-                    const hasDragHandle = taskNameCell.querySelector('.drag-handle');
-                    return hasDragHandle !== null;
-                });
+                console.log(`🔧 Configurando drag and drop para ${allTaskRows.length} tarefas`);
 
-                console.log(`🔧 Configurando drag and drop para ${subtaskRows.length} subtarefas`);
-
-                // Configurar drag and drop para cada subtarefa
-                subtaskRows.forEach(row => {
+                // Configurar drag and drop para cada tarefa
+                allTaskRows.forEach(row => {
                     row.setAttribute('draggable', 'true');
                     row.addEventListener('dragstart', this.handleDragStart.bind(this));
                     row.addEventListener('dragover', this.handleDragOver.bind(this));
                     row.addEventListener('drop', this.handleDrop.bind(this));
                     row.addEventListener('dragend', this.handleDragEnd.bind(this));
+                    row.addEventListener('dragleave', this.handleDragLeave.bind(this));
 
                     // Adicionar feedback visual
                     row.style.transition = 'all 0.2s ease';
                 });
             },
 
-            // Handlers para drag and drop (ATUALIZADOS)
+            // Armazenar o ID da tarefa sendo arrastada
+            draggingTaskId: null,
+
+            // Handlers para drag and drop (ATUALIZADOS para todas as tarefas)
             handleDragStart: function (e) {
                 const row = e.target.closest('tr');
                 if (!row) return;
 
-                // Encontrar o ID da tarefa
-                const taskNameElement = row.querySelector('.task-edit-trigger');
-                if (!taskNameElement) return;
+                const taskId = parseFloat(row.dataset.taskId);
+                if (!taskId) return;
 
-                const taskId = parseFloat(taskNameElement.dataset.taskId);
+                this.draggingTaskId = taskId;
                 e.dataTransfer.setData('text/plain', taskId.toString());
                 e.dataTransfer.effectAllowed = 'move';
 
                 row.classList.add('dragging');
-                row.style.opacity = '0.6';
-                row.style.background = '#f0f9ff';
+                row.style.opacity = '0.5';
 
                 console.log(`🚀 Iniciando drag da tarefa: ${taskId}`);
             },
@@ -4332,41 +4976,67 @@ saveTask: async (taskData) => {
             handleDragOver: function (e) {
                 e.preventDefault();
                 const row = e.target.closest('tr');
-                if (!row) return;
+                if (!row || !this.draggingTaskId) return;
 
-                const draggingTaskId = parseFloat(e.dataTransfer.getData('text/plain'));
-                const targetTaskId = this.getTaskIdFromRow(row);
-
-                if (this.canReorder(draggingTaskId, targetTaskId)) {
+                const targetTaskId = parseFloat(row.dataset.taskId);
+                
+                if (this.canReorder(this.draggingTaskId, targetTaskId)) {
                     e.dataTransfer.dropEffect = 'move';
+                    
+                    // Limpar outros indicadores
+                    document.querySelectorAll('.drag-over').forEach(r => {
+                        if (r !== row) {
+                            r.classList.remove('drag-over');
+                            r.style.borderTop = '';
+                            r.style.borderBottom = '';
+                        }
+                    });
+                    
+                    // Determinar se inserir acima ou abaixo
+                    const rect = row.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    
                     row.classList.add('drag-over');
-                    row.style.background = '#e0f2fe';
-                    row.style.borderTop = '2px solid #0ea5e9';
+                    if (e.clientY < midY) {
+                        row.style.borderTop = '3px solid #3b82f6';
+                        row.style.borderBottom = '';
+                        row.dataset.dropPosition = 'before';
+                    } else {
+                        row.style.borderBottom = '3px solid #3b82f6';
+                        row.style.borderTop = '';
+                        row.dataset.dropPosition = 'after';
+                    }
                 } else {
                     e.dataTransfer.dropEffect = 'none';
+                }
+            },
+
+            handleDragLeave: function (e) {
+                const row = e.target.closest('tr');
+                if (row) {
                     row.classList.remove('drag-over');
-                    row.style.background = '';
                     row.style.borderTop = '';
+                    row.style.borderBottom = '';
                 }
             },
 
             handleDrop: function (e) {
                 e.preventDefault();
                 const targetRow = e.target.closest('tr');
-                if (!targetRow) return;
+                if (!targetRow || !this.draggingTaskId) return;
 
-                const draggingTaskId = parseFloat(e.dataTransfer.getData('text/plain'));
-                const targetTaskId = this.getTaskIdFromRow(targetRow);
+                const targetTaskId = parseFloat(targetRow.dataset.taskId);
+                const dropPosition = targetRow.dataset.dropPosition || 'before';
 
-                if (!this.canReorder(draggingTaskId, targetTaskId)) {
+                if (!this.canReorder(this.draggingTaskId, targetTaskId)) {
                     this.cleanupDragState();
                     return;
                 }
 
-                console.log(`🎯 Soltando tarefa ${draggingTaskId} na posição da tarefa ${targetTaskId}`);
+                console.log(`🎯 Soltando tarefa ${this.draggingTaskId} ${dropPosition} da tarefa ${targetTaskId}`);
 
-                // Reordenar as subtarefas
-                this.reorderSubtasks(draggingTaskId, targetTaskId);
+                // Reordenar as tarefas
+                this.reorderTasks(this.draggingTaskId, targetTaskId, dropPosition);
                 this.cleanupDragState();
             },
 
@@ -4376,52 +5046,42 @@ saveTask: async (taskData) => {
             },
 
             cleanupDragState: function () {
+                this.draggingTaskId = null;
                 const tableBody = document.getElementById('task-table-body');
                 tableBody.querySelectorAll('tr').forEach(row => {
                     row.classList.remove('dragging', 'drag-over');
                     row.style.opacity = '';
-                    row.style.background = '';
                     row.style.borderTop = '';
+                    row.style.borderBottom = '';
+                    delete row.dataset.dropPosition;
                 });
             },
 
             getTaskIdFromRow: function (row) {
-                const taskNameElement = row.querySelector('.task-edit-trigger');
-                return taskNameElement ? parseFloat(taskNameElement.dataset.taskId) : null;
+                return row ? parseFloat(row.dataset.taskId) : null;
             },
 
             canReorder: function (draggingTaskId, targetTaskId) {
-                if (!draggingTaskId || !targetTaskId) {
-                    console.log('❌ IDs inválidos para reordenamento');
-                    return false;
-                }
-                if (draggingTaskId === targetTaskId) {
-                    console.log('❌ Não pode reordenar para a mesma tarefa');
-                    return false;
-                }
+                if (!draggingTaskId || !targetTaskId) return false;
+                if (draggingTaskId === targetTaskId) return false;
 
                 const project = dataService.getCurrentProject();
-                if (!project) {
-                    console.log('❌ Nenhum projeto encontrado');
-                    return false;
-                }
+                if (!project) return false;
 
                 const draggingTask = project.tasks.find(t => t.id === draggingTaskId);
                 const targetTask = project.tasks.find(t => t.id === targetTaskId);
 
-                if (!draggingTask || !targetTask) {
-                    console.log('❌ Tarefas não encontradas');
-                    return false;
-                }
+                if (!draggingTask || !targetTask) return false;
 
-                // Só pode reordenar se ambas as tarefas tiverem o mesmo pai
-                const canReorder = draggingTask.parentId === targetTask.parentId;
-                console.log(`🔍 Pode reordenar? ${canReorder} (parentId: ${draggingTask.parentId} vs ${targetTask.parentId})`);
+                // Converter null/undefined para 'root' para comparação consistente
+                const draggingParent = draggingTask.parentId || null;
+                const targetParent = targetTask.parentId || null;
 
-                return canReorder;
+                // Só pode reordenar se ambas as tarefas tiverem o mesmo pai (ou ambas forem raiz)
+                return draggingParent === targetParent;
             },
 
-            reorderSubtasks: async function (draggingTaskId, targetTaskId) {
+            reorderTasks: async function (draggingTaskId, targetTaskId, position) {
                 const project = dataService.getCurrentProject();
                 if (!project) {
                     console.log('❌ Nenhum projeto encontrado para reordenar');
@@ -4431,56 +5091,75 @@ saveTask: async (taskData) => {
                 const draggingTask = project.tasks.find(t => t.id === draggingTaskId);
                 const targetTask = project.tasks.find(t => t.id === targetTaskId);
 
-                if (!draggingTask || !targetTask || draggingTask.parentId !== targetTask.parentId) {
-                    console.log('❌ Condições inválidas para reordenamento');
+                if (!draggingTask || !targetTask) {
+                    console.log('❌ Tarefas não encontradas');
                     return;
                 }
 
-                const parentTaskId = draggingTask.parentId;
-                console.log(`🔄 Reordenando subtarefas do parent: ${parentTaskId}`);
+                const parentId = draggingTask.parentId || null;
 
-                const subtasks = project.tasks
-                    .filter(t => t.parentId === parentTaskId)
+                // Obter todas as tarefas do mesmo nível
+                const siblingTasks = project.tasks
+                    .filter(t => (t.parentId || null) === parentId)
                     .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-                console.log(`📋 Subtarefas antes:`, subtasks.map(t => ({ id: t.id, name: t.name, order: t.order })));
+                console.log(`📋 Tarefas antes:`, siblingTasks.map(t => ({ id: t.id, name: t.name, order: t.order })));
 
                 // Remover a tarefa que está sendo arrastada
-                const filteredSubtasks = subtasks.filter(t => t.id !== draggingTaskId);
+                const filteredTasks = siblingTasks.filter(t => t.id !== draggingTaskId);
 
                 // Encontrar a posição da tarefa alvo
-                const targetIndex = filteredSubtasks.findIndex(t => t.id === targetTaskId);
+                let targetIndex = filteredTasks.findIndex(t => t.id === targetTaskId);
 
                 if (targetIndex === -1) {
                     console.log('❌ Índice alvo não encontrado');
                     return;
                 }
 
+                // Ajustar índice baseado na posição (before/after)
+                if (position === 'after') {
+                    targetIndex += 1;
+                }
+
                 // Inserir a tarefa arrastada na nova posição
-                const reorderedSubtasks = [
-                    ...filteredSubtasks.slice(0, targetIndex),
+                const reorderedTasks = [
+                    ...filteredTasks.slice(0, targetIndex),
                     draggingTask,
-                    ...filteredSubtasks.slice(targetIndex)
+                    ...filteredTasks.slice(targetIndex)
                 ];
 
-                // Atualizar a ordem
-                const subtaskIdsInOrder = reorderedSubtasks.map((task, index) => {
-                    task.order = index; // Atualizar a ordem diretamente no objeto
-                    return task.id;
+                // Atualizar a ordem e marcar como ordem manual
+                reorderedTasks.forEach((task, index) => {
+                    const projectTask = project.tasks.find(t => t.id === task.id);
+                    if (projectTask) {
+                        projectTask.order = index;
+                        projectTask.manualOrder = true; // Marcar como ordem manual
+                    }
                 });
 
-                console.log(`📋 Subtarefas depois:`, reorderedSubtasks.map(t => ({ id: t.id, name: t.name, order: t.order })));
+                console.log(`📋 Tarefas depois:`, reorderedTasks.map(t => ({ id: t.id, name: t.name, order: t.order })));
 
                 document.getElementById('loader').style.display = 'flex';
                 try {
-                    await dataService.reorderSubtasks(parentTaskId, subtaskIdsInOrder);
-                    uiService.showToast('Subtarefas reordenadas com sucesso!');
+                    // Salvar no Firebase
+                    await dataService.saveProjectDocument(project);
+                    
+                    // Re-renderizar a tabela
+                    const currentFilter = document.getElementById('task-filter-input').value;
+                    this.renderTaskTable(dataService.filterTasks(project.tasks, currentFilter));
+                    
+                    uiService.showToast('Tarefas reordenadas com sucesso!');
                 } catch (error) {
-                    console.error('Erro ao reordenar subtarefas:', error);
-                    uiService.showToast('Erro ao reordenar subtarefas', 'error');
+                    console.error('Erro ao reordenar tarefas:', error);
+                    uiService.showToast('Erro ao reordenar tarefas', 'error');
                 } finally {
                     document.getElementById('loader').style.display = 'none';
                 }
+            },
+
+            // Manter compatibilidade com função antiga
+            reorderSubtasks: async function (draggingTaskId, targetTaskId) {
+                await this.reorderTasks(draggingTaskId, targetTaskId, 'before');
             },
 
             // --- NOVO: SISTEMA DE NOTIFICAÇÕES ---
@@ -4544,6 +5223,7 @@ saveTask: async (taskData) => {
                     'project_update': '📁',
                     'deadline': '⏰',
                     'comment': '💬',
+                    'mention': '👤',
                     'system': '🔔'
                 };
 
@@ -5494,8 +6174,18 @@ saveTask: async (taskData) => {
                     this.deleteComment(commentItem);
                 });
 
-                // NOVO: Registrar atividade de comentário
-                if (taskId && projectId) {
+                // NOVO: Registrar atividade de comentário e enviar notificações
+                if (taskId && projectId && project) {
+                    // Encontrar a tarefa para obter os responsáveis
+                    const task = project.tasks.find(t => t.id == taskId);
+                    const assignedUsers = task?.assignedUsers || [];
+                    
+                    // Enviar notificações para responsáveis da tarefa
+                    if (assignedUsers.length > 0) {
+                        await dataService.sendCommentNotification(taskId, taskName, projectId, projectName, text, assignedUsers);
+                    }
+                    
+                    // Registrar atividade
                     await dataService.logActivity(
                         taskId,
                         projectId,
@@ -5580,27 +6270,26 @@ saveTask: async (taskData) => {
                 `).join('');
             },
 
-            // CORREÇÃO: Dashboard com gráficos funcionais e fontes melhoradas
+            // DASHBOARD MELHORADO com visual moderno e animações
             updateMainDashboard: function (projects) {
                 const mainDashboard = document.getElementById('main-dashboard');
 
-                // Destruir gráficos existentes
-                Object.values(this.mainDashboardCharts).forEach(chart => {
-                    if (chart) chart.destroy();
-                });
-                this.mainDashboardCharts = {};
-
                 // Calcular métricas
-                let inProgressCount = 0, overdueCount = 0, atRiskCount = 0;
+                let inProgressCount = 0, overdueCount = 0, atRiskCount = 0, completedCount = 0;
                 const totalProjects = projects.length;
 
                 const overdueProjects = [];
                 const inProgressProjects = [];
                 const atRiskProjects = [];
+                const completedProjects = [];
 
                 projects.forEach(project => {
                     const progress = dataService.getProjectProgress(project.tasks);
-                    if (progress > 0 && progress < 100) {
+                    
+                    if (progress === 100) {
+                        completedCount++;
+                        completedProjects.push(project);
+                    } else if (progress > 0) {
                         inProgressCount++;
                         inProgressProjects.push(project);
                     }
@@ -5618,113 +6307,133 @@ saveTask: async (taskData) => {
                     }
                 });
 
-                // Criar container para os gráficos
-                mainDashboard.innerHTML = `
-                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
-                        <h3 class="text-lg font-semibold mb-4">Total de Projetos</h3>
-                        <div class="relative">
-                            <canvas id="total-projects-chart" height="120"></canvas>
+                const createProgressBar = (percentage, total, label) => {
+                    const displayPercentage = Math.round(percentage);
+                    return `
+                        <div class="dashboard-progress-bar-container">
+                            <div class="dashboard-progress-bar-header">
+                                <span class="dashboard-progress-bar-label">${label}</span>
+                                <span class="dashboard-progress-bar-value">${displayPercentage}%</span>
+                            </div>
+                            <div class="dashboard-progress-bar-track">
+                                <div class="dashboard-progress-bar-fill" style="width: 0%" data-target-width="${displayPercentage}%"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
-                        <h3 class="text-lg font-semibold mb-4">Projetos em Andamento</h3>
-                        <div class="relative">
-                            <canvas id="in-progress-chart" height="120"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
-                        <h3 class="text-lg font-semibold mb-4">Projetos Atrasados</h3>
-                        <div class="relative">
-                            <canvas id="overdue-chart" height="120"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-md border border-[var(--border-color)]">
-                        <h3 class="text-lg font-semibold mb-4">Projetos em Risco</h3>
-                        <div class="relative">
-                            <canvas id="at-risk-chart" height="120"></canvas>
-                        </div>
-                    </div>
-                `;
+                    `;
+                };
 
-                // CORREÇÃO: Criar gráficos com cores corretas e fontes melhoradas
-                this.createDashboardChart('total-projects-chart', totalProjects, 0, 'Total', '#3b82f6', projects);
-                this.createDashboardChart('in-progress-chart', inProgressCount, totalProjects - inProgressCount, 'Em Andamento', '#f59e0b', inProgressProjects);
-                this.createDashboardChart('overdue-chart', overdueCount, totalProjects - overdueCount, 'Atrasados', '#ef4444', overdueProjects);
-                this.createDashboardChart('at-risk-chart', atRiskCount, totalProjects - atRiskCount, 'Em Risco', '#f97316', atRiskProjects);
+                const createProjectList = (projectList, cardId, maxShow = 4) => {
+                    if (projectList.length === 0) return '<div class="dashboard-projects-empty">Nenhum projeto nesta categoria</div>';
+                    
+                    const items = projectList.slice(0, maxShow).map(p => `
+                        <div class="dashboard-project-item">
+                            <span class="dashboard-project-dot"></span>
+                            <span class="dashboard-project-name">${p.name}</span>
+                        </div>
+                    `).join('');
+                    
+                    const more = projectList.length > maxShow ? 
+                        `<div class="dashboard-card-more">+ ${projectList.length - maxShow} mais</div>` : '';
+                    
+                    return items + more;
+                };
+
+                const cards = [
+                    {
+                        id: 'total',
+                        value: totalProjects,
+                        label: 'Total de Projetos',
+                        colorClass: 'blue',
+                        percentage: 100,
+                        projects: projects,
+                        icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>`
+                    },
+                    {
+                        id: 'in-progress',
+                        value: inProgressCount,
+                        label: 'Em Andamento',
+                        colorClass: 'amber',
+                        percentage: totalProjects > 0 ? (inProgressCount / totalProjects) * 100 : 0,
+                        projects: inProgressProjects,
+                        icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
+                    },
+                    {
+                        id: 'overdue',
+                        value: overdueCount,
+                        label: 'Atrasados',
+                        colorClass: 'red',
+                        percentage: totalProjects > 0 ? (overdueCount / totalProjects) * 100 : 0,
+                        projects: overdueProjects,
+                        icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+                    },
+                    {
+                        id: 'at-risk',
+                        value: atRiskCount,
+                        label: 'Em Risco',
+                        colorClass: 'orange',
+                        percentage: totalProjects > 0 ? (atRiskCount / totalProjects) * 100 : 0,
+                        projects: atRiskProjects,
+                        icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+                    }
+                ];
+
+                const colorMap = {
+                    blue: '#3b82f6',
+                    amber: '#f59e0b',
+                    red: '#ef4444',
+                    orange: '#f97316',
+                    green: '#10b981'
+                };
+
+                mainDashboard.innerHTML = cards.map(card => `
+                    <div class="dashboard-card card-${card.colorClass}" data-card-id="${card.id}">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-icon icon-${card.colorClass}">
+                                ${card.icon}
+                            </div>
+                            <div class="dashboard-card-info">
+                                <div class="dashboard-card-value">${card.value}</div>
+                                <div class="dashboard-card-label">${card.label}</div>
+                            </div>
+                        </div>
+                        ${createProgressBar(card.percentage, totalProjects, 'do total')}
+                        <div class="dashboard-card-projects">
+                            ${createProjectList(card.projects, card.id)}
+                        </div>
+                    </div>
+                `).join('');
+
+                // Adicionar animação de contagem e barra de progresso
+                setTimeout(() => {
+                    mainDashboard.querySelectorAll('.dashboard-card-value').forEach((el, index) => {
+                        const finalValue = cards[index].value;
+                        this.animateValue(el, 0, finalValue, 1000);
+                    });
+                    
+                    // Animar barras de progresso
+                    mainDashboard.querySelectorAll('.dashboard-progress-bar-fill').forEach(bar => {
+                        const targetWidth = bar.dataset.targetWidth;
+                        setTimeout(() => {
+                            bar.style.width = targetWidth;
+                        }, 100);
+                    });
+                }, 300);
             },
 
-            // CORREÇÃO: Função para criar gráficos do dashboard com fontes melhoradas
-            createDashboardChart: function (canvasId, value, remaining, label, color, projects) {
-                const ctx = document.getElementById(canvasId);
-                if (!ctx) return;
-
-                const total = value + remaining;
-
-                // Destruir gráfico existente se houver
-                if (this.mainDashboardCharts[canvasId]) {
-                    this.mainDashboardCharts[canvasId].destroy();
-                }
-
-                this.mainDashboardCharts[canvasId] = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        datasets: [{
-                            data: [value, remaining],
-                            backgroundColor: [color, '#e5e7eb'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        cutout: '70%',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        const value = context.parsed;
-                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                        return `${value} projetos (${percentage}%)`;
-                                    },
-                                    afterBody: function (context) {
-                                        if (context[0].dataIndex === 0 && projects.length > 0) {
-                                            const projectNames = projects.map(p => p.name).slice(0, 5);
-                                            const remainingCount = projects.length - 5;
-                                            let tooltipText = ['', 'Projetos:'];
-                                            tooltipText = tooltipText.concat(projectNames);
-                                            if (remainingCount > 0) {
-                                                tooltipText.push(`... e mais ${remainingCount}`);
-                                            }
-                                            return tooltipText;
-                                        }
-                                        return '';
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    plugins: [{
-                        id: 'centerText',
-                        afterDraw(chart) {
-                            const { ctx, chartArea: { width, height } } = chart;
-                            ctx.save();
-
-                            // FONTE MELHORADA para o valor central
-                            ctx.font = 'bold 24px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
-                            ctx.fillStyle = chart.config.data.datasets[0].backgroundColor[0];
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText(value.toString(), width / 2, height / 2 - 12);
-
-                            // FONTE MELHORADA para o label
-                            ctx.font = '600 14px "Inter", -apple-system, BlinkMacSystemFont, sans-serif';
-                            ctx.fillStyle = '#6b7280';
-                            ctx.fillText(label, width / 2, height / 2 + 15);
-                            ctx.restore();
-                        }
-                    }]
-                });
+            // Função para animar valores numéricos
+            animateValue: function(element, start, end, duration) {
+                const startTime = performance.now();
+                const updateValue = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+                    const currentValue = Math.floor(start + (end - start) * easeOutQuart);
+                    element.textContent = currentValue;
+                    if (progress < 1) {
+                        requestAnimationFrame(updateValue);
+                    }
+                };
+                requestAnimationFrame(updateValue);
             },
 
             // FUNÇÕES ADICIONADAS PARA CORRIGIR OS ERROS
@@ -5967,9 +6676,14 @@ renderTaskTable: function (tasks) {
         const todayHighlightClass = isRunningToday ? 'today-running-task' : '';
 
         return `
-            <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700 ${rowClass} ${todayHighlightClass}" data-task-id="${task.id}" data-level="${level}">
+            <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700 ${rowClass} ${todayHighlightClass} draggable-task" data-task-id="${task.id}" data-level="${level}" data-parent-id="${task.parentId || 'root'}">
                 <td class="p-3">
                     <div style="padding-left: ${level * 20}px" class="flex items-center gap-2">
+                        <span class="drag-handle cursor-grab" title="Arrastar para reordenar">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
+                            </svg>
+                        </span>
                         ${expandIcon}
                         <span class="${isParent ? 'text-blue-500' : 'text-gray-400'}">${taskIcon}</span>
                         <span class="task-edit-trigger cursor-pointer hover:text-blue-500 hover:underline font-${level === 0 ? 'medium' : 'normal'}" data-task-id="${task.id}">
@@ -5978,6 +6692,7 @@ renderTaskTable: function (tasks) {
                         ${todayIcon}
                         ${task.risk ? '<span class="text-red-500 text-xs ml-1" title="Tarefa em risco">⚠️</span>' : ''}
                         ${isParent ? `<span class="text-xs text-blue-500 bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded-full ml-2">${tasks.filter(t => t.parentId === task.id).length}</span>` : ''}
+                        ${task.manualOrder ? '<span class="text-xs text-orange-500 ml-1" title="Ordem manual">↕️</span>' : ''}
                     </div>
                 </td>
                 <td class="p-3">${duration}</td>
@@ -6196,16 +6911,369 @@ renderTaskTable: function (tasks) {
             },
             generatePdf: (project) => {
                 if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
-                const element = document.getElementById('content-area');
-                const opt = {
-                    margin: [10, 10, 10, 10],
-                    filename: `${project.name}_relatorio.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                
+                const tasks = project.tasks || [];
+                const today = new Date().toLocaleDateString('pt-BR');
+                
+                const stats = {
+                    total: tasks.length,
+                    concluidas: tasks.filter(t => t.status === 'Concluída').length,
+                    emAndamento: tasks.filter(t => t.status === 'Em Andamento').length,
+                    naoIniciadas: tasks.filter(t => t.status === 'Não Iniciada').length,
+                    atrasadas: tasks.filter(t => {
+                        const latestDates = dataService.getLatestDates(t);
+                        return t.status !== 'Concluída' && new Date(latestDates.endDate) < new Date();
+                    }).length,
+                    emRisco: tasks.filter(t => t.risk).length
                 };
-                html2pdf().set(opt).from(element).save();
-                uiService.showToast('PDF gerado com sucesso!');
+                
+                const progressoGeral = stats.total > 0 ? Math.round((stats.concluidas / stats.total) * 100) : 0;
+                
+                const sortedTasks = [...tasks].sort((a, b) => {
+                    if (a.parentId === null && b.parentId !== null) return -1;
+                    if (a.parentId !== null && b.parentId === null) return 1;
+                    const dateA = new Date(dataService.getLatestDates(a).startDate);
+                    const dateB = new Date(dataService.getLatestDates(b).startDate);
+                    return dateA - dateB;
+                });
+                
+                let tasksHtml = '';
+                sortedTasks.forEach((task, index) => {
+                    const latestDates = dataService.getLatestDates(task);
+                    const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
+                    const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
+                    const isSubtask = task.parentId !== null;
+                    
+                    let statusColor = '#6b7280';
+                    let statusTextColor = '#fff';
+                    if (statusInfo.badge.includes('green')) statusColor = '#10b981';
+                    else if (statusInfo.badge.includes('red')) statusColor = '#ef4444';
+                    else if (statusInfo.badge.includes('yellow')) { statusColor = '#f59e0b'; statusTextColor = '#000'; }
+                    
+                    tasksHtml += '<tr style="background-color: ' + (index % 2 === 0 ? '#ffffff' : '#f9fafb') + '; ' + (isSubtask ? 'font-size: 11px;' : '') + '">' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb; ' + (isSubtask ? 'padding-left: 24px;' : 'font-weight: 600;') + '">' + (isSubtask ? '└ ' : '') + task.name + '</td>' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">' + duration + '</td>' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">' + new Date(latestDates.startDate + 'T00:00:00').toLocaleDateString('pt-BR') + '</td>' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">' + new Date(latestDates.endDate + 'T00:00:00').toLocaleDateString('pt-BR') + '</td>' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;"><span style="background-color: ' + statusColor + '; color: ' + statusTextColor + '; padding: 2px 8px; border-radius: 9999px; font-size: 10px;">' + statusInfo.name + '</span></td>' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">' + (task.progress || 0) + '%</td>' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb;">' + dataService.getAssignedUserNames(task.assignedUsers) + '</td>' +
+                        '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">' + (task.risk ? 'Sim' : 'Não') + '</td>' +
+                        '</tr>';
+                });
+                
+                const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#fff;color:#333;}table{width:100%;border-collapse:collapse;font-size:12px;}.stats-container{display:table;width:100%;margin-bottom:20px;}.stat-box{display:table-cell;width:20%;text-align:center;padding:15px;color:#fff;}.stat-box.blue{background:#3b82f6;}.stat-box.green{background:#10b981;}.stat-box.yellow{background:#f59e0b;}.stat-box.red{background:#ef4444;}.stat-box.purple{background:#8b5cf6;}.stat-number{font-size:28px;font-weight:bold;}.stat-label{font-size:11px;}</style></head><body>' +
+                    '<div style="text-align:center;margin-bottom:30px;border-bottom:3px solid #2563eb;padding-bottom:20px;">' +
+                    '<h1 style="color:#1e40af;margin:0;font-size:24px;">RELATÓRIO DE PROJETO</h1>' +
+                    '<h2 style="color:#374151;margin:10px 0 5px 0;font-size:20px;">' + project.name + '</h2>' +
+                    '<p style="color:#6b7280;margin:0;font-size:12px;">Gerado em: ' + today + '</p></div>' +
+                    '<div class="stats-container">' +
+                    '<div class="stat-box blue"><div class="stat-number">' + stats.total + '</div><div class="stat-label">Total</div></div>' +
+                    '<div class="stat-box green"><div class="stat-number">' + stats.concluidas + '</div><div class="stat-label">Concluídas</div></div>' +
+                    '<div class="stat-box yellow"><div class="stat-number">' + stats.emAndamento + '</div><div class="stat-label">Em Andamento</div></div>' +
+                    '<div class="stat-box red"><div class="stat-number">' + stats.atrasadas + '</div><div class="stat-label">Atrasadas</div></div>' +
+                    '<div class="stat-box purple"><div class="stat-number">' + progressoGeral + '%</div><div class="stat-label">Progresso</div></div>' +
+                    '</div>' +
+                    '<h3 style="color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:15px;">Lista de Tarefas</h3>' +
+                    '<table><thead><tr style="background-color:#1e40af;color:white;">' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:left;">Tarefa</th>' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:center;">Dias</th>' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:center;">Início</th>' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:center;">Término</th>' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:center;">Status</th>' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:center;">%</th>' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:left;">Responsável</th>' +
+                    '<th style="padding:10px;border:1px solid #1e40af;text-align:center;">Risco</th>' +
+                    '</tr></thead><tbody>' + tasksHtml + '</tbody></table>' +
+                    '<div style="margin-top:30px;padding-top:15px;border-top:1px solid #e5e7eb;text-align:center;color:#9ca3af;font-size:10px;"><p>Vinci Highways - Sistema de Gerenciamento de Projetos</p></div>' +
+                    '</body></html>';
+                
+                const printWindow = window.open('', '_blank', 'width=1200,height=800');
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+                
+                printWindow.onload = function() {
+                    setTimeout(function() {
+                        printWindow.print();
+                        printWindow.onafterprint = function() {
+                            printWindow.close();
+                        };
+                    }, 500);
+                };
+                
+                uiService.showToast('Abrindo janela de impressão para PDF...');
+            },
+            exportMSProject: (project) => {
+                if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
+                
+                const tasks = project.tasks || [];
+                const today = new Date().toISOString();
+                
+                const sortedTasks = [...tasks].sort((a, b) => {
+                    if (a.parentId === null && b.parentId !== null) return -1;
+                    if (a.parentId !== null && b.parentId === null) return 1;
+                    const dateA = new Date(dataService.getLatestDates(a).startDate);
+                    const dateB = new Date(dataService.getLatestDates(b).startDate);
+                    return dateA - dateB;
+                });
+                
+                const taskIdMap = {};
+                sortedTasks.forEach((task, index) => {
+                    taskIdMap[task.id] = index + 1;
+                });
+                
+                let tasksXml = '';
+                sortedTasks.forEach((task, index) => {
+                    const latestDates = dataService.getLatestDates(task);
+                    const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
+                    const outlineLevel = task.parentId !== null ? 2 : 1;
+                    const parentUID = task.parentId !== null ? taskIdMap[task.parentId] || 0 : 0;
+                    const percentComplete = task.progress || 0;
+                    
+                    const priorityMap = { 'Alta': 700, 'Média': 500, 'Baixa': 300 };
+                    const priority = priorityMap[task.priority] || 500;
+                    
+                    tasksXml += `
+        <Task>
+            <UID>${index + 1}</UID>
+            <ID>${index + 1}</ID>
+            <Name>${task.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Name>
+            <Type>0</Type>
+            <IsNull>0</IsNull>
+            <CreateDate>${today}</CreateDate>
+            <WBS>${index + 1}</WBS>
+            <OutlineNumber>${index + 1}</OutlineNumber>
+            <OutlineLevel>${outlineLevel}</OutlineLevel>
+            <Priority>${priority}</Priority>
+            <Start>${latestDates.startDate}T08:00:00</Start>
+            <Finish>${latestDates.endDate}T17:00:00</Finish>
+            <Duration>PT${duration * 8}H0M0S</Duration>
+            <ManualStart>${latestDates.startDate}T08:00:00</ManualStart>
+            <ManualFinish>${latestDates.endDate}T17:00:00</ManualFinish>
+            <ManualDuration>PT${duration * 8}H0M0S</ManualDuration>
+            <DurationFormat>7</DurationFormat>
+            <Work>PT${duration * 8}H0M0S</Work>
+            <Stop>${latestDates.endDate}T17:00:00</Stop>
+            <Resume>${latestDates.startDate}T08:00:00</Resume>
+            <ResumeValid>0</ResumeValid>
+            <EffortDriven>1</EffortDriven>
+            <Recurring>0</Recurring>
+            <OverAllocated>0</OverAllocated>
+            <Estimated>0</Estimated>
+            <Milestone>0</Milestone>
+            <Summary>${task.parentId === null && tasks.some(t => t.parentId === task.id) ? 1 : 0}</Summary>
+            <Critical>0</Critical>
+            <IsSubproject>0</IsSubproject>
+            <IsSubprojectReadOnly>0</IsSubprojectReadOnly>
+            <ExternalTask>0</ExternalTask>
+            <EarlyStart>${latestDates.startDate}T08:00:00</EarlyStart>
+            <EarlyFinish>${latestDates.endDate}T17:00:00</EarlyFinish>
+            <LateStart>${latestDates.startDate}T08:00:00</LateStart>
+            <LateFinish>${latestDates.endDate}T17:00:00</LateFinish>
+            <StartVariance>0</StartVariance>
+            <FinishVariance>0</FinishVariance>
+            <WorkVariance>0</WorkVariance>
+            <FreeSlack>0</FreeSlack>
+            <TotalSlack>0</TotalSlack>
+            <FixedCost>0</FixedCost>
+            <FixedCostAccrual>3</FixedCostAccrual>
+            <PercentComplete>${percentComplete}</PercentComplete>
+            <PercentWorkComplete>${percentComplete}</PercentWorkComplete>
+            <Cost>0</Cost>
+            <OvertimeCost>0</OvertimeCost>
+            <OvertimeWork>PT0H0M0S</OvertimeWork>
+            <ActualStart>${task.status !== 'Não Iniciada' ? latestDates.startDate + 'T08:00:00' : ''}</ActualStart>
+            <ActualDuration>PT${Math.round(duration * 8 * (percentComplete / 100))}H0M0S</ActualDuration>
+            <ActualCost>0</ActualCost>
+            <ActualOvertimeCost>0</ActualOvertimeCost>
+            <ActualWork>PT${Math.round(duration * 8 * (percentComplete / 100))}H0M0S</ActualWork>
+            <ActualOvertimeWork>PT0H0M0S</ActualOvertimeWork>
+            <RegularWork>PT${duration * 8}H0M0S</RegularWork>
+            <RemainingDuration>PT${Math.round(duration * 8 * ((100 - percentComplete) / 100))}H0M0S</RemainingDuration>
+            <RemainingCost>0</RemainingCost>
+            <RemainingWork>PT${Math.round(duration * 8 * ((100 - percentComplete) / 100))}H0M0S</RemainingWork>
+            <RemainingOvertimeCost>0</RemainingOvertimeCost>
+            <RemainingOvertimeWork>PT0H0M0S</RemainingOvertimeWork>
+            <ACWP>0</ACWP>
+            <CV>0</CV>
+            <ConstraintType>0</ConstraintType>
+            <CalendarUID>-1</CalendarUID>
+            <LevelAssignments>1</LevelAssignments>
+            <LevelingCanSplit>1</LevelingCanSplit>
+            <LevelingDelay>0</LevelingDelay>
+            <LevelingDelayFormat>8</LevelingDelayFormat>
+            <IgnoreResourceCalendar>0</IgnoreResourceCalendar>
+            <Notes>${task.risk ? 'TAREFA EM RISCO' : ''}</Notes>
+            <HideBar>0</HideBar>
+            <Rollup>0</Rollup>
+            <BCWS>0</BCWS>
+            <BCWP>0</BCWP>
+            <PhysicalPercentComplete>0</PhysicalPercentComplete>
+            <EarnedValueMethod>0</EarnedValueMethod>
+            <IsPublished>1</IsPublished>
+            <CommitmentType>0</CommitmentType>
+        </Task>`;
+                });
+                
+                const xmlContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project xmlns="http://schemas.microsoft.com/project">
+    <SaveVersion>14</SaveVersion>
+    <BuildNumber>14.0</BuildNumber>
+    <Name>${project.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Name>
+    <Title>${project.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Title>
+    <Company>Vinci Highways</Company>
+    <Author>Sistema de Gerenciamento de Projetos</Author>
+    <CreationDate>${today}</CreationDate>
+    <LastSaved>${today}</LastSaved>
+    <ScheduleFromStart>1</ScheduleFromStart>
+    <StartDate>${tasks.length > 0 ? Math.min(...tasks.map(t => new Date(dataService.getLatestDates(t).startDate))).toISOString ? new Date(Math.min(...tasks.map(t => new Date(dataService.getLatestDates(t).startDate)))).toISOString().split('T')[0] + 'T08:00:00' : today : today}</StartDate>
+    <FinishDate>${tasks.length > 0 ? new Date(Math.max(...tasks.map(t => new Date(dataService.getLatestDates(t).endDate)))).toISOString().split('T')[0] + 'T17:00:00' : today}</FinishDate>
+    <FYStartDate>1</FYStartDate>
+    <CriticalSlackLimit>0</CriticalSlackLimit>
+    <CurrencyDigits>2</CurrencyDigits>
+    <CurrencySymbol>R$</CurrencySymbol>
+    <CurrencyCode>BRL</CurrencyCode>
+    <CurrencySymbolPosition>0</CurrencySymbolPosition>
+    <CalendarUID>1</CalendarUID>
+    <DefaultStartTime>08:00:00</DefaultStartTime>
+    <DefaultFinishTime>17:00:00</DefaultFinishTime>
+    <MinutesPerDay>480</MinutesPerDay>
+    <MinutesPerWeek>2400</MinutesPerWeek>
+    <DaysPerMonth>20</DaysPerMonth>
+    <DefaultTaskType>0</DefaultTaskType>
+    <DefaultFixedCostAccrual>3</DefaultFixedCostAccrual>
+    <DefaultStandardRate>0</DefaultStandardRate>
+    <DefaultOvertimeRate>0</DefaultOvertimeRate>
+    <DurationFormat>7</DurationFormat>
+    <WorkFormat>2</WorkFormat>
+    <EditableActualCosts>0</EditableActualCosts>
+    <HonorConstraints>0</HonorConstraints>
+    <InsertedProjectsLikeSummary>1</InsertedProjectsLikeSummary>
+    <MultipleCriticalPaths>0</MultipleCriticalPaths>
+    <NewTasksEffortDriven>1</NewTasksEffortDriven>
+    <NewTasksEstimated>1</NewTasksEstimated>
+    <SplitsInProgressTasks>1</SplitsInProgressTasks>
+    <SpreadActualCost>0</SpreadActualCost>
+    <SpreadPercentComplete>0</SpreadPercentComplete>
+    <TaskUpdatesResource>1</TaskUpdatesResource>
+    <FiscalYearStart>0</FiscalYearStart>
+    <WeekStartDay>1</WeekStartDay>
+    <MoveCompletedEndsBack>0</MoveCompletedEndsBack>
+    <MoveRemainingStartsBack>0</MoveRemainingStartsBack>
+    <MoveRemainingStartsForward>0</MoveRemainingStartsForward>
+    <MoveCompletedEndsForward>0</MoveCompletedEndsForward>
+    <BaselineForEarnedValue>0</BaselineForEarnedValue>
+    <AutoAddNewResourcesAndTasks>1</AutoAddNewResourcesAndTasks>
+    <CurrentDate>${today}</CurrentDate>
+    <MicrosoftProjectServerURL>1</MicrosoftProjectServerURL>
+    <Autolink>1</Autolink>
+    <NewTaskStartDate>0</NewTaskStartDate>
+    <DefaultTaskEVMethod>0</DefaultTaskEVMethod>
+    <ProjectExternallyEdited>0</ProjectExternallyEdited>
+    <ExtendedCreationDate>${today}</ExtendedCreationDate>
+    <ActualsInSync>1</ActualsInSync>
+    <RemoveFileProperties>0</RemoveFileProperties>
+    <AdminProject>0</AdminProject>
+    <Calendars>
+        <Calendar>
+            <UID>1</UID>
+            <Name>Standard</Name>
+            <IsBaseCalendar>1</IsBaseCalendar>
+            <BaseCalendarUID>-1</BaseCalendarUID>
+            <WeekDays>
+                <WeekDay>
+                    <DayType>1</DayType>
+                    <DayWorking>0</DayWorking>
+                </WeekDay>
+                <WeekDay>
+                    <DayType>2</DayType>
+                    <DayWorking>1</DayWorking>
+                    <WorkingTimes>
+                        <WorkingTime>
+                            <FromTime>08:00:00</FromTime>
+                            <ToTime>12:00:00</ToTime>
+                        </WorkingTime>
+                        <WorkingTime>
+                            <FromTime>13:00:00</FromTime>
+                            <ToTime>17:00:00</ToTime>
+                        </WorkingTime>
+                    </WorkingTimes>
+                </WeekDay>
+                <WeekDay>
+                    <DayType>3</DayType>
+                    <DayWorking>1</DayWorking>
+                    <WorkingTimes>
+                        <WorkingTime>
+                            <FromTime>08:00:00</FromTime>
+                            <ToTime>12:00:00</ToTime>
+                        </WorkingTime>
+                        <WorkingTime>
+                            <FromTime>13:00:00</FromTime>
+                            <ToTime>17:00:00</ToTime>
+                        </WorkingTime>
+                    </WorkingTimes>
+                </WeekDay>
+                <WeekDay>
+                    <DayType>4</DayType>
+                    <DayWorking>1</DayWorking>
+                    <WorkingTimes>
+                        <WorkingTime>
+                            <FromTime>08:00:00</FromTime>
+                            <ToTime>12:00:00</ToTime>
+                        </WorkingTime>
+                        <WorkingTime>
+                            <FromTime>13:00:00</FromTime>
+                            <ToTime>17:00:00</ToTime>
+                        </WorkingTime>
+                    </WorkingTimes>
+                </WeekDay>
+                <WeekDay>
+                    <DayType>5</DayType>
+                    <DayWorking>1</DayWorking>
+                    <WorkingTimes>
+                        <WorkingTime>
+                            <FromTime>08:00:00</FromTime>
+                            <ToTime>12:00:00</ToTime>
+                        </WorkingTime>
+                        <WorkingTime>
+                            <FromTime>13:00:00</FromTime>
+                            <ToTime>17:00:00</ToTime>
+                        </WorkingTime>
+                    </WorkingTimes>
+                </WeekDay>
+                <WeekDay>
+                    <DayType>6</DayType>
+                    <DayWorking>1</DayWorking>
+                    <WorkingTimes>
+                        <WorkingTime>
+                            <FromTime>08:00:00</FromTime>
+                            <ToTime>12:00:00</ToTime>
+                        </WorkingTime>
+                        <WorkingTime>
+                            <FromTime>13:00:00</FromTime>
+                            <ToTime>17:00:00</ToTime>
+                        </WorkingTime>
+                    </WorkingTimes>
+                </WeekDay>
+                <WeekDay>
+                    <DayType>7</DayType>
+                    <DayWorking>0</DayWorking>
+                </WeekDay>
+            </WeekDays>
+        </Calendar>
+    </Calendars>
+    <Tasks>${tasksXml}
+    </Tasks>
+</Project>`;
+                
+                const blob = new Blob([xmlContent], { type: 'application/xml' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${project.name}.xml`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                
+                uiService.showToast('Exportado para Microsoft Project (XML) com sucesso! Abra o arquivo no MS Project.', 'success');
             },
             downloadExcelTemplate: () => {
                 const template = [
