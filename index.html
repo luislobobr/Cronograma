@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-BR" class="">
 
@@ -1581,7 +1582,6 @@
 
             <form id="task-form" class="space-y-6">
                 <input type="hidden" id="task-id">
-                <input type="hidden" id="parent-id">
 
                 <!-- SEÇÃO 1: Informações Básicas -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
@@ -1665,10 +1665,10 @@
                     </div>
                 </div>
 
-                <!-- SEÇÃO 3: Atribuição e Dependências -->
+                <!-- SEÇÃO 3: Atribuição e Hierarquia -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2">Atribuição e
-                        Dependências</h3>
+                        Hierarquia</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Responsáveis -->
@@ -1685,10 +1685,10 @@
                         <div class="space-y-4">
                             <div>
                                 <label for="task-dependency"
-                                    class="block text-sm font-medium text-gray-400 mb-1">Depende de</label>
+                                    class="block text-sm font-medium text-gray-400 mb-1">Tarefa Pai</label>
                                 <select id="task-dependency"
                                     class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
-                                    <option value="">Nenhuma</option>
+                                    <option value="">Nenhuma (tarefa principal)</option>
                                 </select>
                             </div>
 
@@ -5835,7 +5835,6 @@ saveTask: async (taskData) => {
 
                 document.getElementById('modal-title').textContent = mode === 'add' ? 'Adicionar Tarefa' : 'Editar Tarefa';
                 document.getElementById('task-id').value = task.id || '';
-                document.getElementById('parent-id').value = parentId || (task ? task.parentId : '') || '';
                 document.getElementById('task-name').value = task.name || '';
                 document.getElementById('task-priority').value = task.priority || 'Média';
                 document.getElementById('task-status').value = task.status || 'Não Iniciada';
@@ -5844,16 +5843,17 @@ saveTask: async (taskData) => {
                 document.getElementById('task-risk').checked = task.risk || false;
 
                 const dependencySelect = document.getElementById('task-dependency');
-                dependencySelect.innerHTML = '<option value="">Nenhuma</option>';
+                dependencySelect.innerHTML = '<option value="">Nenhuma (tarefa principal)</option>';
                 project?.tasks.forEach(t => {
-                    if (t.id !== task.id) {
+                    if (t.id !== task.id && t.parentId === null) {
                         const option = document.createElement('option');
                         option.value = t.id;
                         option.textContent = t.name;
                         dependencySelect.appendChild(option);
                     }
                 });
-                dependencySelect.value = task.dependsOn || '';
+                const parentTaskValue = parentId || task.parentId || task.dependsOn || '';
+                dependencySelect.value = parentTaskValue;
 
                 this.renderComments(task.comments || []);
                 document.getElementById('new-comment-input').value = '';
@@ -5922,18 +5922,19 @@ saveTask: async (taskData) => {
                     // Outras informações dos anexos seriam coletadas de um data attribute
                 }));
 
+                const parentTaskId = document.getElementById('task-dependency').value ? parseFloat(document.getElementById('task-dependency').value) : null;
                 const data = {
-                    id: document.getElementById('task-id').value ? parseFloat(document.getElementById('task-id').value) : null, // CORREÇÃO: Usar parseFloat
-                    parentId: document.getElementById('parent-id').value ? parseFloat(document.getElementById('parent-id').value) : null, // CORREÇÃO: Usar parseFloat
+                    id: document.getElementById('task-id').value ? parseFloat(document.getElementById('task-id').value) : null,
+                    parentId: parentTaskId,
                     name: document.getElementById('task-name').value,
                     assignedUsers: selectedUsers,
                     priority: document.getElementById('task-priority').value,
                     status: document.getElementById('task-status').value,
                     progress: parseInt(document.getElementById('task-progress').value),
                     risk: document.getElementById('task-risk').checked,
-                    dependsOn: document.getElementById('task-dependency').value ? parseFloat(document.getElementById('task-dependency').value) : null, // CORREÇÃO: Usar parseFloat
+                    dependsOn: parentTaskId,
                     comments: comments,
-                    attachments: attachments, // NOVO: Incluir anexos
+                    attachments: attachments,
                     newStartDate: startDateInput.value,
                     newEndDate: endDateInput.value,
                 };
@@ -6929,13 +6930,52 @@ renderTaskTable: function (tasks) {
                 
                 const progressoGeral = stats.total > 0 ? Math.round((stats.concluidas / stats.total) * 100) : 0;
                 
-                const sortedTasks = [...tasks].sort((a, b) => {
-                    if (a.parentId === null && b.parentId !== null) return -1;
-                    if (a.parentId !== null && b.parentId === null) return 1;
-                    const dateA = new Date(dataService.getLatestDates(a).startDate);
-                    const dateB = new Date(dataService.getLatestDates(b).startDate);
-                    return dateA - dateB;
-                });
+                const buildHierarchicalTasks = (tasksArray) => {
+                    const result = [];
+                    const processedIds = new Set();
+                    
+                    const normalizeId = (id) => (id === null || id === undefined || id === '') ? null : String(id);
+                    const isRootTask = (task) => task.parentId === null || task.parentId === undefined || task.parentId === '';
+                    
+                    const sortByDate = (a, b) => {
+                        const dateA = new Date(dataService.getLatestDates(a).startDate);
+                        const dateB = new Date(dataService.getLatestDates(b).startDate);
+                        return dateA - dateB;
+                    };
+                    
+                    const addTaskWithChildren = (task) => {
+                        const taskIdStr = normalizeId(task.id);
+                        if (taskIdStr !== null && processedIds.has(taskIdStr)) return;
+                        if (taskIdStr !== null) processedIds.add(taskIdStr);
+                        result.push(task);
+                        
+                        const children = tasksArray.filter(t => {
+                            const parentIdStr = normalizeId(t.parentId);
+                            return parentIdStr !== null && taskIdStr !== null && parentIdStr === taskIdStr;
+                        });
+                        children.sort(sortByDate);
+                        children.forEach(child => addTaskWithChildren(child));
+                    };
+                    
+                    const rootTasks = tasksArray.filter(isRootTask);
+                    rootTasks.sort(sortByDate);
+                    rootTasks.forEach(parent => addTaskWithChildren(parent));
+                    
+                    const orphans = tasksArray.filter(task => {
+                        const taskIdStr = normalizeId(task.id);
+                        return taskIdStr !== null && !processedIds.has(taskIdStr);
+                    });
+                    orphans.sort(sortByDate);
+                    orphans.forEach(task => {
+                        const taskIdStr = normalizeId(task.id);
+                        processedIds.add(taskIdStr);
+                        result.push(task);
+                    });
+                    
+                    return result;
+                };
+                
+                const sortedTasks = buildHierarchicalTasks(tasks);
                 
                 let tasksHtml = '';
                 sortedTasks.forEach((task, index) => {
@@ -7009,13 +7049,58 @@ renderTaskTable: function (tasks) {
                 const tasks = project.tasks || [];
                 const today = new Date().toISOString();
                 
-                const sortedTasks = [...tasks].sort((a, b) => {
-                    if (a.parentId === null && b.parentId !== null) return -1;
-                    if (a.parentId !== null && b.parentId === null) return 1;
-                    const dateA = new Date(dataService.getLatestDates(a).startDate);
-                    const dateB = new Date(dataService.getLatestDates(b).startDate);
-                    return dateA - dateB;
-                });
+                const buildHierarchicalTasks = (tasksArray) => {
+                    const result = [];
+                    const processedIds = new Set();
+                    const taskLevels = new Map();
+                    
+                    const normalizeId = (id) => (id === null || id === undefined || id === '') ? null : String(id);
+                    const isRootTask = (task) => task.parentId === null || task.parentId === undefined || task.parentId === '';
+                    
+                    const sortByDate = (a, b) => {
+                        const dateA = new Date(dataService.getLatestDates(a).startDate);
+                        const dateB = new Date(dataService.getLatestDates(b).startDate);
+                        return dateA - dateB;
+                    };
+                    
+                    const addTaskWithChildren = (task, level = 1) => {
+                        const taskIdStr = normalizeId(task.id);
+                        if (taskIdStr !== null && processedIds.has(taskIdStr)) return;
+                        if (taskIdStr !== null) processedIds.add(taskIdStr);
+                        taskLevels.set(taskIdStr, level);
+                        result.push(task);
+                        
+                        const children = tasksArray.filter(t => {
+                            const parentIdStr = normalizeId(t.parentId);
+                            return parentIdStr !== null && taskIdStr !== null && parentIdStr === taskIdStr;
+                        });
+                        children.sort(sortByDate);
+                        children.forEach(child => addTaskWithChildren(child, level + 1));
+                    };
+                    
+                    const rootTasks = tasksArray.filter(isRootTask);
+                    rootTasks.sort(sortByDate);
+                    rootTasks.forEach(parent => addTaskWithChildren(parent, 1));
+                    
+                    const orphans = tasksArray.filter(task => {
+                        const taskIdStr = normalizeId(task.id);
+                        return taskIdStr !== null && !processedIds.has(taskIdStr);
+                    });
+                    orphans.sort(sortByDate);
+                    orphans.forEach(task => {
+                        const taskIdStr = normalizeId(task.id);
+                        processedIds.add(taskIdStr);
+                        taskLevels.set(taskIdStr, 1);
+                        result.push(task);
+                    });
+                    
+                    return { tasks: result, levels: taskLevels, normalizeId };
+                };
+                
+                const hierarchyResult = buildHierarchicalTasks(tasks);
+                const sortedTasks = hierarchyResult.tasks;
+                const taskLevels = hierarchyResult.levels;
+                const normalizeId = hierarchyResult.normalizeId;
                 
                 const taskIdMap = {};
                 sortedTasks.forEach((task, index) => {
@@ -7026,8 +7111,10 @@ renderTaskTable: function (tasks) {
                 sortedTasks.forEach((task, index) => {
                     const latestDates = dataService.getLatestDates(task);
                     const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
-                    const outlineLevel = task.parentId !== null ? 2 : 1;
-                    const parentUID = task.parentId !== null ? taskIdMap[task.parentId] || 0 : 0;
+                    const taskIdStr = normalizeId(task.id);
+                    const outlineLevel = taskLevels.get(taskIdStr) || 1;
+                    const parentIdStr = normalizeId(task.parentId);
+                    const parentUID = parentIdStr ? taskIdMap[task.parentId] || 0 : 0;
                     const percentComplete = task.progress || 0;
                     
                     const priorityMap = { 'Alta': 700, 'Média': 500, 'Baixa': 300 };
@@ -7061,7 +7148,7 @@ renderTaskTable: function (tasks) {
             <OverAllocated>0</OverAllocated>
             <Estimated>0</Estimated>
             <Milestone>0</Milestone>
-            <Summary>${task.parentId === null && tasks.some(t => t.parentId === task.id) ? 1 : 0}</Summary>
+            <Summary>${!parentIdStr && tasks.some(t => normalizeId(t.parentId) === taskIdStr) ? 1 : 0}</Summary>
             <Critical>0</Critical>
             <IsSubproject>0</IsSubproject>
             <IsSubprojectReadOnly>0</IsSubprojectReadOnly>
