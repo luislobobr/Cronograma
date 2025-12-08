@@ -7308,32 +7308,37 @@ saveTask: async (taskData) => {
             updateMainDashboard: function (projects) {
                 const mainDashboard = document.getElementById('main-dashboard');
 
-                // Calcular métricas
+                // 1. Calcular métricas
                 let inProgressCount = 0, overdueCount = 0, atRiskCount = 0, completedCount = 0;
                 const totalProjects = projects.length;
 
                 const overdueProjects = [];
                 const inProgressProjects = [];
                 const atRiskProjects = [];
-                const completedProjects = [];
-
+                // completedProjects não é usado no visual, mas mantemos o cálculo para porcentagens se necessário
+                
                 projects.forEach(project => {
                     const progress = dataService.getProjectProgress(project.tasks);
                     
                     if (progress === 100) {
                         completedCount++;
-                        completedProjects.push(project);
                     } else if (progress > 0) {
                         inProgressCount++;
                         inProgressProjects.push(project);
                     }
 
-                    const hasOverdue = project.tasks.some(t => reportService.getTaskStatusClass(t.status, dataService.getLatestDates(t).endDate).name === 'Atrasada');
+                    // Verifica atrasos
+                    const hasOverdue = project.tasks.some(t => {
+                        const dates = dataService.getLatestDates(t);
+                        return reportService.getTaskStatusClass(t.status, dates.endDate).name === 'Atrasada';
+                    });
+                    
                     if (hasOverdue) {
                         overdueCount++;
                         overdueProjects.push(project);
                     }
 
+                    // Verifica risco
                     const hasRisk = project.tasks.some(t => t.risk);
                     if (hasRisk) {
                         atRiskCount++;
@@ -7341,7 +7346,8 @@ saveTask: async (taskData) => {
                     }
                 });
 
-                const createProgressBar = (percentage, total, label) => {
+                // 2. Função auxiliar para criar a barra de progresso visual
+                const createProgressBar = (percentage, label) => {
                     const displayPercentage = Math.round(percentage);
                     return `
                         <div class="dashboard-progress-bar-container">
@@ -7356,11 +7362,13 @@ saveTask: async (taskData) => {
                     `;
                 };
 
-                const createProjectList = (projectList, cardId, maxShow = 4) => {
+                // 3. Função auxiliar para criar a lista de projetos dentro do cartão
+                const createProjectList = (projectList, maxShow = 4) => {
                     if (projectList.length === 0) return '<div class="dashboard-projects-empty">Nenhum projeto nesta categoria</div>';
                     
+                    // IMPORTANTE: Adicionamos data-project-id aqui para o clique funcionar
                     const items = projectList.slice(0, maxShow).map(p => `
-                        <div class="dashboard-project-item" data-project-id="${p.id}" title="Clique para abrir: ${p.name}">
+                        <div class="dashboard-project-item" data-project-id="${p.id}" title="Abrir projeto: ${p.name}">
                             <span class="dashboard-project-dot"></span>
                             <span class="dashboard-project-name">${p.name}</span>
                         </div>
@@ -7372,6 +7380,7 @@ saveTask: async (taskData) => {
                     return items + more;
                 };
 
+                // 4. Definição dos Cartões (SEM o cartão de Concluídos)
                 const cards = [
                     {
                         id: 'total',
@@ -7379,7 +7388,7 @@ saveTask: async (taskData) => {
                         label: 'Total de Projetos',
                         colorClass: 'blue',
                         percentage: 100,
-                        projects: projects,
+                        projects: projects, // Mostra todos
                         icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>`
                     },
                     {
@@ -7411,16 +7420,9 @@ saveTask: async (taskData) => {
                     }
                 ];
 
-                const colorMap = {
-                    blue: '#3b82f6',
-                    amber: '#f59e0b',
-                    red: '#ef4444',
-                    orange: '#f97316',
-                    green: '#10b981'
-                };
-
+                // 5. Renderizar HTML
                 mainDashboard.innerHTML = cards.map(card => `
-                    <div class="dashboard-card card-${card.colorClass}" data-card-id="${card.id}">
+                    <div class="dashboard-card card-${card.colorClass}">
                         <div class="dashboard-card-header">
                             <div class="dashboard-card-icon icon-${card.colorClass}">
                                 ${card.icon}
@@ -7430,32 +7432,40 @@ saveTask: async (taskData) => {
                                 <div class="dashboard-card-label">${card.label}</div>
                             </div>
                         </div>
-                        ${card.id !== 'total' ? createProgressBar(card.percentage, totalProjects, 'do total') : ''}
+                        ${createProgressBar(card.percentage, 'do total')}
                         <div class="dashboard-card-projects">
-                            ${createProjectList(card.projects, card.id)}
+                            ${createProjectList(card.projects)}
                         </div>
                     </div>
                 `).join('');
-                
-                // Adicionar event listeners para cliques nos projetos
-                mainDashboard.querySelectorAll('.dashboard-project-item[data-project-id]').forEach(item => {
-                    item.style.cursor = 'pointer';
+
+                // 6. Adicionar Event Listeners para o CLIQUE (A parte que faz navegar)
+                const projectItems = mainDashboard.querySelectorAll('.dashboard-project-item');
+                projectItems.forEach(item => {
+                    item.style.cursor = 'pointer'; // Garante que o mouse vire mãozinha
+                    
                     item.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Evita conflitos
                         const projectId = item.dataset.projectId;
+                        
                         if (projectId) {
-                            appController.openProject(projectId);
+                            console.log("Navegando para o projeto:", projectId); // Debug
+                            // Usa o objeto global App para navegar
+                            App.openProject(projectId);
+                        } else {
+                            console.error("ID do projeto não encontrado no elemento");
                         }
                     });
                 });
 
-                // Adicionar animação de contagem e barra de progresso
+                // 7. Animações visuais (Contadores e Barras)
                 setTimeout(() => {
                     mainDashboard.querySelectorAll('.dashboard-card-value').forEach((el, index) => {
-                        const finalValue = cards[index].value;
-                        this.animateValue(el, 0, finalValue, 1000);
+                        if (cards[index]) {
+                            this.animateValue(el, 0, cards[index].value, 1000);
+                        }
                     });
                     
-                    // Animar barras de progresso
                     mainDashboard.querySelectorAll('.dashboard-progress-bar-fill').forEach(bar => {
                         const targetWidth = bar.dataset.targetWidth;
                         setTimeout(() => {
