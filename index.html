@@ -8163,47 +8163,93 @@ renderTaskTable: function (tasks) {
                 
                 uiService.showToast('Abrindo janela de impressão para PDF...');
             },
-            exportMSProject: (project) => {
+exportMSProject: (project) => {
                 if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
                 
                 const tasks = project.tasks || [];
                 const today = new Date().toISOString();
                 
-                const sortedTasks = [...tasks].sort((a, b) => {
-                    if (a.parentId === null && b.parentId !== null) return -1;
-                    if (a.parentId !== null && b.parentId === null) return 1;
-                    const dateA = new Date(dataService.getLatestDates(a).startDate);
-                    const dateB = new Date(dataService.getLatestDates(b).startDate);
-                    return dateA - dateB;
-                });
+                // 1. Função interna para organizar a hierarquia e calcular níveis (Igual ao PDF)
+                const buildHierarchicalData = (tasksArray) => {
+                    const result = [];
+                    const processedIds = new Set();
+                    
+                    const normalizeId = (id) => (id === null || id === undefined || id === '') ? null : String(id);
+                    const isRootTask = (task) => task.parentId === null || task.parentId === undefined || task.parentId === '';
+                    
+                    const sortByDate = (a, b) => {
+                        const dateA = new Date(dataService.getLatestDates(a).startDate);
+                        const dateB = new Date(dataService.getLatestDates(b).startDate);
+                        return dateA - dateB;
+                    };
+                    
+                    // Recursivamente adiciona tarefas e calcula o nível (1, 2, 3...)
+                    const addTaskWithChildren = (task, level) => {
+                        const taskIdStr = normalizeId(task.id);
+                        if (taskIdStr !== null && processedIds.has(taskIdStr)) return;
+                        if (taskIdStr !== null) processedIds.add(taskIdStr);
+                        
+                        // Armazena a tarefa junto com seu nível hierárquico
+                        result.push({ task: task, level: level });
+                        
+                        const children = tasksArray.filter(t => {
+                            const parentIdStr = normalizeId(t.parentId);
+                            return parentIdStr !== null && taskIdStr !== null && parentIdStr === taskIdStr;
+                        });
+                        children.sort(sortByDate);
+                        children.forEach(child => addTaskWithChildren(child, level + 1));
+                    };
+                    
+                    const rootTasks = tasksArray.filter(isRootTask);
+                    rootTasks.sort(sortByDate);
+                    rootTasks.forEach(parent => addTaskWithChildren(parent, 1));
+                    
+                    // Captura tarefas órfãs (segurança)
+                    const orphans = tasksArray.filter(task => {
+                        const taskIdStr = normalizeId(task.id);
+                        return taskIdStr !== null && !processedIds.has(taskIdStr);
+                    });
+                    orphans.sort(sortByDate);
+                    orphans.forEach(task => {
+                        const taskIdStr = normalizeId(task.id);
+                        processedIds.add(taskIdStr);
+                        result.push({ task: task, level: 1 });
+                    });
+                    
+                    return result;
+                };
                 
-                const taskIdMap = {};
-                sortedTasks.forEach((task, index) => {
-                    taskIdMap[task.id] = index + 1;
-                });
+                // 2. Obtém a lista já ordenada e com níveis definidos
+                const sortedData = buildHierarchicalData(tasks);
                 
+                // 3. Gera o XML das tarefas na ordem correta
                 let tasksXml = '';
-                sortedTasks.forEach((task, index) => {
+                sortedData.forEach((item, index) => {
+                    const task = item.task;
+                    const level = item.level; // Nível calculado (1 = Principal, 2 = Subtarefa, etc)
+                    
                     const latestDates = dataService.getLatestDates(task);
                     const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
-                    const outlineLevel = task.parentId !== null ? 2 : 1;
-                    const parentUID = task.parentId !== null ? taskIdMap[task.parentId] || 0 : 0;
+                    const msUID = index + 1; // UID sequencial para o MS Project não se perder
                     const percentComplete = task.progress || 0;
                     
                     const priorityMap = { 'Alta': 700, 'Média': 500, 'Baixa': 300 };
                     const priority = priorityMap[task.priority] || 500;
                     
+                    // Verifica se é tarefa resumo (se tem filhos na lista original)
+                    const isSummary = tasks.some(t => t.parentId === task.id) ? 1 : 0;
+                    
                     tasksXml += `
         <Task>
-            <UID>${index + 1}</UID>
-            <ID>${index + 1}</ID>
-            <Name>${task.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Name>
+            <UID>${msUID}</UID>
+            <ID>${msUID}</ID>
+            <Name>${(task.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Name>
             <Type>0</Type>
             <IsNull>0</IsNull>
             <CreateDate>${today}</CreateDate>
-            <WBS>${index + 1}</WBS>
-            <OutlineNumber>${index + 1}</OutlineNumber>
-            <OutlineLevel>${outlineLevel}</OutlineLevel>
+            <WBS>${msUID}</WBS>
+            <OutlineNumber>${msUID}</OutlineNumber>
+            <OutlineLevel>${level}</OutlineLevel>
             <Priority>${priority}</Priority>
             <Start>${latestDates.startDate}T08:00:00</Start>
             <Finish>${latestDates.endDate}T17:00:00</Finish>
@@ -8221,7 +8267,7 @@ renderTaskTable: function (tasks) {
             <OverAllocated>0</OverAllocated>
             <Estimated>0</Estimated>
             <Milestone>0</Milestone>
-            <Summary>${task.parentId === null && tasks.some(t => t.parentId === task.id) ? 1 : 0}</Summary>
+            <Summary>${isSummary}</Summary>
             <Critical>0</Critical>
             <IsSubproject>0</IsSubproject>
             <IsSubprojectReadOnly>0</IsSubprojectReadOnly>
@@ -8230,13 +8276,6 @@ renderTaskTable: function (tasks) {
             <EarlyFinish>${latestDates.endDate}T17:00:00</EarlyFinish>
             <LateStart>${latestDates.startDate}T08:00:00</LateStart>
             <LateFinish>${latestDates.endDate}T17:00:00</LateFinish>
-            <StartVariance>0</StartVariance>
-            <FinishVariance>0</FinishVariance>
-            <WorkVariance>0</WorkVariance>
-            <FreeSlack>0</FreeSlack>
-            <TotalSlack>0</TotalSlack>
-            <FixedCost>0</FixedCost>
-            <FixedCostAccrual>3</FixedCostAccrual>
             <PercentComplete>${percentComplete}</PercentComplete>
             <PercentWorkComplete>${percentComplete}</PercentWorkComplete>
             <Cost>0</Cost>
@@ -8254,8 +8293,6 @@ renderTaskTable: function (tasks) {
             <RemainingWork>PT${Math.round(duration * 8 * ((100 - percentComplete) / 100))}H0M0S</RemainingWork>
             <RemainingOvertimeCost>0</RemainingOvertimeCost>
             <RemainingOvertimeWork>PT0H0M0S</RemainingOvertimeWork>
-            <ACWP>0</ACWP>
-            <CV>0</CV>
             <ConstraintType>0</ConstraintType>
             <CalendarUID>-1</CalendarUID>
             <LevelAssignments>1</LevelAssignments>
@@ -8275,19 +8312,28 @@ renderTaskTable: function (tasks) {
         </Task>`;
                 });
                 
+                // 4. Monta o XML final
+                const projectStart = tasks.length > 0 
+                    ? new Date(Math.min(...tasks.map(t => new Date(dataService.getLatestDates(t).startDate)))).toISOString().split('T')[0] + 'T08:00:00'
+                    : today;
+                    
+                const projectFinish = tasks.length > 0 
+                    ? new Date(Math.max(...tasks.map(t => new Date(dataService.getLatestDates(t).endDate)))).toISOString().split('T')[0] + 'T17:00:00'
+                    : today;
+
                 const xmlContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Project xmlns="http://schemas.microsoft.com/project">
     <SaveVersion>14</SaveVersion>
     <BuildNumber>14.0</BuildNumber>
-    <Name>${project.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Name>
-    <Title>${project.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Title>
+    <Name>${(project.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Name>
+    <Title>${(project.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Title>
     <Company>Vinci Highways</Company>
     <Author>Sistema de Gerenciamento de Projetos</Author>
     <CreationDate>${today}</CreationDate>
     <LastSaved>${today}</LastSaved>
     <ScheduleFromStart>1</ScheduleFromStart>
-    <StartDate>${tasks.length > 0 ? Math.min(...tasks.map(t => new Date(dataService.getLatestDates(t).startDate))).toISOString ? new Date(Math.min(...tasks.map(t => new Date(dataService.getLatestDates(t).startDate)))).toISOString().split('T')[0] + 'T08:00:00' : today : today}</StartDate>
-    <FinishDate>${tasks.length > 0 ? new Date(Math.max(...tasks.map(t => new Date(dataService.getLatestDates(t).endDate)))).toISOString().split('T')[0] + 'T17:00:00' : today}</FinishDate>
+    <StartDate>${projectStart}</StartDate>
+    <FinishDate>${projectFinish}</FinishDate>
     <FYStartDate>1</FYStartDate>
     <CriticalSlackLimit>0</CriticalSlackLimit>
     <CurrencyDigits>2</CurrencyDigits>
