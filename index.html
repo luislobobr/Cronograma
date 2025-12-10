@@ -8,7 +8,8 @@
     <!-- Fonte moderna Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -40,6 +41,35 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        /* Estilos para campos desabilitados e somente leitura */
+        input:disabled,
+        select:disabled,
+        textarea:disabled {
+            background-color: #f3f4f6 !important;
+            color: #6b7280 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        html.dark input:disabled,
+        html.dark select:disabled,
+        html.dark textarea:disabled {
+            background-color: #374151 !important;
+            color: #9ca3af !important;
+        }
+
+        input:read-only:not(:disabled),
+        textarea:read-only:not(:disabled) {
+            background-color: #f9fafb;
+            color: #374151;
+        }
+
+        html.dark input:read-only:not(:disabled),
+        html.dark textarea:read-only:not(:disabled) {
+            background-color: #1f2937;
+            color: #d1d5db;
+        }
+
         /* Efeitos de hover para cards de projetos */
         .project-card-link {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -61,8 +91,8 @@
 
         .project-card-link:hover {
             transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px -12px rgba(59, 130, 246, 0.25), 
-                        0 8px 16px -8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 40px -12px rgba(59, 130, 246, 0.25),
+                0 8px 16px -8px rgba(0, 0, 0, 0.1);
             border-color: rgba(59, 130, 246, 0.5);
         }
 
@@ -71,8 +101,8 @@
         }
 
         html.dark .project-card-link:hover {
-            box-shadow: 0 20px 40px -12px rgba(59, 130, 246, 0.3), 
-                        0 8px 16px -8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px -12px rgba(59, 130, 246, 0.3),
+                0 8px 16px -8px rgba(0, 0, 0, 0.3);
         }
 
         /* Animação do progresso no hover */
@@ -520,11 +550,30 @@
             opacity: 1;
         }
 
-        .dashboard-card.card-blue { --card-accent: #3b82f6; --card-accent-light: #60a5fa; }
-        .dashboard-card.card-amber { --card-accent: #f59e0b; --card-accent-light: #fbbf24; }
-        .dashboard-card.card-red { --card-accent: #ef4444; --card-accent-light: #f87171; }
-        .dashboard-card.card-orange { --card-accent: #f97316; --card-accent-light: #fb923c; }
-        .dashboard-card.card-green { --card-accent: #10b981; --card-accent-light: #34d399; }
+        .dashboard-card.card-blue {
+            --card-accent: #3b82f6;
+            --card-accent-light: #60a5fa;
+        }
+
+        .dashboard-card.card-amber {
+            --card-accent: #f59e0b;
+            --card-accent-light: #fbbf24;
+        }
+
+        .dashboard-card.card-red {
+            --card-accent: #ef4444;
+            --card-accent-light: #f87171;
+        }
+
+        .dashboard-card.card-orange {
+            --card-accent: #f97316;
+            --card-accent-light: #fb923c;
+        }
+
+        .dashboard-card.card-green {
+            --card-accent: #10b981;
+            --card-accent-light: #34d399;
+        }
 
         .dashboard-card-icon {
             width: 56px;
@@ -541,11 +590,25 @@
             transform: scale(1.1) rotate(5deg);
         }
 
-        .dashboard-card-icon.icon-blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
-        .dashboard-card-icon.icon-amber { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
-        .dashboard-card-icon.icon-red { background: linear-gradient(135deg, #ef4444, #f87171); }
-        .dashboard-card-icon.icon-orange { background: linear-gradient(135deg, #f97316, #fb923c); }
-        .dashboard-card-icon.icon-green { background: linear-gradient(135deg, #10b981, #34d399); }
+        .dashboard-card-icon.icon-blue {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        }
+
+        .dashboard-card-icon.icon-amber {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        }
+
+        .dashboard-card-icon.icon-red {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+        }
+
+        .dashboard-card-icon.icon-orange {
+            background: linear-gradient(135deg, #f97316, #fb923c);
+        }
+
+        .dashboard-card-icon.icon-green {
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
 
         .dashboard-card-icon svg {
             width: 28px;
@@ -671,16 +734,16 @@
             background: rgba(0, 0, 0, 0.05);
             transform: translateX(4px);
         }
-        
+
         .dark .dashboard-project-item:hover {
             background: rgba(255, 255, 255, 0.08);
         }
-        
+
         .dashboard-project-name {
             text-decoration: none;
             transition: text-decoration 0.2s ease;
         }
-        
+
         .dashboard-project-item:hover .dashboard-project-name {
             text-decoration: underline;
         }
@@ -701,28 +764,60 @@
         }
 
         @keyframes countUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes pulse-ring {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.3); opacity: 0; }
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
         }
 
         .dashboard-card {
             animation: slideInUp 0.6s ease forwards;
         }
 
-        .dashboard-card:nth-child(1) { animation-delay: 0.1s; }
-        .dashboard-card:nth-child(2) { animation-delay: 0.2s; }
-        .dashboard-card:nth-child(3) { animation-delay: 0.3s; }
-        .dashboard-card:nth-child(4) { animation-delay: 0.4s; }
+        .dashboard-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .dashboard-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dashboard-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .dashboard-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
 
         .dashboard-card-value {
             animation: countUp 0.8s ease forwards;
@@ -808,15 +903,17 @@
         }
 
         @keyframes pulse-highlight-dark {
+
             0%,
             100% {
                 background-color: rgba(34, 197, 94, 0.2);
             }
+
             50% {
                 background-color: rgba(34, 197, 94, 0.3);
             }
         }
-        
+
         html.dark .today-running-task {
             animation: pulse-highlight-dark 2s infinite;
         }
@@ -887,6 +984,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -1374,15 +1472,15 @@
             border-radius: 50%;
         }
 
-        .user-status-toggle input:checked + .user-status-slider {
+        .user-status-toggle input:checked+.user-status-slider {
             background-color: #10b981;
         }
 
-        .user-status-toggle input:checked + .user-status-slider:before {
+        .user-status-toggle input:checked+.user-status-slider:before {
             transform: translateX(24px);
         }
 
-        .user-status-toggle input:disabled + .user-status-slider {
+        .user-status-toggle input:disabled+.user-status-slider {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -1443,7 +1541,8 @@
                     <button type="button" id="forgot-password-btn"
                         class="text-sm text-orange-500 hover:underline transition-colors">Esqueci minha senha</button>
                     <button type="button" id="toggle-auth-mode"
-                        class="text-sm text-blue-500 hover:underline transition-colors">Precisa de uma conta? Registrar</button>
+                        class="text-sm text-blue-500 hover:underline transition-colors">Precisa de uma conta?
+                        Registrar</button>
                 </div>
 
                 <div class="flex justify-end gap-2">
@@ -1572,8 +1671,8 @@
                 <div class="flex justify-end gap-2">
                     <button type="button"
                         class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
-                    <button type="submit"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Guardar Alterações</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Guardar
+                        Alterações</button>
                 </div>
             </form>
         </div>
@@ -1721,8 +1820,10 @@
             <div class="flex items-center justify-between mb-6">
                 <h2 id="modal-title" class="text-2xl font-bold text-[var(--text-color)]">Adicionar Nova Tarefa</h2>
                 <button type="button" class="cancel-btn text-gray-400 hover:text-gray-600 p-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -1733,8 +1834,10 @@
 
                 <!-- SEÇÃO 1: Informações Básicas -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
-                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                    <h3
+                        class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
+                        <span
+                            class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span>
                         Informações Básicas
                     </h3>
 
@@ -1793,8 +1896,10 @@
 
                 <!-- SEÇÃO 2: Datas e Prazos -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
-                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                    <h3
+                        class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
+                        <span
+                            class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">2</span>
                         Datas e Prazos
                     </h3>
 
@@ -1822,10 +1927,12 @@
 
                     <!-- Botão para definir mesma data -->
                     <div class="mt-3 flex gap-2">
-                        <button type="button" id="same-day-btn" class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <button type="button" id="same-day-btn"
+                            class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
                             Mesmo dia (início = término)
                         </button>
-                        <button type="button" id="today-btn" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800">
+                        <button type="button" id="today-btn"
+                            class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800">
                             Definir para hoje
                         </button>
                     </div>
@@ -1853,8 +1960,10 @@
 
                 <!-- SEÇÃO 3: Atribuição e Dependências -->
                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
-                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                    <h3
+                        class="text-lg font-semibold mb-4 text-[var(--text-color)] border-b pb-2 flex items-center gap-2">
+                        <span
+                            class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">3</span>
                         Responsáveis e Dependências
                     </h3>
 
@@ -1864,22 +1973,25 @@
                             <label class="block text-sm font-medium text-gray-400 mb-2">
                                 Atribuir a (pode selecionar vários)
                             </label>
-                            
+
                             <!-- Busca de usuários -->
                             <div class="relative mb-2">
-                                <input type="text" id="user-search-input" 
+                                <input type="text" id="user-search-input"
                                     class="w-full border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2 pl-8 text-sm"
                                     placeholder="Buscar usuário...">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-2 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 absolute left-2 top-3 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
-                            
+
                             <!-- Usuários selecionados (badges) -->
                             <div id="selected-users-badges" class="flex flex-wrap gap-1 mb-2 min-h-[28px]">
                                 <!-- Badges dos usuários selecionados aparecerão aqui -->
                             </div>
-                            
+
                             <!-- Lista de usuários -->
                             <div id="assigned-users-container"
                                 class="assigned-users-container border border-[var(--border-color)] rounded-md p-2 bg-[var(--card-bg)] max-h-32 overflow-y-auto">
@@ -1898,10 +2010,12 @@
                                     class="w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-3">
                                     <option value="">Nenhuma dependência</option>
                                 </select>
-                                <p class="text-xs text-gray-500 mt-1">Esta tarefa só pode iniciar após a tarefa selecionada</p>
+                                <p class="text-xs text-gray-500 mt-1">Esta tarefa só pode iniciar após a tarefa
+                                    selecionada</p>
                             </div>
 
-                            <div class="flex items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                            <div
+                                class="flex items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                                 <input type="checkbox" id="task-risk"
                                     class="h-5 w-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
                                 <div class="ml-3">
@@ -2056,42 +2170,46 @@
     <!-- Modal de Alertas/Lembretes -->
     <div id="alerts-modal"
         class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-[100] no-print modal-transition modal-hidden">
-        <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden alerts-modal-content">
+        <div
+            class="bg-[var(--card-bg)] rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden alerts-modal-content">
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-5">
                 <h2 class="text-xl font-bold text-white flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                        <path
+                            d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
                     </svg>
                     Lembretes do Dia
                 </h2>
                 <p class="text-blue-100 text-sm mt-1" id="alerts-date"></p>
             </div>
-            
+
             <div class="p-5 max-h-[60vh] overflow-y-auto">
                 <!-- Tarefas Atrasadas -->
                 <div id="alerts-overdue-section" class="mb-5 hidden">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="text-2xl">⚠️</span>
                         <h3 class="font-bold text-red-600 dark:text-red-400 text-lg">Tarefas Atrasadas</h3>
-                        <span id="alerts-overdue-count" class="bg-red-600 text-white text-xs px-2 py-1 rounded-full"></span>
+                        <span id="alerts-overdue-count"
+                            class="bg-red-600 text-white text-xs px-2 py-1 rounded-full"></span>
                     </div>
                     <div id="alerts-overdue-list" class="space-y-2">
                         <!-- Lista de tarefas atrasadas -->
                     </div>
                 </div>
-                
+
                 <!-- Tarefas de Hoje -->
                 <div id="alerts-today-section" class="hidden">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="text-2xl">📅</span>
                         <h3 class="font-bold text-green-600 dark:text-green-400 text-lg">Tarefas para Hoje</h3>
-                        <span id="alerts-today-count" class="bg-green-600 text-white text-xs px-2 py-1 rounded-full"></span>
+                        <span id="alerts-today-count"
+                            class="bg-green-600 text-white text-xs px-2 py-1 rounded-full"></span>
                     </div>
                     <div id="alerts-today-list" class="space-y-2">
                         <!-- Lista de tarefas de hoje -->
                     </div>
                 </div>
-                
+
                 <!-- Nenhum alerta -->
                 <div id="alerts-empty" class="text-center py-8 hidden">
                     <span class="text-5xl mb-4 block">🎉</span>
@@ -2099,7 +2217,7 @@
                     <p class="text-gray-500 mt-2">Você não tem tarefas atrasadas ou para hoje.</p>
                 </div>
             </div>
-            
+
             <div class="p-4 border-t border-[var(--border-color)] flex justify-end">
                 <button id="alerts-close-btn"
                     class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
@@ -2196,15 +2314,17 @@
             <!-- Abas de Projetos Ativos e Finalizados -->
             <div class="mb-6 border-b border-gray-300 dark:border-gray-700">
                 <nav class="flex gap-4" aria-label="Tabs">
-                    <button id="tab-active-projects" 
+                    <button id="tab-active-projects"
                         class="project-tab active px-4 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 flex items-center gap-2">
                         <span>📁</span> Projetos Ativos
-                        <span id="active-projects-count" class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full">0</span>
+                        <span id="active-projects-count"
+                            class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full">0</span>
                     </button>
-                    <button id="tab-finalized-projects" 
+                    <button id="tab-finalized-projects"
                         class="project-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-2">
                         <span>✅</span> Projetos Finalizados
-                        <span id="finalized-projects-count" class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-0.5 rounded-full">0</span>
+                        <span id="finalized-projects-count"
+                            class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-0.5 rounded-full">0</span>
                     </button>
                 </nav>
             </div>
@@ -2284,28 +2404,35 @@
                         <!-- Botão para editar datas do projeto -->
                         <button id="edit-project-dates-btn"
                             class="no-print bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                fill="currentColor">
                                 <path fill-rule="evenodd"
                                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
                                     clip-rule="evenodd" />
                             </svg>
                             Editar Datas
                         </button>
-                        
+
                         <!-- Botão para finalizar projeto (só aparece quando 100%) -->
                         <button id="finalize-project-btn"
                             class="no-print hidden bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd" />
                             </svg>
                             Finalizar Projeto
                         </button>
-                        
+
                         <!-- Botão para reabrir projeto (só aparece em projetos finalizados) -->
                         <button id="reopen-project-btn"
                             class="no-print hidden bg-amber-600 text-white px-3 py-2 rounded-md hover:bg-amber-700 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                    clip-rule="evenodd" />
                             </svg>
                             Reabrir Projeto
                         </button>
@@ -2610,7 +2737,7 @@
                 try {
                     const userDocRef = doc(db, 'users_data', uid);
                     await setDoc(userDocRef, userData, { merge: true });
-                    
+
                     const userIndex = dataService.users.findIndex(u => u.id === uid);
                     if (userIndex !== -1) {
                         dataService.users[userIndex] = { ...dataService.users[userIndex], ...userData };
@@ -2788,7 +2915,7 @@
                     } else {
                         App.showProjectView();
                     }
-                    
+
                     // Mostrar alertas de tarefas atrasadas e de hoje ao carregar
                     setTimeout(() => {
                         uiService.showLoginAlerts();
@@ -2870,13 +2997,13 @@
                 try {
                     const project = dataService.getProjectById(projectId);
                     if (!project) return;
-                    
+
                     const progress = dataService.getProjectProgress(project.tasks);
                     if (progress < 100) {
                         uiService.showToast('O projeto precisa estar 100% concluído para ser finalizado.', 'error');
                         return;
                     }
-                    
+
                     project.finalized = true;
                     project.finalizedAt = new Date().toISOString();
                     await dataService.saveProjectDocument(project);
@@ -2891,7 +3018,7 @@
                 try {
                     const project = dataService.getProjectById(projectId);
                     if (!project) return;
-                    
+
                     project.finalized = false;
                     project.finalizedAt = null;
                     await dataService.saveProjectDocument(project);
@@ -3148,253 +3275,253 @@
                 return false;
             },
 
-// FUNÇÃO saveTask CORRIGIDA - Atualiza hierarquia quando muda dependência
-saveTask: async (taskData) => {
-    const project = dataService.getCurrentProject();
-    if (!project) {
-        uiService.showToast('Nenhum projeto selecionado.', 'error');
-        return;
-    }
-
-    const { newStartDate, newEndDate, dependsOn, ...restOfTaskData } = taskData;
-
-    // Validações básicas
-    if (!newStartDate || !newEndDate) {
-        uiService.showToast('Datas de início e término são obrigatórias.', 'error');
-        return;
-    }
-
-    if (new Date(newStartDate) > new Date(newEndDate)) {
-        uiService.showToast('Data de início não pode ser posterior à data de término!', 'error');
-        return;
-    }
-
-    // Validação contra data do projeto
-    if (project.startDate && new Date(newStartDate) < new Date(project.startDate)) {
-        uiService.showToast(`A data de início não pode ser anterior à data do projeto (${new Date(project.startDate).toLocaleDateString('pt-BR')}).`, 'error');
-        return;
-    }
-
-    // CORREÇÃO: Verificar se está mudando de tarefa independente para subtarefa
-    const taskId = restOfTaskData.id;
-    const existingTask = taskId ? project.tasks.find(t => t.id === taskId) : null;
-    const isChangingToSubtask = existingTask && dependsOn && !existingTask.parentId;
-    const isChangingFromSubtask = existingTask && !dependsOn && existingTask.parentId;
-
-    let updatedTasks;
-    
-    if (taskId) {
-        // EDITANDO tarefa existente
-        updatedTasks = project.tasks.map(t => {
-            if (t.id === taskId) {
-                const updatedTask = { 
-                    ...t, 
-                    ...restOfTaskData,
-                    dependsOn: dependsOn || null,
-                    // CORREÇÃO: Se está adicionando dependência, converter em subtarefa
-                    parentId: dependsOn ? dependsOn : (restOfTaskData.parentId || null)
-                };
-                
-                // Atualizar histórico de datas se mudou
-                const latestDates = dataService.getLatestDates(t);
-                if (latestDates.startDate !== newStartDate || latestDates.endDate !== newEndDate) {
-                    updatedTask.dateHistory = [
-                        ...(updatedTask.dateHistory || []), 
-                        { startDate: newStartDate, endDate: newEndDate }
-                    ];
+            // FUNÇÃO saveTask CORRIGIDA - Atualiza hierarquia quando muda dependência
+            saveTask: async (taskData) => {
+                const project = dataService.getCurrentProject();
+                if (!project) {
+                    uiService.showToast('Nenhum projeto selecionado.', 'error');
+                    return;
                 }
 
-                // CORREÇÃO: Recalcular ordem se mudou de hierarquia
-                if (isChangingToSubtask || isChangingFromSubtask) {
-                    const siblings = project.tasks.filter(task => 
-                        task.parentId === updatedTask.parentId && 
-                        task.id !== updatedTask.id
+                const { newStartDate, newEndDate, dependsOn, ...restOfTaskData } = taskData;
+
+                // Validações básicas
+                if (!newStartDate || !newEndDate) {
+                    uiService.showToast('Datas de início e término são obrigatórias.', 'error');
+                    return;
+                }
+
+                if (new Date(newStartDate) > new Date(newEndDate)) {
+                    uiService.showToast('Data de início não pode ser posterior à data de término!', 'error');
+                    return;
+                }
+
+                // Validação contra data do projeto
+                if (project.startDate && new Date(newStartDate) < new Date(project.startDate)) {
+                    uiService.showToast(`A data de início não pode ser anterior à data do projeto (${new Date(project.startDate).toLocaleDateString('pt-BR')}).`, 'error');
+                    return;
+                }
+
+                // CORREÇÃO: Verificar se está mudando de tarefa independente para subtarefa
+                const taskId = restOfTaskData.id;
+                const existingTask = taskId ? project.tasks.find(t => t.id === taskId) : null;
+                const isChangingToSubtask = existingTask && dependsOn && !existingTask.parentId;
+                const isChangingFromSubtask = existingTask && !dependsOn && existingTask.parentId;
+
+                let updatedTasks;
+
+                if (taskId) {
+                    // EDITANDO tarefa existente
+                    updatedTasks = project.tasks.map(t => {
+                        if (t.id === taskId) {
+                            const updatedTask = {
+                                ...t,
+                                ...restOfTaskData,
+                                dependsOn: dependsOn || null,
+                                // CORREÇÃO: Se está adicionando dependência, converter em subtarefa
+                                parentId: dependsOn ? dependsOn : (restOfTaskData.parentId || null)
+                            };
+
+                            // Atualizar histórico de datas se mudou
+                            const latestDates = dataService.getLatestDates(t);
+                            if (latestDates.startDate !== newStartDate || latestDates.endDate !== newEndDate) {
+                                updatedTask.dateHistory = [
+                                    ...(updatedTask.dateHistory || []),
+                                    { startDate: newStartDate, endDate: newEndDate }
+                                ];
+                            }
+
+                            // CORREÇÃO: Recalcular ordem se mudou de hierarquia
+                            if (isChangingToSubtask || isChangingFromSubtask) {
+                                const siblings = project.tasks.filter(task =>
+                                    task.parentId === updatedTask.parentId &&
+                                    task.id !== updatedTask.id
+                                );
+                                updatedTask.order = siblings.length;
+                            }
+
+                            return updatedTask;
+                        }
+                        return t;
+                    });
+
+                    // Se está convertendo em subtarefa, ajustar automaticamente datas da tarefa pai se necessário
+                    if (isChangingToSubtask && dependsOn) {
+                        const parentTask = project.tasks.find(t => t.id === dependsOn);
+                        if (parentTask) {
+                            try {
+                                const parentDates = dataService.getLatestDates(parentTask);
+                                if (parentDates && parentDates.startDate && parentDates.endDate) {
+                                    const parentStart = new Date(parentDates.startDate);
+                                    const parentEnd = new Date(parentDates.endDate);
+                                    const childStart = new Date(newStartDate);
+                                    const childEnd = new Date(newEndDate);
+
+                                    // Ajustar automaticamente as datas do pai para acomodar a subtarefa
+                                    if (childStart < parentStart || childEnd > parentEnd) {
+                                        const newParentStart = new Date(Math.min(parentStart.getTime(), childStart.getTime())).toISOString().split('T')[0];
+                                        const newParentEnd = new Date(Math.max(parentEnd.getTime(), childEnd.getTime())).toISOString().split('T')[0];
+
+                                        updatedTasks = updatedTasks.map(t => {
+                                            if (t.id === dependsOn) {
+                                                const updatedParent = { ...t };
+                                                updatedParent.dateHistory = [
+                                                    ...(updatedParent.dateHistory || []),
+                                                    { startDate: newParentStart, endDate: newParentEnd }
+                                                ];
+                                                return updatedParent;
+                                            }
+                                            return t;
+                                        });
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('Erro ao ajustar datas da tarefa pai:', e);
+                            }
+                        }
+                    }
+                } else {
+                    // NOVA tarefa
+                    const parentIdForNew = dependsOn ? dependsOn : (restOfTaskData.parentId || null);
+
+                    // Calcular ordem cronológica para a nova tarefa
+                    const siblingsOfNewTask = project.tasks.filter(t =>
+                        (t.parentId || null) === parentIdForNew
                     );
-                    updatedTask.order = siblings.length;
-                }
-                
-                return updatedTask;
-            }
-            return t;
-        });
 
-        // Se está convertendo em subtarefa, ajustar automaticamente datas da tarefa pai se necessário
-        if (isChangingToSubtask && dependsOn) {
-            const parentTask = project.tasks.find(t => t.id === dependsOn);
-            if (parentTask) {
-                try {
-                    const parentDates = dataService.getLatestDates(parentTask);
-                    if (parentDates && parentDates.startDate && parentDates.endDate) {
-                        const parentStart = new Date(parentDates.startDate);
-                        const parentEnd = new Date(parentDates.endDate);
-                        const childStart = new Date(newStartDate);
-                        const childEnd = new Date(newEndDate);
+                    // Ordenar irmãos por data de início para encontrar posição cronológica
+                    const sortedSiblings = siblingsOfNewTask
+                        .map(t => ({
+                            task: t,
+                            startDate: new Date(dataService.getLatestDates(t).startDate)
+                        }))
+                        .sort((a, b) => a.startDate - b.startDate);
 
-                        // Ajustar automaticamente as datas do pai para acomodar a subtarefa
-                        if (childStart < parentStart || childEnd > parentEnd) {
-                            const newParentStart = new Date(Math.min(parentStart.getTime(), childStart.getTime())).toISOString().split('T')[0];
-                            const newParentEnd = new Date(Math.max(parentEnd.getTime(), childEnd.getTime())).toISOString().split('T')[0];
+                    // Encontrar posição cronológica baseada na data de início da nova tarefa
+                    const newTaskStartDate = new Date(newStartDate);
+                    let chronologicalOrder = 0;
 
-                            updatedTasks = updatedTasks.map(t => {
-                                if (t.id === dependsOn) {
-                                    const updatedParent = { ...t };
-                                    updatedParent.dateHistory = [
-                                        ...(updatedParent.dateHistory || []),
-                                        { startDate: newParentStart, endDate: newParentEnd }
-                                    ];
-                                    return updatedParent;
+                    for (let i = 0; i < sortedSiblings.length; i++) {
+                        if (newTaskStartDate < sortedSiblings[i].startDate) {
+                            chronologicalOrder = i;
+                            break;
+                        }
+                        chronologicalOrder = i + 1;
+                    }
+
+                    const newTask = {
+                        ...restOfTaskData,
+                        id: Date.now() + Math.random(),
+                        dependsOn: dependsOn || null,
+                        parentId: parentIdForNew,
+                        dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
+                        comments: [],
+                        assignedUsers: restOfTaskData.assignedUsers || [],
+                        order: chronologicalOrder,
+                        manualOrder: false // Nova tarefa começa com ordem cronológica
+                    };
+
+                    // Reajustar ordem das tarefas irmãs que vêm depois
+                    const updatedSiblings = project.tasks.map(t => {
+                        if ((t.parentId || null) === parentIdForNew && (t.order || 0) >= chronologicalOrder) {
+                            return { ...t, order: (t.order || 0) + 1 };
+                        }
+                        return t;
+                    });
+
+                    updatedTasks = [...updatedSiblings, newTask];
+
+                    // Ajustar automaticamente datas do pai se é uma nova subtarefa
+                    if (dependsOn) {
+                        const parentTask = project.tasks.find(t => t.id === dependsOn);
+                        if (parentTask) {
+                            try {
+                                const parentDates = dataService.getLatestDates(parentTask);
+                                if (parentDates && parentDates.startDate && parentDates.endDate) {
+                                    const parentStart = new Date(parentDates.startDate);
+                                    const parentEnd = new Date(parentDates.endDate);
+                                    const childStart = new Date(newStartDate);
+                                    const childEnd = new Date(newEndDate);
+
+                                    // Ajustar automaticamente as datas do pai para acomodar a subtarefa
+                                    if (childStart < parentStart || childEnd > parentEnd) {
+                                        const newParentStart = new Date(Math.min(parentStart.getTime(), childStart.getTime())).toISOString().split('T')[0];
+                                        const newParentEnd = new Date(Math.max(parentEnd.getTime(), childEnd.getTime())).toISOString().split('T')[0];
+
+                                        updatedTasks = updatedTasks.map(t => {
+                                            if (t.id === dependsOn) {
+                                                const updatedParent = { ...t };
+                                                updatedParent.dateHistory = [
+                                                    ...(updatedParent.dateHistory || []),
+                                                    { startDate: newParentStart, endDate: newParentEnd }
+                                                ];
+                                                return updatedParent;
+                                            }
+                                            return t;
+                                        });
+                                    }
                                 }
-                                return t;
-                            });
+                            } catch (e) {
+                                console.warn('Erro ao ajustar datas da tarefa pai:', e);
+                            }
                         }
                     }
-                } catch (e) {
-                    console.warn('Erro ao ajustar datas da tarefa pai:', e);
                 }
-            }
-        }
-    } else {
-        // NOVA tarefa
-        const parentIdForNew = dependsOn ? dependsOn : (restOfTaskData.parentId || null);
-        
-        // Calcular ordem cronológica para a nova tarefa
-        const siblingsOfNewTask = project.tasks.filter(t => 
-            (t.parentId || null) === parentIdForNew
-        );
-        
-        // Ordenar irmãos por data de início para encontrar posição cronológica
-        const sortedSiblings = siblingsOfNewTask
-            .map(t => ({
-                task: t,
-                startDate: new Date(dataService.getLatestDates(t).startDate)
-            }))
-            .sort((a, b) => a.startDate - b.startDate);
-        
-        // Encontrar posição cronológica baseada na data de início da nova tarefa
-        const newTaskStartDate = new Date(newStartDate);
-        let chronologicalOrder = 0;
-        
-        for (let i = 0; i < sortedSiblings.length; i++) {
-            if (newTaskStartDate < sortedSiblings[i].startDate) {
-                chronologicalOrder = i;
-                break;
-            }
-            chronologicalOrder = i + 1;
-        }
-        
-        const newTask = {
-            ...restOfTaskData,
-            id: Date.now() + Math.random(),
-            dependsOn: dependsOn || null,
-            parentId: parentIdForNew,
-            dateHistory: [{ startDate: newStartDate, endDate: newEndDate }],
-            comments: [],
-            assignedUsers: restOfTaskData.assignedUsers || [],
-            order: chronologicalOrder,
-            manualOrder: false // Nova tarefa começa com ordem cronológica
-        };
-        
-        // Reajustar ordem das tarefas irmãs que vêm depois
-        const updatedSiblings = project.tasks.map(t => {
-            if ((t.parentId || null) === parentIdForNew && (t.order || 0) >= chronologicalOrder) {
-                return { ...t, order: (t.order || 0) + 1 };
-            }
-            return t;
-        });
-        
-        updatedTasks = [...updatedSiblings, newTask];
 
-        // Ajustar automaticamente datas do pai se é uma nova subtarefa
-        if (dependsOn) {
-            const parentTask = project.tasks.find(t => t.id === dependsOn);
-            if (parentTask) {
-                try {
-                    const parentDates = dataService.getLatestDates(parentTask);
-                    if (parentDates && parentDates.startDate && parentDates.endDate) {
-                        const parentStart = new Date(parentDates.startDate);
-                        const parentEnd = new Date(parentDates.endDate);
-                        const childStart = new Date(newStartDate);
-                        const childEnd = new Date(newEndDate);
+                // NOVO: Capturar tarefa salva ANTES de atualizar project.tasks para notificações
+                let savedTaskForNotification = null;
+                let newAssignedUsersForNotification = [];
 
-                        // Ajustar automaticamente as datas do pai para acomodar a subtarefa
-                        if (childStart < parentStart || childEnd > parentEnd) {
-                            const newParentStart = new Date(Math.min(parentStart.getTime(), childStart.getTime())).toISOString().split('T')[0];
-                            const newParentEnd = new Date(Math.max(parentEnd.getTime(), childEnd.getTime())).toISOString().split('T')[0];
-
-                            updatedTasks = updatedTasks.map(t => {
-                                if (t.id === dependsOn) {
-                                    const updatedParent = { ...t };
-                                    updatedParent.dateHistory = [
-                                        ...(updatedParent.dateHistory || []),
-                                        { startDate: newParentStart, endDate: newParentEnd }
-                                    ];
-                                    return updatedParent;
-                                }
-                                return t;
-                            });
-                        }
+                if (taskId) {
+                    // Editando tarefa existente
+                    savedTaskForNotification = updatedTasks.find(t => t.id === taskId);
+                    if (savedTaskForNotification && savedTaskForNotification.assignedUsers) {
+                        const existingAssignedUsers = existingTask?.assignedUsers || [];
+                        newAssignedUsersForNotification = savedTaskForNotification.assignedUsers.filter(uid => !existingAssignedUsers.includes(uid));
                     }
-                } catch (e) {
-                    console.warn('Erro ao ajustar datas da tarefa pai:', e);
+                } else {
+                    // Nova tarefa - encontrar a tarefa recém criada pelo ID único gerado
+                    const originalTaskIds = new Set(project.tasks.map(t => t.id));
+                    savedTaskForNotification = updatedTasks.find(t => !originalTaskIds.has(t.id));
+                    if (savedTaskForNotification && savedTaskForNotification.assignedUsers) {
+                        newAssignedUsersForNotification = savedTaskForNotification.assignedUsers;
+                    }
                 }
-            }
-        }
-    }
 
-    // NOVO: Capturar tarefa salva ANTES de atualizar project.tasks para notificações
-    let savedTaskForNotification = null;
-    let newAssignedUsersForNotification = [];
-    
-    if (taskId) {
-        // Editando tarefa existente
-        savedTaskForNotification = updatedTasks.find(t => t.id === taskId);
-        if (savedTaskForNotification && savedTaskForNotification.assignedUsers) {
-            const existingAssignedUsers = existingTask?.assignedUsers || [];
-            newAssignedUsersForNotification = savedTaskForNotification.assignedUsers.filter(uid => !existingAssignedUsers.includes(uid));
-        }
-    } else {
-        // Nova tarefa - encontrar a tarefa recém criada pelo ID único gerado
-        const originalTaskIds = new Set(project.tasks.map(t => t.id));
-        savedTaskForNotification = updatedTasks.find(t => !originalTaskIds.has(t.id));
-        if (savedTaskForNotification && savedTaskForNotification.assignedUsers) {
-            newAssignedUsersForNotification = savedTaskForNotification.assignedUsers;
-        }
-    }
-    
-    // Atualizar projeto
-    project.tasks = updatedTasks;
+                // Atualizar projeto
+                project.tasks = updatedTasks;
 
-    // Recalcular progresso
-    dataService.recalculateAllProgress();
+                // Recalcular progresso
+                dataService.recalculateAllProgress();
 
-    // Salvar no Firebase
-    await dataService.saveProjectDocument(project);
+                // Salvar no Firebase
+                await dataService.saveProjectDocument(project);
 
-    // NOVO: Enviar notificações para usuários atribuídos à tarefa
-    if (savedTaskForNotification && newAssignedUsersForNotification.length > 0) {
-        await dataService.sendTaskAssignmentNotifications(
-            savedTaskForNotification.id,
-            savedTaskForNotification.name,
-            project.id,
-            project.name,
-            newAssignedUsersForNotification
-        );
-        console.log(`📨 Notificações de atribuição enviadas para ${newAssignedUsersForNotification.length} usuário(s)`);
-    }
+                // NOVO: Enviar notificações para usuários atribuídos à tarefa
+                if (savedTaskForNotification && newAssignedUsersForNotification.length > 0) {
+                    await dataService.sendTaskAssignmentNotifications(
+                        savedTaskForNotification.id,
+                        savedTaskForNotification.name,
+                        project.id,
+                        project.name,
+                        newAssignedUsersForNotification
+                    );
+                    console.log(`📨 Notificações de atribuição enviadas para ${newAssignedUsersForNotification.length} usuário(s)`);
+                }
 
-    // CORREÇÃO: Limpar estado de expansão para forçar re-renderização completa
-    if (uiService.expandedTasks) {
-        uiService.expandedTasks.clear();
-    }
+                // CORREÇÃO: Limpar estado de expansão para forçar re-renderização completa
+                if (uiService.expandedTasks) {
+                    uiService.expandedTasks.clear();
+                }
 
-    // Fechar modal e mostrar feedback
-    uiService.closeModal('task-modal');
-    uiService.showToast('Tarefa salva com sucesso!', 'success');
+                // Fechar modal e mostrar feedback
+                uiService.closeModal('task-modal');
+                uiService.showToast('Tarefa salva com sucesso!', 'success');
 
-    // Atualizar a interface
-    const currentFilter = document.getElementById('task-filter-input').value;
-    uiService.renderProjectDashboard(project, currentFilter);
-},
+                // Atualizar a interface
+                const currentFilter = document.getElementById('task-filter-input').value;
+                uiService.renderProjectDashboard(project, currentFilter);
+            },
             // NOVA FUNÇÃO: Reordenar subtarefas via drag and drop
             reorderSubtasks: async function (parentTaskId, subtaskIdsInOrder) {
                 const project = dataService.getCurrentProject();
@@ -3931,7 +4058,7 @@ saveTask: async (taskData) => {
                         size: file.size,
                         type: file.type,
                         uploadedAt: new Date().toISOString(),
-                        uploadedBy: dataService.userId 
+                        uploadedBy: dataService.userId
                     };
                 } catch (error) {
                     console.error("Erro ao fazer upload do arquivo:", error);
@@ -4233,18 +4360,18 @@ saveTask: async (taskData) => {
                 // Esqueci minha senha
                 document.getElementById('forgot-password-btn').addEventListener('click', async () => {
                     const email = authEmail.value.trim();
-                    
+
                     if (!email) {
                         uiService.showToast('Digite seu e-mail para recuperar a senha.', 'error');
                         authEmail.focus();
                         return;
                     }
-                    
+
                     if (!email.endsWith(ALLOWED_DOMAIN)) {
                         uiService.showToast(`E-mail deve terminar com ${ALLOWED_DOMAIN}`, 'error');
                         return;
                     }
-                    
+
                     document.getElementById('loader').style.display = 'flex';
                     try {
                         await sendPasswordResetEmail(auth, email);
@@ -4385,12 +4512,12 @@ saveTask: async (taskData) => {
                 document.getElementById('finalize-project-btn').addEventListener('click', async () => {
                     const project = dataService.getProjectById(dataService.currentProjectId);
                     if (!project) return;
-                    
+
                     const confirmed = await uiService.showConfirmModalPromise(
                         `Tem certeza que deseja finalizar o projeto "${project.name}"? O projeto será movido para a aba de Projetos Finalizados.`,
                         'Finalizar Projeto'
                     );
-                    
+
                     if (confirmed) {
                         await dataService.finalizeProject(dataService.currentProjectId);
                         uiService.showToast('Projeto finalizado com sucesso!', 'success');
@@ -4402,12 +4529,12 @@ saveTask: async (taskData) => {
                 document.getElementById('reopen-project-btn').addEventListener('click', async () => {
                     const project = dataService.getProjectById(dataService.currentProjectId);
                     if (!project) return;
-                    
+
                     const confirmed = await uiService.showConfirmModalPromise(
                         `Tem certeza que deseja reabrir o projeto "${project.name}"? O projeto voltará para a aba de Projetos Ativos.`,
                         'Reabrir Projeto'
                     );
-                    
+
                     if (confirmed) {
                         await dataService.reopenProject(dataService.currentProjectId);
                         uiService.showToast('Projeto reaberto com sucesso!', 'success');
@@ -4473,7 +4600,7 @@ saveTask: async (taskData) => {
                 document.getElementById('user-search-input').addEventListener('input', (e) => {
                     uiService.filterUserCheckboxes(e.target.value);
                 });
-                
+
                 document.getElementById('same-day-btn').addEventListener('click', () => {
                     const startDate = document.getElementById('start-date').value;
                     if (startDate) {
@@ -4482,13 +4609,13 @@ saveTask: async (taskData) => {
                         uiService.showToast('Preencha a data de início primeiro', 'error');
                     }
                 });
-                
+
                 document.getElementById('today-btn').addEventListener('click', () => {
                     const today = new Date().toISOString().split('T')[0];
                     document.getElementById('start-date').value = today;
                     document.getElementById('end-date').value = today;
                 });
-                
+
                 // Quando a data de início muda, ajustar a data de término se necessário
                 document.getElementById('start-date').addEventListener('change', (e) => {
                     const endDate = document.getElementById('end-date').value;
@@ -4650,7 +4777,7 @@ saveTask: async (taskData) => {
                 document.getElementById('tab-active-projects').addEventListener('click', () => {
                     uiService.switchProjectTab('active');
                 });
-                
+
                 document.getElementById('tab-finalized-projects').addEventListener('click', () => {
                     uiService.switchProjectTab('finalized');
                 });
@@ -4718,6 +4845,14 @@ saveTask: async (taskData) => {
             mentionSuggestionsVisible: false, // NOVO: Controla visibilidade das sugestões de menção
             currentMentionStart: -1, // NOVO: Posição inicial da menção atual
             mentionedUsers: [], // NOVO: Usuários mencionados no comentário atual
+
+            // Função para formatar menções para exibição
+            formatMentionsForDisplay: function (text) {
+                if (!text) return '';
+                // Regex para capturar @[Nome](ID) e substituir por @Nome destacado
+                const regex = new RegExp('@\\[([^\\]]+)\\]\\([^)]+\\)', 'g');
+                return text.replace(regex, '<span class="mention-highlight">@$1</span>');
+            },
 
             // --- AUTH UI ---
             updateUserRoleDisplay: () => {
@@ -4934,7 +5069,7 @@ saveTask: async (taskData) => {
                 if (badgesContainer) badgesContainer.innerHTML = '';
 
                 const activeUsers = dataService.users.filter(u => u.email && u.active !== false);
-                
+
                 activeUsers.forEach(user => {
                     const checkboxItem = document.createElement('div');
                     checkboxItem.className = 'user-checkbox-item flex items-center gap-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors';
@@ -4955,22 +5090,22 @@ saveTask: async (taskData) => {
 
                     const infoDiv = document.createElement('div');
                     infoDiv.className = 'flex-1 min-w-0';
-                    
+
                     const nameSpan = document.createElement('div');
                     nameSpan.textContent = user.name || user.email.split('@')[0];
                     nameSpan.className = 'text-sm font-medium text-gray-700 dark:text-gray-300 truncate';
-                    
+
                     const roleSpan = document.createElement('div');
                     roleSpan.textContent = user.role || 'Usuario';
                     roleSpan.className = 'text-xs text-gray-500';
-                    
+
                     infoDiv.appendChild(nameSpan);
                     infoDiv.appendChild(roleSpan);
 
                     checkboxItem.appendChild(checkbox);
                     checkboxItem.appendChild(avatar);
                     checkboxItem.appendChild(infoDiv);
-                    
+
                     // Clicar no item inteiro marca o checkbox
                     checkboxItem.addEventListener('click', (e) => {
                         if (e.target !== checkbox) {
@@ -4978,7 +5113,7 @@ saveTask: async (taskData) => {
                         }
                         this.updateSelectedUsersBadges();
                     });
-                    
+
                     checkbox.addEventListener('change', () => {
                         this.updateSelectedUsersBadges();
                     });
@@ -4986,24 +5121,24 @@ saveTask: async (taskData) => {
                     container.appendChild(checkboxItem);
                 });
             },
-            
+
             // Atualiza os badges dos usuários selecionados
-            updateSelectedUsersBadges: function() {
+            updateSelectedUsersBadges: function () {
                 const badgesContainer = document.getElementById('selected-users-badges');
                 if (!badgesContainer) return;
-                
+
                 const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
                 badgesContainer.innerHTML = '';
-                
+
                 if (selectedCheckboxes.length === 0) {
                     badgesContainer.innerHTML = '<span class="text-xs text-gray-400">Nenhum responsável selecionado</span>';
                     return;
                 }
-                
+
                 selectedCheckboxes.forEach(checkbox => {
                     const user = dataService.users.find(u => u.id === checkbox.value);
                     if (!user) return;
-                    
+
                     const badge = document.createElement('span');
                     badge.className = 'inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-full';
                     badge.innerHTML = `
@@ -5014,23 +5149,23 @@ saveTask: async (taskData) => {
                             </svg>
                         </button>
                     `;
-                    
+
                     // Botão de remover
                     badge.querySelector('button').addEventListener('click', (e) => {
                         e.stopPropagation();
                         checkbox.checked = false;
                         this.updateSelectedUsersBadges();
                     });
-                    
+
                     badgesContainer.appendChild(badge);
                 });
             },
-            
+
             // Filtra usuários pela busca
-            filterUserCheckboxes: function(searchTerm) {
+            filterUserCheckboxes: function (searchTerm) {
                 const items = document.querySelectorAll('.user-checkbox-item');
                 const term = searchTerm.toLowerCase();
-                
+
                 items.forEach(item => {
                     const userName = item.dataset.userName || '';
                     if (userName.includes(term) || term === '') {
@@ -5040,20 +5175,20 @@ saveTask: async (taskData) => {
                     }
                 });
             },
-            
+
             // Popula o select de tarefas pai
-            populateParentTaskSelect: function(currentTaskId = null) {
+            populateParentTaskSelect: function (currentTaskId = null) {
                 const select = document.getElementById('task-parent-select');
                 if (!select) return;
-                
+
                 const project = dataService.getCurrentProject();
                 if (!project) return;
-                
+
                 select.innerHTML = '<option value="">Nenhuma (tarefa principal)</option>';
-                
+
                 // Apenas tarefas que não são subtarefas podem ser pai
                 const parentTasks = project.tasks.filter(t => !t.parentId && t.id !== currentTaskId);
-                
+
                 parentTasks.forEach(task => {
                     const option = document.createElement('option');
                     option.value = task.id;
@@ -5342,7 +5477,7 @@ saveTask: async (taskData) => {
             currentProjectTab: 'active',
 
             // Função para obter projetos filtrados por aba
-            getFilteredProjects: function() {
+            getFilteredProjects: function () {
                 if (this.currentProjectTab === 'finalized') {
                     return dataService.projects.filter(p => p.finalized === true);
                 } else {
@@ -5351,36 +5486,36 @@ saveTask: async (taskData) => {
             },
 
             // Função para alternar entre abas de projetos
-            switchProjectTab: function(tabType) {
+            switchProjectTab: function (tabType) {
                 this.currentProjectTab = tabType;
-                
+
                 const activeTab = document.getElementById('tab-active-projects');
                 const finalizedTab = document.getElementById('tab-finalized-projects');
                 const addProjectBtn = document.getElementById('add-project-btn');
-                
+
                 if (tabType === 'active') {
                     // Ativar aba de projetos ativos
                     activeTab.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
                     activeTab.classList.remove('border-transparent', 'text-gray-500');
-                    
+
                     finalizedTab.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
                     finalizedTab.classList.add('border-transparent', 'text-gray-500');
-                    
+
                     // Mostrar botão de adicionar projeto
                     addProjectBtn.classList.remove('hidden');
-                    
+
                 } else if (tabType === 'finalized') {
                     // Ativar aba de projetos finalizados
                     finalizedTab.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
                     finalizedTab.classList.remove('border-transparent', 'text-gray-500');
-                    
+
                     activeTab.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
                     activeTab.classList.add('border-transparent', 'text-gray-500');
-                    
+
                     // Ocultar botão de adicionar projeto na aba de finalizados
                     addProjectBtn.classList.add('hidden');
                 }
-                
+
                 // Atualizar lista de projetos
                 const filteredProjects = this.getFilteredProjects();
                 this.renderProjectList(filteredProjects);
@@ -5388,10 +5523,10 @@ saveTask: async (taskData) => {
             },
 
             // Atualizar contadores das abas
-            updateProjectTabCounts: function() {
+            updateProjectTabCounts: function () {
                 const activeCount = dataService.projects.filter(p => !p.finalized).length;
                 const finalizedCount = dataService.projects.filter(p => p.finalized === true).length;
-                
+
                 document.getElementById('active-projects-count').textContent = activeCount;
                 document.getElementById('finalized-projects-count').textContent = finalizedCount;
             },
@@ -5532,10 +5667,10 @@ saveTask: async (taskData) => {
                 const canReorderSameLevel = this.canReorder(this.draggingTaskId, targetTaskId);
                 const canMakeChild = this.canMakeSubtask(this.draggingTaskId, targetTaskId);
                 const canPromote = this.canPromoteToRoot(this.draggingTaskId, targetTaskId);
-                
+
                 if (canReorderSameLevel || canMakeChild || canPromote) {
                     e.dataTransfer.dropEffect = 'move';
-                    
+
                     // Limpar outros indicadores
                     document.querySelectorAll('.drag-over, .drag-inside, .drag-promote').forEach(r => {
                         if (r !== row) {
@@ -5545,15 +5680,15 @@ saveTask: async (taskData) => {
                             r.style.backgroundColor = '';
                         }
                     });
-                    
+
                     // Determinar zona: topo (40%), centro (20%), baixo (40%)
                     // Zona central menor facilita promoção de subtarefas
                     const rect = row.getBoundingClientRect();
                     const topZone = rect.top + rect.height * 0.40;
                     const bottomZone = rect.top + rect.height * 0.60;
-                    
+
                     row.classList.add('drag-over');
-                    
+
                     // Prioridade: promoção > reordenar > tornar subtarefa
                     if (e.clientY < topZone) {
                         // Zona superior (40%) - inserir antes ou promover
@@ -5645,7 +5780,7 @@ saveTask: async (taskData) => {
                         this.reorderTasks(this.draggingTaskId, targetTaskId, dropPosition);
                     }
                 }
-                
+
                 this.cleanupDragState();
             },
 
@@ -5713,7 +5848,7 @@ saveTask: async (taskData) => {
                 if (targetTask.parentId) return false;
 
                 // Não pode criar dependência circular (a tarefa alvo não pode ser filho da arrastada)
-                const isTargetChildOfDragging = project.tasks.some(t => 
+                const isTargetChildOfDragging = project.tasks.some(t =>
                     t.id === targetTaskId && t.parentId === draggingTaskId
                 );
                 if (isTargetChildOfDragging) return false;
@@ -5757,7 +5892,7 @@ saveTask: async (taskData) => {
                 // Ajustar datas do pai se necessário
                 const taskDates = dataService.getLatestDates(task);
                 const parentDates = dataService.getLatestDates(newParent);
-                
+
                 if (taskDates && parentDates) {
                     const taskStart = new Date(taskDates.startDate);
                     const taskEnd = new Date(taskDates.endDate);
@@ -5796,7 +5931,7 @@ saveTask: async (taskData) => {
                 try {
                     await dataService.saveProjectDocument(project);
                     uiService.showToast(`"${task.name}" agora é subtarefa de "${newParent.name}"`, 'success');
-                    
+
                     // Atualizar UI
                     const currentFilter = document.getElementById('task-filter-input').value;
                     uiService.renderProjectDashboard(project, currentFilter);
@@ -5886,7 +6021,7 @@ saveTask: async (taskData) => {
                     await dataService.saveProjectDocument(project);
                     const parentName = oldParent ? oldParent.name : 'pai';
                     uiService.showToast(`"${task.name}" agora é tarefa independente`, 'success');
-                    
+
                     // Atualizar UI
                     const currentFilter = document.getElementById('task-filter-input').value;
                     uiService.renderProjectDashboard(project, currentFilter);
@@ -5960,7 +6095,7 @@ saveTask: async (taskData) => {
                 try {
                     // Salvar no Firebase
                     await dataService.saveProjectDocument(project);
-                    
+
                     // Re-renderizar a tabela com filtro aplicado
                     const currentFilter = document.getElementById('task-filter-input').value;
                     const filteredTasks = project.tasks.filter(t =>
@@ -5971,7 +6106,7 @@ saveTask: async (taskData) => {
                         }))
                     );
                     this.renderTaskTable(filteredTasks);
-                    
+
                     uiService.showToast('Tarefas reordenadas com sucesso!');
                 } catch (error) {
                     console.error('Erro ao reordenar tarefas:', error);
@@ -6137,7 +6272,7 @@ saveTask: async (taskData) => {
             },
 
             // --- SISTEMA DE ALERTAS/LEMBRETES ---
-            
+
             // Flag para controlar se os alertas já foram mostrados nesta sessão
             alertsShownThisSession: false,
 
@@ -6145,34 +6280,34 @@ saveTask: async (taskData) => {
             showLoginAlerts: function () {
                 // Só mostrar alertas uma vez por sessão
                 if (this.alertsShownThisSession) return;
-                
+
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
+
                 const overdueTasks = [];
                 const todayTasks = [];
-                
+
                 // Percorrer todos os projetos e suas tarefas
                 dataService.projects.forEach(project => {
                     if (!project.tasks) return;
-                    
+
                     project.tasks.forEach(task => {
                         // Verificar se o usuário está atribuído a esta tarefa
                         const isAssigned = task.assignedUsers && task.assignedUsers.includes(dataService.userId);
                         const isGestor = dataService.userRole === 'Gestor';
-                        
+
                         // Só mostrar tarefas se for gestor ou se estiver atribuído
                         if (!isGestor && !isAssigned) return;
-                        
+
                         // Ignorar tarefas concluídas
                         if (task.status === 'Concluída') return;
-                        
+
                         const taskDates = dataService.getLatestDates(task);
                         const endDate = new Date(taskDates.endDate);
                         endDate.setHours(0, 0, 0, 0);
                         const startDate = new Date(taskDates.startDate);
                         startDate.setHours(0, 0, 0, 0);
-                        
+
                         // Verificar se está atrasada
                         if (endDate < today) {
                             overdueTasks.push({
@@ -6194,22 +6329,22 @@ saveTask: async (taskData) => {
                         }
                     });
                 });
-                
+
                 // Se não houver alertas, não mostrar o modal
                 if (overdueTasks.length === 0 && todayTasks.length === 0) {
                     this.alertsShownThisSession = true;
                     return;
                 }
-                
+
                 // Atualizar a data no modal
-                const todayStr = today.toLocaleDateString('pt-BR', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                const todayStr = today.toLocaleDateString('pt-BR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                 });
                 document.getElementById('alerts-date').textContent = todayStr.charAt(0).toUpperCase() + todayStr.slice(1);
-                
+
                 // Função auxiliar para obter nome do dono do projeto
                 const getProjectOwnerName = (projectId) => {
                     const project = dataService.projects.find(p => p.id === projectId);
@@ -6217,14 +6352,14 @@ saveTask: async (taskData) => {
                     const owner = dataService.users.find(u => u.id === project.creatorId);
                     return owner ? owner.name : null;
                 };
-                
+
                 const isGestor = dataService.userRole === 'Gestor';
-                
+
                 // Renderizar tarefas atrasadas
                 const overdueSection = document.getElementById('alerts-overdue-section');
                 const overdueList = document.getElementById('alerts-overdue-list');
                 const overdueCount = document.getElementById('alerts-overdue-count');
-                
+
                 if (overdueTasks.length > 0) {
                     overdueSection.classList.remove('hidden');
                     overdueCount.textContent = overdueTasks.length;
@@ -6246,12 +6381,12 @@ saveTask: async (taskData) => {
                 } else {
                     overdueSection.classList.add('hidden');
                 }
-                
+
                 // Renderizar tarefas de hoje
                 const todaySection = document.getElementById('alerts-today-section');
                 const todayList = document.getElementById('alerts-today-list');
                 const todayCount = document.getElementById('alerts-today-count');
-                
+
                 if (todayTasks.length > 0) {
                     todaySection.classList.remove('hidden');
                     todayCount.textContent = todayTasks.length;
@@ -6272,7 +6407,7 @@ saveTask: async (taskData) => {
                 } else {
                     todaySection.classList.add('hidden');
                 }
-                
+
                 // Mostrar seção vazia se necessário
                 const emptySection = document.getElementById('alerts-empty');
                 if (overdueTasks.length === 0 && todayTasks.length === 0) {
@@ -6280,11 +6415,11 @@ saveTask: async (taskData) => {
                 } else {
                     emptySection.classList.add('hidden');
                 }
-                
+
                 // Mostrar o modal
                 this.openModal('alerts-modal');
                 this.alertsShownThisSession = true;
-                
+
                 // Adicionar event listeners para os itens de tarefa
                 document.querySelectorAll('#alerts-modal .alert-task-item').forEach(item => {
                     item.addEventListener('click', () => {
@@ -6477,6 +6612,7 @@ saveTask: async (taskData) => {
                     return;
                 }
 
+
                 // Adicionar sugestões ao container
                 filteredUsers.forEach((user, index) => {
                     const suggestion = document.createElement('div');
@@ -6509,10 +6645,11 @@ saveTask: async (taskData) => {
 
             // Função para posicionar o container de sugestões
             positionMentionSuggestions: function (input, suggestionsContainer) {
-                const rect = input.getBoundingClientRect();
-                suggestionsContainer.style.top = `${rect.bottom + window.scrollY}px`;
-                suggestionsContainer.style.left = `${rect.left + window.scrollX}px`;
-                suggestionsContainer.style.width = `${rect.width}px`;
+                // Como o container está dentro do mesmo parent com position: relative,
+                // usamos posição relativa ao parent (100% = logo abaixo do input)
+                suggestionsContainer.style.top = '100%';
+                suggestionsContainer.style.left = '0';
+                suggestionsContainer.style.width = `${input.offsetWidth}px`;
             },
 
             // Função para esconder sugestões de menção
@@ -6582,15 +6719,20 @@ saveTask: async (taskData) => {
                 const value = input.value;
                 const userName = user.name || user.email.split('@')[0];
 
-                // Substituir o texto da menção pelo formato [Nome](ID)
+                // Exibir apenas @Nome no input (mais amigável ao usuário)
+                const displayMention = `@${userName}`;
                 const newValue = value.substring(0, mentionStart) +
-                    `@[${userName}](${user.id})` +
+                    displayMention +
                     value.substring(input.selectionStart);
 
                 input.value = newValue;
 
-                // Adicionar o usuário à lista de mencionados
-                this.mentionedUsers.push(user.id);
+                // Armazenar o usuário à lista de mencionados (com nome e ID para reconstruir depois)
+                this.mentionedUsers.push({
+                    id: user.id,
+                    name: userName,
+                    displayText: displayMention
+                });
 
                 // Esconder sugestões
                 this.hideMentionSuggestions();
@@ -6599,7 +6741,7 @@ saveTask: async (taskData) => {
                 input.focus();
 
                 // Posicionar o cursor após a menção
-                const newCursorPosition = mentionStart + `@[${userName}](${user.id})`.length;
+                const newCursorPosition = mentionStart + displayMention.length;
                 input.setSelectionRange(newCursorPosition, newCursorPosition);
             },
 
@@ -6735,7 +6877,7 @@ saveTask: async (taskData) => {
                 const progress = dataService.getProjectProgress(project.tasks);
                 const finalizeBtn = document.getElementById('finalize-project-btn');
                 const reopenBtn = document.getElementById('reopen-project-btn');
-                
+
                 if (project.finalized) {
                     // Projeto já finalizado: mostrar botão de reabrir
                     finalizeBtn.classList.add('hidden');
@@ -6809,7 +6951,7 @@ saveTask: async (taskData) => {
                 this.populateParentTaskSelect(data.taskId);
                 this.hideMentionSuggestions();
                 this.mentionedUsers = [];
-                
+
                 // Limpar busca de usuários
                 const userSearchInput = document.getElementById('user-search-input');
                 if (userSearchInput) userSearchInput.value = '';
@@ -6830,10 +6972,10 @@ saveTask: async (taskData) => {
                         checkbox.checked = false;
                     });
                 }
-                
+
                 // Atualizar badges de usuários selecionados
                 this.updateSelectedUsersBadges();
-                
+
                 // Preencher select de tarefa pai
                 const parentSelect = document.getElementById('task-parent-select');
                 if (parentSelect) {
@@ -6949,7 +7091,7 @@ saveTask: async (taskData) => {
                 const parentSelect = document.getElementById('task-parent-select');
                 const parentIdHidden = document.getElementById('parent-id');
                 let parentId = null;
-                
+
                 if (parentSelect && parentSelect.value) {
                     parentId = parseFloat(parentSelect.value);
                 } else if (parentIdHidden && parentIdHidden.value) {
@@ -7156,23 +7298,36 @@ saveTask: async (taskData) => {
                 const project = dataService.getCurrentProject();
                 const projectName = project ? project.name : '';
 
+                // Reconstruir o formato interno das menções (@Nome → @[Nome](ID))
+                let internalText = text;
+                if (this.mentionedUsers && this.mentionedUsers.length > 0) {
+                    for (const mention of this.mentionedUsers) {
+                        // Substituir @Nome por @[Nome](ID) para processamento interno
+                        const displayPattern = mention.displayText || `@${mention.name}`;
+                        const internalFormat = `@[${mention.name}](${mention.id})`;
+                        internalText = internalText.replace(displayPattern, internalFormat);
+                    }
+                }
+
                 if (taskId && projectId) {
-                    await dataService.processMentions(text, taskId, taskName, projectId, projectName);
+                    // Enviar notificações de menção usando os IDs armazenados
+                    for (const mention of (this.mentionedUsers || [])) {
+                        const mentionUserId = typeof mention === 'object' ? mention.id : mention;
+                        await dataService.sendMentionNotification(mentionUserId, taskId, taskName, projectId, projectName, internalText);
+                    }
                 }
 
                 commentItem.className = "comment-item border-b border-[var(--border-color)] pb-1 mb-1 text-xs last:border-b-0 relative";
                 commentItem.dataset.commentId = commentId;
                 commentItem.dataset.timestamp = timestamp;
-                commentItem.dataset.text = text;
+                commentItem.dataset.text = internalText; // Usar formato interno para salvar
                 commentItem.dataset.author = authorName;
 
                 const dateString = new Date(timestamp).toLocaleDateString('pt-BR');
                 const timeString = new Date(timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-                // NOVO: Processar texto para destacar menções
-                let processedText = text;
-                const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
-                processedText = processedText.replace(mentionRegex, '<span class="mention-highlight">@$1</span>');
+                // NOVO: Processar texto para destacar menções (converter @[Nome](ID) para @Nome visual)
+                const processedText = this.formatMentionsForDisplay(internalText);
 
                 commentItem.innerHTML = `
                     <div class="flex justify-between items-start">
@@ -7213,12 +7368,23 @@ saveTask: async (taskData) => {
                     // Encontrar a tarefa para obter os responsáveis
                     const task = project.tasks.find(t => t.id == taskId);
                     const assignedUsers = task?.assignedUsers || [];
-                    
-                    // Enviar notificações para responsáveis da tarefa
-                    if (assignedUsers.length > 0) {
-                        await dataService.sendCommentNotification(taskId, taskName, projectId, projectName, text, assignedUsers);
+
+                    // Obter o gestor do projeto
+                    const projectManager = project.manager;
+
+                    // Criar lista de destinatários (responsáveis + gestor do projeto)
+                    const notificationRecipients = [...assignedUsers];
+
+                    // Adicionar o gestor do projeto se existir e não estiver já na lista
+                    if (projectManager && !notificationRecipients.includes(projectManager)) {
+                        notificationRecipients.push(projectManager);
                     }
-                    
+
+                    // Enviar notificações para responsáveis da tarefa e gestor do projeto
+                    if (notificationRecipients.length > 0) {
+                        await dataService.sendCommentNotification(taskId, taskName, projectId, projectName, text, notificationRecipients);
+                    }
+
                     // Registrar atividade
                     await dataService.logActivity(
                         taskId,
@@ -7316,10 +7482,10 @@ saveTask: async (taskData) => {
                 const inProgressProjects = [];
                 const atRiskProjects = [];
                 // completedProjects não é usado no visual, mas mantemos o cálculo para porcentagens se necessário
-                
+
                 projects.forEach(project => {
                     const progress = dataService.getProjectProgress(project.tasks);
-                    
+
                     if (progress === 100) {
                         completedCount++;
                     } else if (progress > 0) {
@@ -7332,7 +7498,7 @@ saveTask: async (taskData) => {
                         const dates = dataService.getLatestDates(t);
                         return reportService.getTaskStatusClass(t.status, dates.endDate).name === 'Atrasada';
                     });
-                    
+
                     if (hasOverdue) {
                         overdueCount++;
                         overdueProjects.push(project);
@@ -7365,7 +7531,7 @@ saveTask: async (taskData) => {
                 // 3. Função auxiliar para criar a lista de projetos dentro do cartão
                 const createProjectList = (projectList, maxShow = 4) => {
                     if (projectList.length === 0) return '<div class="dashboard-projects-empty">Nenhum projeto nesta categoria</div>';
-                    
+
                     // IMPORTANTE: Adicionamos data-project-id aqui para o clique funcionar
                     const items = projectList.slice(0, maxShow).map(p => `
                         <div class="dashboard-project-item" data-project-id="${p.id}" title="Abrir projeto: ${p.name}">
@@ -7373,10 +7539,10 @@ saveTask: async (taskData) => {
                             <span class="dashboard-project-name">${p.name}</span>
                         </div>
                     `).join('');
-                    
-                    const more = projectList.length > maxShow ? 
+
+                    const more = projectList.length > maxShow ?
                         `<div class="dashboard-card-more">+ ${projectList.length - maxShow} mais</div>` : '';
-                    
+
                     return items + more;
                 };
 
@@ -7432,7 +7598,7 @@ saveTask: async (taskData) => {
                                 <div class="dashboard-card-label">${card.label}</div>
                             </div>
                         </div>
-                        ${createProgressBar(card.percentage, 'do total')}
+                        ${card.id !== 'total' ? createProgressBar(card.percentage, 'do total') : ''}
                         <div class="dashboard-card-projects">
                             ${createProjectList(card.projects)}
                         </div>
@@ -7443,11 +7609,11 @@ saveTask: async (taskData) => {
                 const projectItems = mainDashboard.querySelectorAll('.dashboard-project-item');
                 projectItems.forEach(item => {
                     item.style.cursor = 'pointer'; // Garante que o mouse vire mãozinha
-                    
+
                     item.addEventListener('click', (e) => {
                         e.stopPropagation(); // Evita conflitos
                         const projectId = item.dataset.projectId;
-                        
+
                         if (projectId) {
                             console.log("Navegando para o projeto:", projectId); // Debug
                             // Usa o objeto global App para navegar
@@ -7465,7 +7631,7 @@ saveTask: async (taskData) => {
                             this.animateValue(el, 0, cards[index].value, 1000);
                         }
                     });
-                    
+
                     mainDashboard.querySelectorAll('.dashboard-progress-bar-fill').forEach(bar => {
                         const targetWidth = bar.dataset.targetWidth;
                         setTimeout(() => {
@@ -7476,7 +7642,7 @@ saveTask: async (taskData) => {
             },
 
             // Função para animar valores numéricos
-            animateValue: function(element, start, end, duration) {
+            animateValue: function (element, start, end, duration) {
                 const startTime = performance.now();
                 const updateValue = (currentTime) => {
                     const elapsed = currentTime - startTime;
@@ -7535,14 +7701,14 @@ saveTask: async (taskData) => {
                     let currentDay = 0;
                     let daysDelayed = 0;
                     let durationInfo = '';
-                    
+
                     if (startDateObj && endDateObj) {
                         startDateObj.setHours(0, 0, 0, 0);
                         endDateObj.setHours(0, 0, 0, 0);
-                        
+
                         // Duração total do projeto em dias
                         totalDays = Math.ceil((endDateObj - startDateObj) / (1000 * 60 * 60 * 24)) + 1;
-                        
+
                         // Qual dia estamos (desde o início)
                         if (today >= startDateObj) {
                             currentDay = Math.ceil((today - startDateObj) / (1000 * 60 * 60 * 24)) + 1;
@@ -7550,7 +7716,7 @@ saveTask: async (taskData) => {
                         } else {
                             currentDay = 0; // Projeto ainda não iniciou
                         }
-                        
+
                         // Dias de atraso (se passou da data de término e não está 100%)
                         if (today > endDateObj && progress < 100) {
                             daysDelayed = Math.ceil((today - endDateObj) / (1000 * 60 * 60 * 24));
@@ -7718,94 +7884,94 @@ saveTask: async (taskData) => {
                 }
             },
 
-// FUNÇÃO renderTaskTable COM SISTEMA EXPANDIR/RECOLHER
-renderTaskTable: function (tasks) {
-    const tableBody = document.getElementById('task-table-body');
+            // FUNÇÃO renderTaskTable COM SISTEMA EXPANDIR/RECOLHER
+            renderTaskTable: function (tasks) {
+                const tableBody = document.getElementById('task-table-body');
 
-    if (!tasks || tasks.length === 0) {
-        tableBody.innerHTML = `
+                if (!tasks || tasks.length === 0) {
+                    tableBody.innerHTML = `
             <tr>
                 <td colspan="8" class="p-4 text-center text-gray-400">
                     Nenhuma tarefa encontrada. Clique em "Nova Tarefa" para começar.
                 </td>
             </tr>
         `;
-        return;
-    }
+                    return;
+                }
 
-    // Estado de expansão (armazena quais tarefas pai estão expandidas)
-    if (!this.expandedTasks) {
-        this.expandedTasks = new Set();
-    }
+                // Estado de expansão (armazena quais tarefas pai estão expandidas)
+                if (!this.expandedTasks) {
+                    this.expandedTasks = new Set();
+                }
 
-    // CORREÇÃO: Criar um mapa de tarefas para acesso rápido
-    const taskMap = new Map();
-    tasks.forEach(task => {
-        taskMap.set(task.id, task);
-    });
+                // CORREÇÃO: Criar um mapa de tarefas para acesso rápido
+                const taskMap = new Map();
+                tasks.forEach(task => {
+                    taskMap.set(task.id, task);
+                });
 
-    // Função para verificar se uma tarefa tem subtarefas
-    const hasSubtasks = (taskId) => {
-        return tasks.some(t => t.parentId === taskId);
-    };
+                // Função para verificar se uma tarefa tem subtarefas
+                const hasSubtasks = (taskId) => {
+                    return tasks.some(t => t.parentId === taskId);
+                };
 
-    // Função para verificar se uma tarefa está expandida
-    const isExpanded = (taskId) => {
-        return this.expandedTasks.has(taskId);
-    };
+                // Função para verificar se uma tarefa está expandida
+                const isExpanded = (taskId) => {
+                    return this.expandedTasks.has(taskId);
+                };
 
-    // Função para alternar expansão
-    const toggleExpansion = (taskId) => {
-        if (isExpanded(taskId)) {
-            this.expandedTasks.delete(taskId);
-        } else {
-            this.expandedTasks.add(taskId);
-        }
-        // Re-renderizar a tabela
-        this.renderTaskTable(tasks);
-    };
+                // Função para alternar expansão
+                const toggleExpansion = (taskId) => {
+                    if (isExpanded(taskId)) {
+                        this.expandedTasks.delete(taskId);
+                    } else {
+                        this.expandedTasks.add(taskId);
+                    }
+                    // Re-renderizar a tabela
+                    this.renderTaskTable(tasks);
+                };
 
-    // Função recursiva para renderizar tarefas
-    const renderTaskRow = (task, level = 0, isChild = false) => {
-        const latestDates = dataService.getLatestDates(task);
-        const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
-        const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
-        const isParent = hasSubtasks(task.id);
-        const expanded = isExpanded(task.id);
+                // Função recursiva para renderizar tarefas
+                const renderTaskRow = (task, level = 0, isChild = false) => {
+                    const latestDates = dataService.getLatestDates(task);
+                    const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
+                    const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
+                    const isParent = hasSubtasks(task.id);
+                    const expanded = isExpanded(task.id);
 
-        // Verificar se a tarefa está em execução hoje
-        const isRunningToday = dataService.taskService.isTaskRunningToday(task);
+                    // Verificar se a tarefa está em execução hoje
+                    const isRunningToday = dataService.taskService.isTaskRunningToday(task);
 
-        // Usar nomes em vez de UIDs
-        const assignedUsersText = dataService.getAssignedUserNames(task.assignedUsers);
+                    // Usar nomes em vez de UIDs
+                    const assignedUsersText = dataService.getAssignedUserNames(task.assignedUsers);
 
-        const commentsPreview = (task.comments || [])
-            .slice(0, 2)
-            .map(c => `${c.author || 'Utilizador'}: ${c.text.substring(0, 30)}${c.text.length > 30 ? '...' : ''}`)
-            .join('; ');
+                    const commentsPreview = (task.comments || [])
+                        .slice(0, 2)
+                        .map(c => `${c.author || 'Utilizador'}: ${c.text.substring(0, 30)}${c.text.length > 30 ? '...' : ''}`)
+                        .join('; ');
 
-        // Ícone de expansão para tarefas pai
-        const expandIcon = isParent ? 
-            `<button class="expand-btn text-gray-500 hover:text-blue-500 transition-transform ${expanded ? 'rotate-90' : ''}" 
+                    // Ícone de expansão para tarefas pai
+                    const expandIcon = isParent ?
+                        `<button class="expand-btn text-gray-500 hover:text-blue-500 transition-transform ${expanded ? 'rotate-90' : ''}" 
                     data-task-id="${task.id}" title="${expanded ? 'Recolher' : 'Expandir'}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
             </button>` :
-            '<div class="w-4 h-4"></div>'; // Espaço vazio para alinhamento
+                        '<div class="w-4 h-4"></div>'; // Espaço vazio para alinhamento
 
-        // Ícone da tarefa
-        const taskIcon = isParent ? '📁' : '📄';
+                    // Ícone da tarefa
+                    const taskIcon = isParent ? '📁' : '📄';
 
-        // Ícone de "hoje" para tarefas em execução
-        const todayIcon = isRunningToday ?
-            '<span class="ml-2 text-green-500 animate-pulse" title="Em execução hoje">🟢</span>' : '';
+                    // Ícone de "hoje" para tarefas em execução
+                    const todayIcon = isRunningToday ?
+                        '<span class="ml-2 text-green-500 animate-pulse" title="Em execução hoje">🟢</span>' : '';
 
-        // Background para subtarefas
-        const rowClass = isChild ? 'bg-gray-50 dark:bg-gray-800' : '';
-        const todayHighlightClass = isRunningToday ? 'today-running-task' : '';
+                    // Background para subtarefas
+                    const rowClass = isChild ? 'bg-gray-50 dark:bg-gray-800' : '';
+                    const todayHighlightClass = isRunningToday ? 'today-running-task' : '';
 
-        return `
+                    return `
             <tr class="border-b border-[var(--border-color)] hover:bg-gray-100 dark:hover:bg-gray-700 ${rowClass} ${todayHighlightClass} draggable-task" data-task-id="${task.id}" data-level="${level}" data-parent-id="${task.parentId || 'root'}">
                 <td class="p-3">
                     <div style="padding-left: ${level * 20}px" class="flex items-center gap-2">
@@ -7863,63 +8029,63 @@ renderTaskTable: function (tasks) {
                 </td>
             </tr>
         `;
-    };
+                };
 
-    // Função para renderizar tarefas recursivamente
-    const renderTasksRecursive = (parentId = null, level = 0) => {
-        let html = '';
-        
-        // Obter tarefas deste nível
-        const currentTasks = tasks
-            .filter(t => t.parentId === parentId)
-            .sort((a, b) => {
-                const orderA = a.order || 0;
-                const orderB = b.order || 0;
-                if (orderA !== orderB) return orderA - orderB;
-                
-                const dateA = new Date(dataService.getLatestDates(a).startDate);
-                const dateB = new Date(dataService.getLatestDates(b).startDate);
-                return dateA - dateB;
-            });
+                // Função para renderizar tarefas recursivamente
+                const renderTasksRecursive = (parentId = null, level = 0) => {
+                    let html = '';
 
-        // Renderizar cada tarefa
-        currentTasks.forEach(task => {
-            html += renderTaskRow(task, level, parentId !== null);
-            
-            // Se é uma tarefa pai E está expandida, renderizar subtarefas
-            if (hasSubtasks(task.id) && isExpanded(task.id)) {
-                html += renderTasksRecursive(task.id, level + 1);
-            }
-        });
+                    // Obter tarefas deste nível
+                    const currentTasks = tasks
+                        .filter(t => t.parentId === parentId)
+                        .sort((a, b) => {
+                            const orderA = a.order || 0;
+                            const orderB = b.order || 0;
+                            if (orderA !== orderB) return orderA - orderB;
 
-        return html;
-    };
+                            const dateA = new Date(dataService.getLatestDates(a).startDate);
+                            const dateB = new Date(dataService.getLatestDates(b).startDate);
+                            return dateA - dateB;
+                        });
 
-    // Renderizar todas as tarefas começando do nível raiz
-    tableBody.innerHTML = renderTasksRecursive();
+                    // Renderizar cada tarefa
+                    currentTasks.forEach(task => {
+                        html += renderTaskRow(task, level, parentId !== null);
 
-    // Adicionar event listeners para os botões de expandir/recolher
-    setTimeout(() => {
-        tableBody.querySelectorAll('.expand-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const taskId = parseFloat(btn.dataset.taskId);
-                toggleExpansion(taskId);
-            });
-        });
+                        // Se é uma tarefa pai E está expandida, renderizar subtarefas
+                        if (hasSubtasks(task.id) && isExpanded(task.id)) {
+                            html += renderTasksRecursive(task.id, level + 1);
+                        }
+                    });
 
-        // Configurar drag and drop para subtarefas
-        this.setupSubtasksDragAndDrop();
-    }, 50);
+                    return html;
+                };
 
-    // NOVO: Adicionar contador de tarefas em execução hoje
-    const todayTasksCount = tasks.filter(task =>
-        dataService.taskService.isTaskRunningToday(task)
-    ).length;
+                // Renderizar todas as tarefas começando do nível raiz
+                tableBody.innerHTML = renderTasksRecursive();
 
-    // Atualizar o header do dashboard com informação das tarefas de hoje
-    this.updateTodayTasksInfo(todayTasksCount);
-},
+                // Adicionar event listeners para os botões de expandir/recolher
+                setTimeout(() => {
+                    tableBody.querySelectorAll('.expand-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const taskId = parseFloat(btn.dataset.taskId);
+                            toggleExpansion(taskId);
+                        });
+                    });
+
+                    // Configurar drag and drop para subtarefas
+                    this.setupSubtasksDragAndDrop();
+                }, 50);
+
+                // NOVO: Adicionar contador de tarefas em execução hoje
+                const todayTasksCount = tasks.filter(task =>
+                    dataService.taskService.isTaskRunningToday(task)
+                ).length;
+
+                // Atualizar o header do dashboard com informação das tarefas de hoje
+                this.updateTodayTasksInfo(todayTasksCount);
+            },
 
             renderGanttChart: function (tasks) {
                 const ganttView = document.getElementById('gantt-view');
@@ -8041,10 +8207,10 @@ renderTaskTable: function (tasks) {
             },
             generatePdf: (project) => {
                 if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
-                
+
                 const tasks = project.tasks || [];
                 const today = new Date().toLocaleDateString('pt-BR');
-                
+
                 const stats = {
                     total: tasks.length,
                     concluidas: tasks.filter(t => t.status === 'Concluída').length,
@@ -8056,29 +8222,29 @@ renderTaskTable: function (tasks) {
                     }).length,
                     emRisco: tasks.filter(t => t.risk).length
                 };
-                
+
                 const progressoGeral = stats.total > 0 ? Math.round((stats.concluidas / stats.total) * 100) : 0;
-                
+
                 // Função auxiliar para construir hierarquia (presente no Cronograma.html)
                 const buildHierarchicalTasks = (tasksArray) => {
                     const result = [];
                     const processedIds = new Set();
-                    
+
                     const normalizeId = (id) => (id === null || id === undefined || id === '') ? null : String(id);
                     const isRootTask = (task) => task.parentId === null || task.parentId === undefined || task.parentId === '';
-                    
+
                     const sortByDate = (a, b) => {
                         const dateA = new Date(dataService.getLatestDates(a).startDate);
                         const dateB = new Date(dataService.getLatestDates(b).startDate);
                         return dateA - dateB;
                     };
-                    
+
                     const addTaskWithChildren = (task) => {
                         const taskIdStr = normalizeId(task.id);
                         if (taskIdStr !== null && processedIds.has(taskIdStr)) return;
                         if (taskIdStr !== null) processedIds.add(taskIdStr);
                         result.push(task);
-                        
+
                         const children = tasksArray.filter(t => {
                             const parentIdStr = normalizeId(t.parentId);
                             return parentIdStr !== null && taskIdStr !== null && parentIdStr === taskIdStr;
@@ -8086,11 +8252,11 @@ renderTaskTable: function (tasks) {
                         children.sort(sortByDate);
                         children.forEach(child => addTaskWithChildren(child));
                     };
-                    
+
                     const rootTasks = tasksArray.filter(isRootTask);
                     rootTasks.sort(sortByDate);
                     rootTasks.forEach(parent => addTaskWithChildren(parent));
-                    
+
                     const orphans = tasksArray.filter(task => {
                         const taskIdStr = normalizeId(task.id);
                         return taskIdStr !== null && !processedIds.has(taskIdStr);
@@ -8101,25 +8267,25 @@ renderTaskTable: function (tasks) {
                         processedIds.add(taskIdStr);
                         result.push(task);
                     });
-                    
+
                     return result;
                 };
-                
+
                 const sortedTasks = buildHierarchicalTasks(tasks);
-                
+
                 let tasksHtml = '';
                 sortedTasks.forEach((task, index) => {
                     const latestDates = dataService.getLatestDates(task);
                     const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
                     const statusInfo = reportService.getTaskStatusClass(task.status, latestDates.endDate);
                     const isSubtask = task.parentId !== null;
-                    
+
                     let statusColor = '#6b7280';
                     let statusTextColor = '#fff';
                     if (statusInfo.badge.includes('green')) statusColor = '#10b981';
                     else if (statusInfo.badge.includes('red')) statusColor = '#ef4444';
                     else if (statusInfo.badge.includes('yellow')) { statusColor = '#f59e0b'; statusTextColor = '#000'; }
-                    
+
                     tasksHtml += '<tr style="background-color: ' + (index % 2 === 0 ? '#ffffff' : '#f9fafb') + '; ' + (isSubtask ? 'font-size: 11px;' : '') + '">' +
                         '<td style="padding: 8px; border: 1px solid #e5e7eb; ' + (isSubtask ? 'padding-left: 24px;' : 'font-weight: 600;') + '">' + (isSubtask ? '+ ' : '') + task.name + '</td>' +
                         '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">' + duration + '</td>' +
@@ -8131,7 +8297,7 @@ renderTaskTable: function (tasks) {
                         '<td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">' + (task.risk ? 'Sim' : 'Não') + '</td>' +
                         '</tr>';
                 });
-                
+
                 const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#fff;color:#333;}table{width:100%;border-collapse:collapse;font-size:12px;}.stats-container{display:table;width:100%;margin-bottom:20px;}.stat-box{display:table-cell;width:20%;text-align:center;padding:15px;color:#fff;}.stat-box.blue{background:#3b82f6;}.stat-box.green{background:#10b981;}.stat-box.yellow{background:#f59e0b;}.stat-box.red{background:#ef4444;}.stat-box.purple{background:#8b5cf6;}.stat-number{font-size:28px;font-weight:bold;}.stat-label{font-size:11px;}</style></head><body>' +
                     '<div style="text-align:center;margin-bottom:30px;border-bottom:3px solid #2563eb;padding-bottom:20px;">' +
                     '<h1 style="color:#1e40af;margin:0;font-size:24px;">RELATÓRIO DE PROJETO</h1>' +
@@ -8157,51 +8323,51 @@ renderTaskTable: function (tasks) {
                     '</tr></thead><tbody>' + tasksHtml + '</tbody></table>' +
                     '<div style="margin-top:30px;padding-top:15px;border-top:1px solid #e5e7eb;text-align:center;color:#9ca3af;font-size:10px;"><p>Vinci Highways - Sistema de Gerenciamento de Projetos</p></div>' +
                     '</body></html>';
-                
+
                 const printWindow = window.open('', '_blank', 'width=1200,height=800');
                 printWindow.document.write(htmlContent);
                 printWindow.document.close();
-                
-                printWindow.onload = function() {
-                    setTimeout(function() {
+
+                printWindow.onload = function () {
+                    setTimeout(function () {
                         printWindow.print();
-                        printWindow.onafterprint = function() {
+                        printWindow.onafterprint = function () {
                             printWindow.close();
                         };
                     }, 500);
                 };
-                
+
                 uiService.showToast('Abrindo janela de impressão para PDF...');
             },
-exportMSProject: (project) => {
+            exportMSProject: (project) => {
                 if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
-                
+
                 const tasks = project.tasks || [];
                 const today = new Date().toISOString();
-                
+
                 // 1. Função interna para organizar a hierarquia e calcular níveis (Igual ao PDF)
                 const buildHierarchicalData = (tasksArray) => {
                     const result = [];
                     const processedIds = new Set();
-                    
+
                     const normalizeId = (id) => (id === null || id === undefined || id === '') ? null : String(id);
                     const isRootTask = (task) => task.parentId === null || task.parentId === undefined || task.parentId === '';
-                    
+
                     const sortByDate = (a, b) => {
                         const dateA = new Date(dataService.getLatestDates(a).startDate);
                         const dateB = new Date(dataService.getLatestDates(b).startDate);
                         return dateA - dateB;
                     };
-                    
+
                     // Recursivamente adiciona tarefas e calcula o nível (1, 2, 3...)
                     const addTaskWithChildren = (task, level) => {
                         const taskIdStr = normalizeId(task.id);
                         if (taskIdStr !== null && processedIds.has(taskIdStr)) return;
                         if (taskIdStr !== null) processedIds.add(taskIdStr);
-                        
+
                         // Armazena a tarefa junto com seu nível hierárquico
                         result.push({ task: task, level: level });
-                        
+
                         const children = tasksArray.filter(t => {
                             const parentIdStr = normalizeId(t.parentId);
                             return parentIdStr !== null && taskIdStr !== null && parentIdStr === taskIdStr;
@@ -8209,11 +8375,11 @@ exportMSProject: (project) => {
                         children.sort(sortByDate);
                         children.forEach(child => addTaskWithChildren(child, level + 1));
                     };
-                    
+
                     const rootTasks = tasksArray.filter(isRootTask);
                     rootTasks.sort(sortByDate);
                     rootTasks.forEach(parent => addTaskWithChildren(parent, 1));
-                    
+
                     // Captura tarefas órfãs (segurança)
                     const orphans = tasksArray.filter(task => {
                         const taskIdStr = normalizeId(task.id);
@@ -8225,30 +8391,30 @@ exportMSProject: (project) => {
                         processedIds.add(taskIdStr);
                         result.push({ task: task, level: 1 });
                     });
-                    
+
                     return result;
                 };
-                
+
                 // 2. Obtém a lista já ordenada e com níveis definidos
                 const sortedData = buildHierarchicalData(tasks);
-                
+
                 // 3. Gera o XML das tarefas na ordem correta
                 let tasksXml = '';
                 sortedData.forEach((item, index) => {
                     const task = item.task;
                     const level = item.level; // Nível calculado (1 = Principal, 2 = Subtarefa, etc)
-                    
+
                     const latestDates = dataService.getLatestDates(task);
                     const duration = reportService.calculateDuration(latestDates.startDate, latestDates.endDate);
                     const msUID = index + 1; // UID sequencial para o MS Project não se perder
                     const percentComplete = task.progress || 0;
-                    
+
                     const priorityMap = { 'Alta': 700, 'Média': 500, 'Baixa': 300 };
                     const priority = priorityMap[task.priority] || 500;
-                    
+
                     // Verifica se é tarefa resumo (se tem filhos na lista original)
                     const isSummary = tasks.some(t => t.parentId === task.id) ? 1 : 0;
-                    
+
                     tasksXml += `
         <Task>
             <UID>${msUID}</UID>
@@ -8321,13 +8487,13 @@ exportMSProject: (project) => {
             <CommitmentType>0</CommitmentType>
         </Task>`;
                 });
-                
+
                 // 4. Monta o XML final
-                const projectStart = tasks.length > 0 
+                const projectStart = tasks.length > 0
                     ? new Date(Math.min(...tasks.map(t => new Date(dataService.getLatestDates(t).startDate)))).toISOString().split('T')[0] + 'T08:00:00'
                     : today;
-                    
-                const projectFinish = tasks.length > 0 
+
+                const projectFinish = tasks.length > 0
                     ? new Date(Math.max(...tasks.map(t => new Date(dataService.getLatestDates(t).endDate)))).toISOString().split('T')[0] + 'T17:00:00'
                     : today;
 
@@ -8481,14 +8647,14 @@ exportMSProject: (project) => {
     <Tasks>${tasksXml}
     </Tasks>
 </Project>`;
-                
+
                 const blob = new Blob([xmlContent], { type: 'application/xml' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = `${project.name}.xml`;
                 link.click();
                 URL.revokeObjectURL(link.href);
-                
+
                 uiService.showToast('Exportado para Microsoft Project (XML) com sucesso! Abra o arquivo no MS Project.', 'success');
             },
             downloadExcelTemplate: () => {
