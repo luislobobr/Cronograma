@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Monitoramento - Vinci Highways</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --bg-primary: #0f172a;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-em-andamento {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .status-concluido {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status-atrasado {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-nao-iniciado {
+            background-color: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #334155;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .kpi-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .table-row:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loader -->
+    <div id="loader" class="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50 hidden">
+        <div class="card max-w-md w-full mx-4">
+            <div class="mb-6">
+                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
+                    alt="Vinci Highways" class="h-12 mb-4">
+                <h2 class="text-2xl font-bold text-blue-500">Dashboard de Monitoramento</h2>
+                <p class="text-gray-400 text-sm">Faça login para acessar</p>
+            </div>
+            <form id="auth-form" class="space-y-4">
+                <input type="email" id="auth-email" placeholder="E-mail (@vinci-highways.com.br)"
+                    class="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                    required>
+                <input type="password" id="auth-password" placeholder="Senha"
+                    class="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500"
+                    required>
+                <button type="submit"
+                    class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="hidden">
+        <!-- Header -->
+        <header class="border-b border-gray-700 bg-gray-800/50 backdrop-blur-sm sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
+                        alt="Logo" class="h-8">
+                    <div>
+                        <h1 class="text-xl font-bold">Dashboard de Monitoramento</h1>
+                        <p class="text-sm text-gray-400">Visão geral de todos os projetos</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 text-sm text-gray-400">
+                        <div class="pulse-dot"></div>
+                        <span>Tempo real</span>
+                    </div>
+                    <span id="user-email" class="text-sm text-gray-400"></span>
+                    <button id="logout-btn"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors">
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="card kpi-card">
+                    <div class="kpi-icon bg-blue-500/20 text-blue-500">📁</div>
+                    <div>
+                        <div id="kpi-total" class="text-3xl font-bold">0</div>
+                        <div class="text-sm text-gray-400">Total de Projetos</div>
+                    </div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-icon bg-yellow-500/20 text-yellow-500">⚡</div>
+                    <div>
+                        <div id="kpi-andamento" class="text-3xl font-bold">0</div>
+                        <div class="text-sm text-gray-400">Em Andamento</div>
+                    </div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-icon bg-red-500/20 text-red-500">⏰</div>
+                    <div>
+                        <div id="kpi-atrasados" class="text-3xl font-bold">0</div>
+                        <div class="text-sm text-gray-400">Com Atraso</div>
+                    </div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-icon bg-green-500/20 text-green-500">✅</div>
+                    <div>
+                        <div id="kpi-concluidos" class="text-3xl font-bold">0</div>
+                        <div class="text-sm text-gray-400">Concluídos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Table -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold">Projetos</h2>
+                    <div class="text-sm text-gray-400">
+                        Última atualização: <span id="last-update-time">--</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-sm text-gray-400 border-b border-gray-700">
+                                <th class="pb-3 font-medium">Projeto</th>
+                                <th class="pb-3 font-medium">Status</th>
+                                <th class="pb-3 font-medium">Progresso</th>
+                                <th class="pb-3 font-medium">Tarefas</th>
+                                <th class="pb-3 font-medium">Última Atualização</th>
+                                <th class="pb-3 font-medium">Atualizado Por</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <!-- Projects will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-gray-700 py-4 mt-8">
+            <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+                © 2025 Vinci Highways - Dashboard de Monitoramento
+            </div>
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB_q9kdQGNiLf34PPZFL2YuBDOj7XdwkA",
+            authDomain: "cronograma-85bf4.firebaseapp.com",
+            projectId: "cronograma-85bf4",
+            storageBucket: "cronograma-85bf4.firebasestorage.app",
+            messagingSenderId: "802190123207",
+            appId: "1:802190123207:web:adaf51b25010f677bbdee2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const loader = document.getElementById('loader');
+        const authModal = document.getElementById('auth-modal');
+        const mainContent = document.getElementById('main-content');
+        const authForm = document.getElementById('auth-form');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userEmailSpan = document.getElementById('user-email');
+        const projectsTableBody = document.getElementById('projects-table-body');
+
+        // State
+        let projects = [];
+        let users = {};
+        let unsubscribeProjects = null;
+
+        // Auth State Listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is logged in
+                authModal.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                userEmailSpan.textContent = user.email;
+
+                // Load users first
+                await loadUsers();
+
+                // Start listening to projects
+                listenToProjects();
+            } else {
+                // User is not logged in
+                authModal.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+                if (unsubscribeProjects) {
+                    unsubscribeProjects();
+                }
+            }
+            loader.style.display = 'none';
+        });
+
+        // Login Handler
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+
+            try {
+                loader.style.display = 'flex';
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                alert('Erro ao fazer login: ' + error.message);
+                loader.style.display = 'none';
+            }
+        });
+
+        // Logout Handler
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error('Erro ao sair:', error);
+            }
+        });
+
+        // Load Users
+        async function loadUsers() {
+            try {
+                const usersRef = collection(db, 'users');
+                const usersSnapshot = await onSnapshot(usersRef, (snapshot) => {
+                    users = {};
+                    snapshot.forEach(doc => {
+                        users[doc.id] = doc.data();
+                    });
+                });
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+            }
+        }
+
+        // Listen to Projects (Real-time)
+        function listenToProjects() {
+            const projectsRef = collection(db, 'projects');
+
+            unsubscribeProjects = onSnapshot(projectsRef, (snapshot) => {
+                projects = [];
+                snapshot.forEach(doc => {
+                    projects.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Update UI
+                updateDashboard();
+                updateLastUpdateTime();
+            }, (error) => {
+                console.error('Erro ao ouvir projetos:', error);
+            });
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            // Calculate KPIs
+            const total = projects.length;
+            let emAndamento = 0;
+            let atrasados = 0;
+            let concluidos = 0;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            projects.forEach(project => {
+                const tasks = project.tasks || [];
+                const totalTasks = tasks.length;
+                const completedTasks = tasks.filter(t => t.status === 'Concluída').length;
+
+                // Check if project has overdue tasks
+                const hasOverdue = tasks.some(task => {
+                    if (task.status === 'Concluída') return false;
+                    const endDate = new Date(task.endDate || task.dateHistory?.[task.dateHistory.length - 1]?.endDate);
+                    return endDate < today;
+                });
+
+                if (hasOverdue) {
+                    atrasados++;
+                }
+
+                if (project.finalized || (totalTasks > 0 && completedTasks === totalTasks)) {
+                    concluidos++;
+                } else if (totalTasks > 0 && completedTasks > 0) {
+                    emAndamento++;
+                } else {
+                    emAndamento++;
+                }
+            });
+
+            // Update KPI display
+            document.getElementById('kpi-total').textContent = total;
+            document.getElementById('kpi-andamento').textContent = emAndamento;
+            document.getElementById('kpi-atrasados').textContent = atrasados;
+            document.getElementById('kpi-concluidos').textContent = concluidos;
+
+            // Update Projects Table
+            renderProjectsTable();
+        }
+
+        // Render Projects Table
+        function renderProjectsTable() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            projectsTableBody.innerHTML = projects.map(project => {
+                const tasks = project.tasks || [];
+                const totalTasks = tasks.length;
+                const completedTasks = tasks.filter(t => t.status === 'Concluída').length;
+                const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+                // Check for overdue tasks
+                const hasOverdue = tasks.some(task => {
+                    if (task.status === 'Concluída') return false;
+                    const endDate = new Date(task.endDate || task.dateHistory?.[task.dateHistory.length - 1]?.endDate);
+                    return endDate < today;
+                });
+
+                // Determine status
+                let status, statusClass;
+                if (project.finalized || progress === 100) {
+                    status = 'Concluído';
+                    statusClass = 'status-concluido';
+                } else if (hasOverdue) {
+                    status = 'Atrasado';
+                    statusClass = 'status-atrasado';
+                } else if (progress > 0) {
+                    status = 'Em Andamento';
+                    statusClass = 'status-em-andamento';
+                } else {
+                    status = 'Não Iniciado';
+                    statusClass = 'status-nao-iniciado';
+                }
+
+                // Get last update info
+                const lastUpdatedAt = project.lastUpdatedAt
+                    ? new Date(project.lastUpdatedAt).toLocaleString('pt-BR')
+                    : '--';
+
+                const updatedByUser = project.lastUpdatedBy && users[project.lastUpdatedBy]
+                    ? users[project.lastUpdatedBy].name || users[project.lastUpdatedBy].email
+                    : project.lastUpdatedBy || '--';
+
+                // Progress bar color
+                let progressColor = 'bg-blue-500';
+                if (hasOverdue) progressColor = 'bg-red-500';
+                else if (progress === 100) progressColor = 'bg-green-500';
+
+                return `
+                    <tr class="table-row border-b border-gray-700/50">
+                        <td class="py-4">
+                            <div class="font-medium">${project.name || 'Sem nome'}</div>
+                            <div class="text-sm text-gray-400">${project.startDate || ''} - ${project.endDate || ''}</div>
+                        </td>
+                        <td class="py-4">
+                            <span class="status-badge ${statusClass}">${status}</span>
+                        </td>
+                        <td class="py-4 w-40">
+                            <div class="flex items-center gap-2">
+                                <div class="progress-bar flex-1">
+                                    <div class="progress-bar-fill ${progressColor}" style="width: ${progress}%"></div>
+                                </div>
+                                <span class="text-sm">${progress}%</span>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            <span class="text-sm">${completedTasks}/${totalTasks}</span>
+                        </td>
+                        <td class="py-4 text-sm text-gray-400">${lastUpdatedAt}</td>
+                        <td class="py-4 text-sm text-gray-400">${updatedByUser}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update Last Update Time
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('last-update-time').textContent = now.toLocaleTimeString('pt-BR');
+        }
+    </script>
+</body>
+
+</html>
