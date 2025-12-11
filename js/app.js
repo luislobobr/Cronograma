@@ -1383,6 +1383,203 @@ const dataService = {
         console.log('🔗 Hierarquia resolvida para', tasks.length, 'tarefas');
     },
 
+    // NOVA FUNÇÃO: Processar importação do Excel Antigo (Formato Tecsidel)
+    // Mapeamento de colunas:
+    // B = Em Risco, C = Nome da Tarefa, D = Duração dias, E = Data Início, F = Data Término, G = Porcentagem, H = Status
+    // Cabeçalho na linha 5, dados começam na linha 6
+    processLegacyExcelImport: async function (file) {
+        try {
+            const project = dataService.getCurrentProject();
+            if (!project) {
+                throw new Error('Nenhum projeto selecionado');
+            }
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = async (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                        // Ler a planilha pulando as primeiras 4 linhas (header na linha 5)
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 4 });
+
+                        if (jsonData.length === 0) {
+                            throw new Error('A planilha está vazia ou não tem dados após a linha 5');
+                        }
+
+                        console.log('📊 Importação Excel Antigo (Tecsidel) iniciada...');
+                        console.log('Colunas encontradas:', Object.keys(jsonData[0]));
+
+                        // Converter dados do formato Tecsidel para formato do sistema
+                        const convertedData = this.convertLegacyExcelToStandardFormat(jsonData);
+
+                        console.log(`✅ ${convertedData.length} tarefas convertidas do Excel Antigo`);
+
+                        const importResults = {
+                            validTasks: [],
+                            invalidTasks: [],
+                            errors: [],
+                            taskNameMap: new Map()
+                        };
+
+                        // Mapear tarefas existentes
+                        project.tasks.forEach(task => {
+                            importResults.taskNameMap.set(task.name.trim().toLowerCase(), task.id);
+                        });
+
+                        // Validar cada linha convertida
+                        convertedData.forEach((row, index) => {
+                            const result = this.validateImportRow(row, index + 6, importResults.taskNameMap, project.startDate);
+                            if (result.isValid) {
+                                importResults.validTasks.push(result.task);
+                                importResults.taskNameMap.set(result.task.name.trim().toLowerCase(), result.task.id);
+                            } else {
+                                importResults.invalidTasks.push({
+                                    row: index + 6,
+                                    data: row,
+                                    errors: result.errors,
+                                    task: result.task
+                                });
+                            }
+                        });
+
+                        // Se há tarefas inválidas, mostrar modal de ajustes
+                        if (importResults.invalidTasks.length > 0) {
+                            uiService.showImportAdjustmentModal(importResults);
+                            resolve({ needsAdjustment: true, results: importResults });
+                        } else {
+                            // Todas válidas, importar diretamente
+                            await this.finalizeImport(importResults.validTasks, project);
+                            uiService.showToast(`Excel Antigo: ${importResults.validTasks.length} tarefas importadas com sucesso!`, 'success');
+                            resolve({ needsAdjustment: false, count: importResults.validTasks.length });
+                        }
+
+                    } catch (error) {
+                        console.error('Erro na importação do Excel Antigo:', error);
+                        reject(error);
+                    }
+                };
+
+                reader.onerror = (error) => reject(error);
+                reader.readAsArrayBuffer(file);
+            });
+
+        } catch (error) {
+            console.error('Erro na importação do Excel Antigo:', error);
+            throw error;
+        }
+    },
+
+    // FUNÇÃO: Converter dados do Excel Antigo (Tecsidel) para formato padrão
+    convertLegacyExcelToStandardFormat: function (jsonData) {
+        // Detectar nomes das colunas (podem variar)
+        const firstRow = jsonData[0] || {};
+        const headers = Object.keys(firstRow);
+
+        // Mapeamento flexível de colunas
+        let columnMap = {
+            taskName: null,
+            startDate: null,
+            endDate: null,
+            duration: null,
+            progress: null,
+            status: null,
+            risk: null
+        };
+
+        // Detectar colunas pelos nomes
+        headers.forEach(h => {
+            const hLower = h.toLowerCase().trim();
+            if (hLower.includes('tarefa') || hLower.includes('nome') || hLower.includes('atividade') || hLower.includes('descrição')) {
+                columnMap.taskName = h;
+            }
+            if ((hLower.includes('início') || hLower.includes('inicio')) && !columnMap.startDate) {
+                columnMap.startDate = h;
+            }
+            if (hLower.includes('término') || hLower.includes('termino') || hLower.includes('fim')) {
+                columnMap.endDate = h;
+            }
+            if (hLower.includes('duração') || hLower.includes('duracao')) {
+                columnMap.duration = h;
+            }
+            if (hLower.includes('%') || hLower.includes('porcentagem') || hLower.includes('progresso') || hLower.includes('conclu')) {
+                columnMap.progress = h;
+            }
+            if (hLower === 'status' || hLower.includes('situação') || hLower.includes('situacao')) {
+                columnMap.status = h;
+            }
+            if (hLower.includes('risco')) {
+                columnMap.risk = h;
+            }
+        });
+
+        console.log('📋 Mapeamento de colunas detectado:', columnMap);
+
+        return jsonData.map((row, index) => {
+            // Obter valores usando o mapeamento
+            const taskName = columnMap.taskName ? row[columnMap.taskName] : '';
+            const startDate = columnMap.startDate ? row[columnMap.startDate] : '';
+            const endDate = columnMap.endDate ? row[columnMap.endDate] : '';
+            let progress = columnMap.progress ? row[columnMap.progress] : 0;
+            let status = columnMap.status ? row[columnMap.status] : '';
+            const risk = columnMap.risk ? row[columnMap.risk] : '';
+
+            // Converter progresso para número
+            if (typeof progress === 'string') {
+                progress = parseInt(progress.replace('%', '').replace(',', '.')) || 0;
+            }
+            if (typeof progress === 'number' && progress <= 1 && progress > 0) {
+                progress = Math.round(progress * 100);
+            }
+
+            // Mapear status para formato do sistema
+            let normalizedStatus = 'Não Iniciada';
+            if (status) {
+                const statusLower = status.toString().toLowerCase().trim();
+                if (statusLower.includes('conclu') || statusLower.includes('finaliz') || statusLower.includes('termin') || statusLower === '100%') {
+                    normalizedStatus = 'Concluída';
+                } else if (statusLower.includes('andamento') || statusLower.includes('progress') || statusLower.includes('execu') || statusLower.includes('iniciado')) {
+                    normalizedStatus = 'Em Andamento';
+                } else if (statusLower.includes('não') || statusLower.includes('nao') || statusLower.includes('pend') || statusLower.includes('aguar')) {
+                    normalizedStatus = 'Não Iniciada';
+                }
+            }
+
+            // Se não tem status mas tem progresso, inferir status
+            if (!status && progress > 0) {
+                if (progress >= 100) {
+                    normalizedStatus = 'Concluída';
+                } else {
+                    normalizedStatus = 'Em Andamento';
+                }
+            }
+
+            // Mapear risco
+            let hasRisk = 'Nao';
+            if (risk) {
+                const riskLower = risk.toString().toLowerCase().trim();
+                if (riskLower === 'sim' || riskLower === 's' || riskLower === 'yes' || riskLower === 'y' || riskLower === 'x' || riskLower === '1') {
+                    hasRisk = 'Sim';
+                }
+            }
+
+            return {
+                'Tarefa': taskName || '',
+                'Data Início': startDate || '',
+                'Data Termino': endDate || '',
+                'Status': normalizedStatus,
+                'Progresso (%)': progress,
+                'Prioridade': 'Média',
+                'Atribuído a (Nomes Separados por Vírgula)': '',
+                'Risco (Sim/Nao)': hasRisk,
+                'Tarefa Pai (Nome)': ''
+            };
+        }).filter(item => item['Tarefa'] && item['Tarefa'].toString().trim() !== '');
+    },
 
     // FUNÇÃO: Validar linha individual (ATUALIZADA com validação de data do projeto)
     validateImportRow: function (row, rowNumber, taskNameMap, projectStartDate) {
@@ -2389,6 +2586,30 @@ const App = {
                 } catch (error) {
                     console.error('Erro na importação do MS Project:', error);
                     uiService.showToast('Erro ao importar arquivo do MS Project: ' + error.message, 'error');
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                    event.target.value = '';
+                }
+            }
+        });
+
+        // NOVO: Event listener para importação do Excel Antigo (Tecsidel)
+        document.getElementById('import-legacy-btn').addEventListener('click', () => document.getElementById('import-legacy-input').click());
+
+        // NOVO: Evento de importação do Excel Antigo
+        document.getElementById('import-legacy-input').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    const result = await dataService.processLegacyExcelImport(file);
+
+                    if (!result.needsAdjustment) {
+                        uiService.showToast(`Excel Antigo: ${result.count} tarefas importadas com sucesso!`, 'success');
+                    }
+                } catch (error) {
+                    console.error('Erro na importação do Excel Antigo:', error);
+                    uiService.showToast('Erro ao importar arquivo Excel Antigo: ' + error.message, 'error');
                 } finally {
                     document.getElementById('loader').style.display = 'none';
                     event.target.value = '';
