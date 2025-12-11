@@ -235,6 +235,21 @@
                 </div>
             </div>
 
+            <!-- Project Spotlight Carousel -->
+            <div id="spotlight-container" class="card mb-8 relative overflow-hidden" style="min-height: 180px;">
+                <div class="absolute top-4 right-4 flex items-center gap-2">
+                    <span class="text-xs text-gray-400">Auto-rotação</span>
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                </div>
+                <div id="spotlight-content" class="transition-all duration-500 ease-in-out">
+                    <div class="flex items-center justify-center h-32 text-gray-500">
+                        Carregando projetos...
+                    </div>
+                </div>
+                <!-- Progress indicators -->
+                <div id="spotlight-dots" class="flex justify-center gap-2 mt-4"></div>
+            </div>
+
             <!-- Projects Table -->
             <div class="card">
                 <div class="flex items-center justify-between mb-6">
@@ -251,6 +266,7 @@
                                 <th class="pb-3 font-medium">Status</th>
                                 <th class="pb-3 font-medium">Progresso</th>
                                 <th class="pb-3 font-medium">Tarefas</th>
+                                <th class="pb-3 font-medium">Em Atraso</th>
                                 <th class="pb-3 font-medium">Última Atualização</th>
                                 <th class="pb-3 font-medium">Atualizado Por</th>
                             </tr>
@@ -262,6 +278,7 @@
                 </div>
             </div>
         </main>
+
 
         <!-- Footer -->
         <footer class="border-t border-gray-700 py-4 mt-8">
@@ -482,13 +499,16 @@
                     ? new Date(project.lastUpdatedAt).toLocaleString('pt-BR')
                     : '--';
 
-                const updatedByUser = project.lastUpdatedBy && users[project.lastUpdatedBy]
-                    ? users[project.lastUpdatedBy].name || users[project.lastUpdatedBy].email
-                    : project.lastUpdatedBy || '--';
+                // Use helper function for user display
+                const updatedByUser = getUserDisplayName(project.lastUpdatedBy);
+
+                // Count overdue tasks
+                const overdueTasksList = getOverdueTasks(tasks);
+                const overdueCount = overdueTasksList.length;
 
                 // Progress bar color
                 let progressColor = 'bg-blue-500';
-                if (hasOverdue) progressColor = 'bg-red-500';
+                if (overdueCount > 0) progressColor = 'bg-red-500';
                 else if (progress === 100) progressColor = 'bg-green-500';
 
                 return `
@@ -511,6 +531,9 @@
                         <td class="py-4">
                             <span class="text-sm">${completedTasks}/${totalTasks}</span>
                         </td>
+                        <td class="py-4">
+                            <span class="text-sm ${overdueCount > 0 ? 'text-red-500 font-bold' : 'text-green-500'}">${overdueCount}</span>
+                        </td>
                         <td class="py-4 text-sm text-gray-400">${lastUpdatedAt}</td>
                         <td class="py-4 text-sm text-gray-400">${updatedByUser}</td>
                     </tr>
@@ -518,12 +541,155 @@
             }).join('');
         }
 
+
+        // Helper: Get overdue tasks count
+        function getOverdueTasks(tasks) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return tasks.filter(task => {
+                if (task.status === 'Concluída') return false;
+                const endDate = new Date(task.endDate || task.dateHistory?.[task.dateHistory.length - 1]?.endDate);
+                return endDate < today;
+            });
+        }
+
+        // Helper: Get user display name
+        function getUserDisplayName(userId) {
+            if (!userId) return '--';
+            const user = users[userId];
+            if (user) {
+                return user.name || user.displayName || user.email?.split('@')[0] || '--';
+            }
+            // If user not in users collection, try to extract from email format
+            return userId.includes('@') ? userId.split('@')[0] : '--';
+        }
+
+        // Spotlight Carousel
+        let spotlightIndex = 0;
+        let spotlightInterval = null;
+
+        function startSpotlightCarousel() {
+            if (spotlightInterval) clearInterval(spotlightInterval);
+
+            if (projects.length === 0) {
+                document.getElementById('spotlight-content').innerHTML = `
+                    <div class="flex items-center justify-center h-32 text-gray-500">
+                        Nenhum projeto encontrado
+                    </div>
+                `;
+                document.getElementById('spotlight-dots').innerHTML = '';
+                return;
+            }
+
+            renderSpotlight();
+
+            // Rotate every 5 seconds
+            spotlightInterval = setInterval(() => {
+                spotlightIndex = (spotlightIndex + 1) % projects.length;
+                renderSpotlight();
+            }, 5000);
+        }
+
+        function renderSpotlight() {
+            const project = projects[spotlightIndex];
+            if (!project) return;
+
+            const tasks = project.tasks || [];
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter(t => t.status === 'Concluída').length;
+            const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            const overdueTasks = getOverdueTasks(tasks);
+            const overdueCount = overdueTasks.length;
+
+            // Determine status
+            let status, statusClass, statusIcon;
+            if (project.finalized || progress === 100) {
+                status = 'Concluído';
+                statusClass = 'text-green-500';
+                statusIcon = '✅';
+            } else if (overdueCount > 0) {
+                status = 'Atrasado';
+                statusClass = 'text-red-500';
+                statusIcon = '⚠️';
+            } else if (progress > 0) {
+                status = 'Em Andamento';
+                statusClass = 'text-blue-500';
+                statusIcon = '⚡';
+            } else {
+                status = 'Não Iniciado';
+                statusClass = 'text-gray-400';
+                statusIcon = '📋';
+            }
+
+            const spotlightContent = document.getElementById('spotlight-content');
+            spotlightContent.style.opacity = '0';
+
+            setTimeout(() => {
+                spotlightContent.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-3xl">${statusIcon}</span>
+                                <div>
+                                    <h3 class="text-2xl font-bold">${project.name || 'Sem nome'}</h3>
+                                    <span class="status-badge ${statusClass === 'text-green-500' ? 'status-concluido' : statusClass === 'text-red-500' ? 'status-atrasado' : statusClass === 'text-blue-500' ? 'status-em-andamento' : 'status-nao-iniciado'}">${status}</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 mt-4">
+                                <div>
+                                    <div class="text-2xl font-bold">${progress}%</div>
+                                    <div class="text-xs text-gray-400">Progresso</div>
+                                </div>
+                                <div>
+                                    <div class="text-2xl font-bold">${completedTasks}/${totalTasks}</div>
+                                    <div class="text-xs text-gray-400">Tarefas</div>
+                                </div>
+                                <div>
+                                    <div class="text-2xl font-bold ${overdueCount > 0 ? 'text-red-500' : 'text-green-500'}">${overdueCount}</div>
+                                    <div class="text-xs text-gray-400">Em Atraso</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="w-32 h-32 rounded-full border-8 ${overdueCount > 0 ? 'border-red-500/30' : progress === 100 ? 'border-green-500/30' : 'border-blue-500/30'} flex items-center justify-center">
+                                <span class="text-4xl font-bold">${progress}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                spotlightContent.style.opacity = '1';
+            }, 200);
+
+            // Update dots
+            const dotsContainer = document.getElementById('spotlight-dots');
+            dotsContainer.innerHTML = projects.map((_, i) => `
+                <button onclick="goToSpotlight(${i})" 
+                    class="w-2 h-2 rounded-full transition-all ${i === spotlightIndex ? 'bg-blue-500 w-6' : 'bg-gray-600 hover:bg-gray-500'}">
+                </button>
+            `).join('');
+        }
+
+        // Make goToSpotlight globally accessible
+        window.goToSpotlight = function (index) {
+            spotlightIndex = index;
+            renderSpotlight();
+            // Reset interval
+            if (spotlightInterval) clearInterval(spotlightInterval);
+            spotlightInterval = setInterval(() => {
+                spotlightIndex = (spotlightIndex + 1) % projects.length;
+                renderSpotlight();
+            }, 5000);
+        };
+
         // Update Last Update Time
         function updateLastUpdateTime() {
             const now = new Date();
             document.getElementById('last-update-time').textContent = now.toLocaleTimeString('pt-BR');
+            // Start carousel when data updates
+            startSpotlightCarousel();
         }
     </script>
+
 </body>
 
 </html>
