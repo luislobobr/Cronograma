@@ -1542,6 +1542,10 @@ const dataService = {
             if (hLower.includes('risco')) {
                 columnMap.risk = h;
             }
+            // NOVO: Detectar coluna de tarefa pai
+            if (hLower.includes('pai') || hLower.includes('parent') || hLower.includes('mãe') || hLower.includes('mae')) {
+                columnMap.parentTask = h;
+            }
         });
 
         console.log('📋 Mapeamento de colunas detectado:', columnMap);
@@ -1554,6 +1558,8 @@ const dataService = {
             let progress = columnMap.progress ? row[columnMap.progress] : 0;
             let status = columnMap.status ? row[columnMap.status] : '';
             const risk = columnMap.risk ? row[columnMap.risk] : '';
+            const parentTask = columnMap.parentTask ? row[columnMap.parentTask] : '';
+
 
             // Converter progresso para número
             if (typeof progress === 'string') {
@@ -1603,8 +1609,9 @@ const dataService = {
                 'Prioridade': 'Média',
                 'Atribuído a (Nomes Separados por Vírgula)': '',
                 'Risco (Sim/Nao)': hasRisk,
-                'Tarefa Pai (Nome)': ''
+                'Tarefa Pai (Nome)': parentTask || ''
             };
+
         }).filter(item => item['Tarefa'] && item['Tarefa'].toString().trim() !== '');
     },
 
