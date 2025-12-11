@@ -274,7 +274,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, collectionGroup, query, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration
         const firebaseConfig = {
@@ -357,25 +357,35 @@
         async function loadUsers() {
             try {
                 const usersRef = collection(db, 'users');
-                const usersSnapshot = await onSnapshot(usersRef, (snapshot) => {
+                onSnapshot(usersRef, (snapshot) => {
                     users = {};
                     snapshot.forEach(doc => {
                         users[doc.id] = doc.data();
                     });
+                    console.log('📋 Usuários carregados:', Object.keys(users).length);
                 });
             } catch (error) {
                 console.error('Erro ao carregar usuários:', error);
             }
         }
 
-        // Listen to Projects (Real-time)
+        // Listen to Projects (Real-time) - using collectionGroup to get all projects
         function listenToProjects() {
-            const projectsRef = collection(db, 'projects');
+            // CORREÇÃO: Usar collectionGroup para buscar projetos de todos os usuários
+            const projectsQuery = query(collectionGroup(db, 'projects'));
 
-            unsubscribeProjects = onSnapshot(projectsRef, (snapshot) => {
+            console.log('🔍 Iniciando listener de projetos via collectionGroup...');
+
+            unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
+                console.log('📦 Projetos recebidos:', snapshot.size);
                 projects = [];
                 snapshot.forEach(doc => {
-                    projects.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    projects.push({
+                        id: doc.id,
+                        creatorId: data.creatorId || doc.ref.parent.parent?.id,
+                        ...data
+                    });
                 });
 
                 // Update UI
@@ -385,6 +395,7 @@
                 console.error('Erro ao ouvir projetos:', error);
             });
         }
+
 
         // Update Dashboard
         function updateDashboard() {
