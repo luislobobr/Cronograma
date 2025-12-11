@@ -1404,13 +1404,38 @@ const dataService = {
 
                         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-                        // Ler a planilha pulando as primeiras 3 linhas (header na linha 4)
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 3 });
+                        // Tentar encontrar a linha do header automaticamente
+                        // Procurar por palavras-chave como "tarefa", "início", "status", etc.
+                        let headerRow = 3; // Padrão: linha 4 (índice 3)
 
-                        if (jsonData.length === 0) {
-                            throw new Error('A planilha está vazia ou não tem dados após a linha 4');
+                        for (let tryRow = 0; tryRow <= 10; tryRow++) {
+                            const testData = XLSX.utils.sheet_to_json(worksheet, { range: tryRow, header: 1 });
+                            if (testData.length > 0 && testData[0]) {
+                                const firstRowValues = testData[0].map(v => (v || '').toString().toLowerCase());
+                                const hasTaskKeyword = firstRowValues.some(v =>
+                                    v.includes('tarefa') || v.includes('atividade') || v.includes('nome')
+                                );
+                                const hasDateKeyword = firstRowValues.some(v =>
+                                    v.includes('início') || v.includes('inicio') || v.includes('data')
+                                );
+                                const hasStatusKeyword = firstRowValues.some(v =>
+                                    v.includes('status') || v.includes('situação')
+                                );
+
+                                if (hasTaskKeyword || (hasDateKeyword && hasStatusKeyword)) {
+                                    headerRow = tryRow;
+                                    console.log(`🔍 Header encontrado na linha ${tryRow + 1}:`, testData[0]);
+                                    break;
+                                }
+                            }
                         }
 
+                        // Ler a planilha a partir da linha do header
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: headerRow });
+
+                        if (jsonData.length === 0) {
+                            throw new Error('A planilha está vazia ou não foi possível detectar os headers');
+                        }
 
                         console.log('📊 Importação Excel Antigo (Tecsidel) iniciada...');
                         console.log('Colunas encontradas:', Object.keys(jsonData[0]));
@@ -1419,6 +1444,7 @@ const dataService = {
                         const convertedData = this.convertLegacyExcelToStandardFormat(jsonData);
 
                         console.log(`✅ ${convertedData.length} tarefas convertidas do Excel Antigo`);
+
 
                         const importResults = {
                             validTasks: [],
