@@ -1511,7 +1511,7 @@ const dataService = {
 
             // Se for string, tentar parse
             if (typeof excelDate === 'string') {
-                // Remover espaços e tentar diferentes formatos
+                // Remover espaços extras e tentar diferentes formatos
                 const cleanDate = excelDate.trim();
 
                 // Formato YYYY-MM-DD
@@ -1523,6 +1523,43 @@ const dataService = {
                 if (/^\d{2}\/\d{2}\/\d{4}$/.test(cleanDate)) {
                     const parts = cleanDate.split('/');
                     return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+
+                // NOVO: Formato MS Project em português "01 Dezembro 2025 08:00" ou "01 Dezembro 2025"
+                const portugueseMonths = {
+                    'janeiro': '01', 'fevereiro': '02', 'março': '03', 'marco': '03',
+                    'abril': '04', 'maio': '05', 'junho': '06',
+                    'julho': '07', 'agosto': '08', 'setembro': '09',
+                    'outubro': '10', 'novembro': '11', 'dezembro': '12'
+                };
+
+                // Regex para capturar "DD Mês YYYY" ou "DD Mês YYYY HH:MM"
+                const ptDateRegex = /^(\d{1,2})\s+([a-zA-ZçÇ]+)\s+(\d{4})(?:\s+\d{2}:\d{2})?$/i;
+                const ptMatch = cleanDate.match(ptDateRegex);
+
+                if (ptMatch) {
+                    const day = ptMatch[1].padStart(2, '0');
+                    const monthName = ptMatch[2].toLowerCase();
+                    const year = ptMatch[3];
+                    const month = portugueseMonths[monthName];
+
+                    if (month) {
+                        return `${year}-${month}-${day}`;
+                    }
+                }
+
+                // NOVO: Formato "Seg DD/MM/YY" ou similar com dia da semana
+                const weekdayDateRegex = /^[a-zA-Z]{3}\s+(\d{2})\/(\d{2})\/(\d{2,4})$/i;
+                const weekdayMatch = cleanDate.match(weekdayDateRegex);
+
+                if (weekdayMatch) {
+                    const day = weekdayMatch[1];
+                    const month = weekdayMatch[2];
+                    let year = weekdayMatch[3];
+                    if (year.length === 2) {
+                        year = '20' + year;
+                    }
+                    return `${year}-${month}-${day}`;
                 }
 
                 // Tentar parse automático
@@ -1538,6 +1575,7 @@ const dataService = {
             return null;
         }
     },
+
 
     // Função para encontrar IDs de usuário pelos nomes
     findUserIdsByNames: function (names) {
