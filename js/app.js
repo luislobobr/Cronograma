@@ -1735,23 +1735,50 @@ const dataService = {
             }
         });
 
+        console.log('📊 Mapa de tarefas disponíveis:', Array.from(taskNameToId.keys()));
+
         let resolvedCount = 0;
+        let unresolvedCount = 0;
+        let unresolvedNames = [];
+
         validTasks.forEach(task => {
+            // Log para TODAS as tarefas mostrando seu parentTaskName
+            if (task.parentTaskName) {
+                console.log(`🔍 Tarefa "${task.name}" procurando pai: "${task.parentTaskName}"`);
+            }
+
             if (task.parentTaskName && !task.parentId) {
-                const parentId = taskNameToId.get(task.parentTaskName.toLowerCase().trim());
+                const searchName = task.parentTaskName.toLowerCase().trim();
+                const parentId = taskNameToId.get(searchName);
+
+                console.log(`🔎 Buscando "${searchName}" no mapa...`, parentId ? 'ENCONTRADO!' : 'NÃO ENCONTRADO');
+
                 if (parentId) {
                     task.parentId = parentId;
                     resolvedCount++;
-                    console.log(`✅ Tarefa pai resolvida: "${task.name}" -> "${task.parentTaskName}"`);
+                    console.log(`✅ Tarefa pai resolvida: "${task.name}" -> "${task.parentTaskName}" (ID: ${parentId})`);
                 } else {
-                    console.warn(`⚠️ Tarefa pai não encontrada: "${task.parentTaskName}" para tarefa "${task.name}"`);
+                    unresolvedCount++;
+                    unresolvedNames.push(`"${task.parentTaskName}" (para: ${task.name})`);
+                    console.warn(`⚠️ Tarefa pai NÃO encontrada: "${task.parentTaskName}" para tarefa "${task.name}"`);
                 }
                 delete task.parentTaskName; // Limpar campo temporário
             }
         });
 
-        if (resolvedCount > 0) {
-            console.log(`🔗 ${resolvedCount} hierarquias de tarefa pai resolvidas`);
+        // Resumo final
+        console.log('═══════════════════════════════════════');
+        console.log(`📋 RESUMO DA IMPORTAÇÃO:`);
+        console.log(`   Total de tarefas: ${validTasks.length}`);
+        console.log(`   Hierarquias resolvidas: ${resolvedCount}`);
+        console.log(`   Tarefas pai não encontradas: ${unresolvedCount}`);
+        if (unresolvedNames.length > 0) {
+            console.log(`   Nomes não encontrados:`, unresolvedNames);
+        }
+        console.log('═══════════════════════════════════════');
+
+        if (unresolvedCount > 0) {
+            uiService.showToast(`${unresolvedCount} tarefas pai não encontradas. Verifique o console (F12) para detalhes.`, 'error');
         }
 
         // ATUALIZAÇÃO AUTOMÁTICA: Atualizar datas do projeto se em modo automático
@@ -1761,6 +1788,7 @@ const dataService = {
         await dataService.saveProjectDocument(project);
         return validTasks.length;
     },
+
 
 
     // Função auxiliar para converter datas do Excel
