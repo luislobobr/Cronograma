@@ -1,4 +1,4 @@
-﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
@@ -1127,7 +1127,6 @@ const dataService = {
         const totalProgress = topLevelTasks.reduce((sum, task) => sum + task.progress, 0);
         return Math.round(totalProgress / topLevelTasks.length);
     },
-
     // NOVA FUNÇÃO: Obter nome do responsável pelo UID
     getManagerName: (managerUid) => {
         if (!managerUid) return 'Não definido';
@@ -1144,7 +1143,232 @@ const dataService = {
         }).join(', ');
     },
 
-    // NOVA FUNÇÃO: Processar importação com validação detalhada
+    // NOVA FUNÇÃO: Detectar formato da planilha e normalizar dados
+    detectAndNormalizeExcelFormat: function (jsonData, worksheet) {
+        // Obter todos os headers da planilha
+        const headers = Object.keys(jsonData[0] || {});
+        const headersLower = headers.map(h => h.toLowerCase().trim());
+
+        console.log('📊 Headers detectados:', headers);
+
+        // Formato padrão do sistema
+        const standardFormat = {
+            taskName: 'Tarefa',
+            startDate: 'Data Início',
+            endDate: 'Data Termino',
+            status: 'Status',
+            progress: 'Progresso (%)',
+            priority: 'Prioridade',
+            assigned: 'Atribuído a (Nomes Separados por Vírgula)',
+            risk: 'Risco (Sim/Nao)',
+            parentTask: 'Tarefa Pai (Nome)'
+        };
+
+        // Detectar formato Kartado (colunas: nome da tarefa, duração, início, término)
+        const isKartado = headers.some(h =>
+            h.toLowerCase().includes('kartado') ||
+            h.toLowerCase().includes('monitoração') ||
+            (headersLower.includes('duração') && !headersLower.includes('duração dias'))
+        );
+
+        // Detectar formato Tecsidel (colunas: tarefa, duração dias, data início, data término)
+        const isTecsidel = headers.some(h =>
+            h.toLowerCase().includes('tecsidel') ||
+            h.toLowerCase().includes('vcr-ime') ||
+            headersLower.includes('duração dias')
+        );
+
+        // Mapeamento de colunas por formato
+        let columnMapping = null;
+        let formatName = 'Padrão';
+
+        if (isKartado) {
+            formatName = 'Kartado';
+            // Buscar colunas pelo nome ou posição
+            columnMapping = {};
+            headers.forEach(h => {
+                const hLower = h.toLowerCase().trim();
+                if (hLower.includes('tarefa') || hLower.includes('nome') || hLower.includes('atividade') || hLower.includes('descrição')) {
+                    columnMapping.taskName = h;
+                }
+                if ((hLower.includes('início') || hLower.includes('inicio')) && !hLower.includes('término') && !hLower.includes('termino')) {
+                    columnMapping.startDate = h;
+                }
+                if (hLower.includes('término') || hLower.includes('termino') || hLower.includes('fim')) {
+                    columnMapping.endDate = h;
+                }
+                if (hLower.includes('duração')) {
+                    columnMapping.duration = h;
+                }
+                if (hLower.includes('status')) {
+                    columnMapping.status = h;
+                }
+                if (hLower.includes('progresso') || hLower.includes('%')) {
+                    columnMapping.progress = h;
+                }
+                if (hLower.includes('responsável') || hLower.includes('atribuído') || hLower.includes('assigned')) {
+                    columnMapping.assigned = h;
+                }
+            });
+        } else if (isTecsidel) {
+            formatName = 'Tecsidel';
+            columnMapping = {};
+            headers.forEach(h => {
+                const hLower = h.toLowerCase().trim();
+                if (hLower.includes('tarefa') || hLower.includes('nome') || hLower.includes('atividade') || hLower.includes('descrição')) {
+                    columnMapping.taskName = h;
+                }
+                if ((hLower.includes('início') || hLower.includes('inicio')) && hLower.includes('data')) {
+                    columnMapping.startDate = h;
+                } else if ((hLower.includes('início') || hLower.includes('inicio')) && !hLower.includes('término') && !hLower.includes('termino')) {
+                    if (!columnMapping.startDate) columnMapping.startDate = h;
+                }
+                if ((hLower.includes('término') || hLower.includes('termino') || hLower.includes('fim')) && hLower.includes('data')) {
+                    columnMapping.endDate = h;
+                } else if (hLower.includes('término') || hLower.includes('termino') || hLower.includes('fim')) {
+                    if (!columnMapping.endDate) columnMapping.endDate = h;
+                }
+                if (hLower.includes('duração')) {
+                    columnMapping.duration = h;
+                }
+                if (hLower.includes('status')) {
+                    columnMapping.status = h;
+                }
+                if (hLower.includes('progresso') || hLower.includes('%') || hLower.includes('concluído')) {
+                    columnMapping.progress = h;
+                }
+                if (hLower.includes('responsável') || hLower.includes('atribuído') || hLower.includes('assigned')) {
+                    columnMapping.assigned = h;
+                }
+            });
+        } else {
+            // Tentar detectar automaticamente pelos nomes das colunas
+            columnMapping = {};
+            headers.forEach(h => {
+                const hLower = h.toLowerCase().trim();
+
+                // Nome da tarefa
+                if (hLower === 'tarefa' || hLower.includes('nome da tarefa') || hLower.includes('atividade')) {
+                    columnMapping.taskName = h;
+                }
+
+                // Data de início
+                if (hLower === 'data início' || hLower === 'data inicio' || hLower === 'início' || hLower === 'inicio') {
+                    columnMapping.startDate = h;
+                }
+
+                // Data de término
+                if (hLower === 'data termino' || hLower === 'data término' || hLower === 'término' || hLower === 'termino' || hLower === 'fim') {
+                    columnMapping.endDate = h;
+                }
+
+                // Status
+                if (hLower === 'status') {
+                    columnMapping.status = h;
+                }
+
+                // Progresso
+                if (hLower.includes('progresso') || hLower === '% concluído') {
+                    columnMapping.progress = h;
+                }
+
+                // Responsável
+                if (hLower.includes('atribuído') || hLower.includes('responsável')) {
+                    columnMapping.assigned = h;
+                }
+
+                // Risco
+                if (hLower.includes('risco')) {
+                    columnMapping.risk = h;
+                }
+
+                // Tarefa Pai
+                if (hLower.includes('tarefa pai') || hLower.includes('pai')) {
+                    columnMapping.parentTask = h;
+                }
+            });
+        }
+
+        console.log(`📋 Formato detectado: ${formatName}`);
+        console.log('🔄 Mapeamento de colunas:', columnMapping);
+
+        // Normalizar os dados para o formato padrão
+        const normalizedData = jsonData.map(row => {
+            const normalizedRow = {};
+
+            // Nome da tarefa
+            if (columnMapping.taskName) {
+                normalizedRow['Tarefa'] = row[columnMapping.taskName];
+            }
+
+            // Data de início
+            if (columnMapping.startDate) {
+                normalizedRow['Data Início'] = row[columnMapping.startDate];
+            }
+
+            // Data de término
+            if (columnMapping.endDate) {
+                normalizedRow['Data Termino'] = row[columnMapping.endDate];
+            }
+
+            // Status (padrão: Não Iniciada)
+            if (columnMapping.status) {
+                normalizedRow['Status'] = row[columnMapping.status];
+            } else {
+                normalizedRow['Status'] = 'Não Iniciada';
+            }
+
+            // Progresso (padrão: 0)
+            if (columnMapping.progress) {
+                const progressValue = row[columnMapping.progress];
+                // Converter de decimal para percentual se necessário
+                if (typeof progressValue === 'number' && progressValue <= 1) {
+                    normalizedRow['Progresso (%)'] = Math.round(progressValue * 100);
+                } else {
+                    normalizedRow['Progresso (%)'] = progressValue || 0;
+                }
+            } else {
+                normalizedRow['Progresso (%)'] = 0;
+            }
+
+            // Prioridade (padrão: Média)
+            if (columnMapping.priority) {
+                normalizedRow['Prioridade'] = row[columnMapping.priority];
+            } else {
+                normalizedRow['Prioridade'] = 'Média';
+            }
+
+            // Responsável
+            if (columnMapping.assigned) {
+                normalizedRow['Atribuído a (Nomes Separados por Vírgula)'] = row[columnMapping.assigned];
+            }
+
+            // Risco
+            if (columnMapping.risk) {
+                normalizedRow['Risco (Sim/Nao)'] = row[columnMapping.risk];
+            }
+
+            // Tarefa Pai
+            if (columnMapping.parentTask) {
+                normalizedRow['Tarefa Pai (Nome)'] = row[columnMapping.parentTask];
+            }
+
+            return normalizedRow;
+        });
+
+        // Filtrar linhas vazias (sem nome de tarefa)
+        const filteredData = normalizedData.filter(row => row['Tarefa'] && row['Tarefa'].toString().trim() !== '');
+
+        console.log(`✅ ${filteredData.length} tarefas encontradas de ${jsonData.length} linhas`);
+
+        return {
+            formatName,
+            columnMapping,
+            normalizedData: filteredData
+        };
+    },
+
+    // NOVA FUNÇÃO: Processar importação com validação detalhada (ATUALIZADA com detecção de formato)
     processImportWithValidation: async function (file) {
         try {
             const project = dataService.getCurrentProject();
@@ -1167,6 +1391,15 @@ const dataService = {
                             throw new Error('A planilha está vazia');
                         }
 
+                        // NOVO: Detectar formato e normalizar dados
+                        const { formatName, normalizedData } = this.detectAndNormalizeExcelFormat(jsonData, worksheet);
+
+                        if (normalizedData.length === 0) {
+                            throw new Error('Nenhuma tarefa válida encontrada na planilha. Verifique se as colunas estão corretas.');
+                        }
+
+                        uiService.showToast(`Formato detectado: ${formatName}. Processando ${normalizedData.length} tarefas...`, 'success');
+
                         const importResults = {
                             validTasks: [],
                             invalidTasks: [],
@@ -1179,11 +1412,13 @@ const dataService = {
                             importResults.taskNameMap.set(task.name.trim().toLowerCase(), task.id);
                         });
 
-                        // Validar cada linha
-                        jsonData.forEach((row, index) => {
+                        // Validar cada linha normalizada
+                        normalizedData.forEach((row, index) => {
                             const result = this.validateImportRow(row, index + 2, importResults.taskNameMap, project.startDate);
                             if (result.isValid) {
                                 importResults.validTasks.push(result.task);
+                                // Adicionar ao mapa para referência de tarefas pai
+                                importResults.taskNameMap.set(result.task.name.trim().toLowerCase(), result.task.id);
                             } else {
                                 importResults.invalidTasks.push({
                                     row: index + 2,
@@ -1218,6 +1453,7 @@ const dataService = {
             throw error;
         }
     },
+
 
     // FUNÇÃO: Validar linha individual (ATUALIZADA com validação de data do projeto)
     validateImportRow: function (row, rowNumber, taskNameMap, projectStartDate) {
