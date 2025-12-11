@@ -979,9 +979,20 @@
                             MS Project
                         </button>
                         <input type="file" id="import-msproject-input" class="hidden" accept=".xlsx, .xls">
+                        <button id="import-legacy-btn"
+                            class="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Excel Antigo
+                        </button>
+                        <input type="file" id="import-legacy-input" class="hidden" accept=".xlsx, .xls">
                         <button id="download-template-btn" class="text-sm text-blue-500 hover:underline">Baixar
                             Template</button>
                     </div>
+
                     <div class="relative">
                         <input type="text" id="task-filter-input" placeholder="Filtrar tarefas..."
                             class="border border-[var(--border-color)] bg-transparent rounded-md shadow-sm p-2 pl-8 text-sm">
