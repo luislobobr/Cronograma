@@ -1142,233 +1142,7 @@ const dataService = {
             return user ? (user.name || user.email.split('@')[0]) : `UID:${uid.substring(0, 4)}`;
         }).join(', ');
     },
-
-    // NOVA FUNÇÃO: Detectar formato da planilha e normalizar dados
-    detectAndNormalizeExcelFormat: function (jsonData, worksheet) {
-        // Obter todos os headers da planilha
-        const headers = Object.keys(jsonData[0] || {});
-        const headersLower = headers.map(h => h.toLowerCase().trim());
-
-        console.log('📊 Headers detectados:', headers);
-
-        // Formato padrão do sistema
-        const standardFormat = {
-            taskName: 'Tarefa',
-            startDate: 'Data Início',
-            endDate: 'Data Termino',
-            status: 'Status',
-            progress: 'Progresso (%)',
-            priority: 'Prioridade',
-            assigned: 'Atribuído a (Nomes Separados por Vírgula)',
-            risk: 'Risco (Sim/Nao)',
-            parentTask: 'Tarefa Pai (Nome)'
-        };
-
-        // Detectar formato Kartado (colunas: nome da tarefa, duração, início, término)
-        const isKartado = headers.some(h =>
-            h.toLowerCase().includes('kartado') ||
-            h.toLowerCase().includes('monitoração') ||
-            (headersLower.includes('duração') && !headersLower.includes('duração dias'))
-        );
-
-        // Detectar formato Tecsidel (colunas: tarefa, duração dias, data início, data término)
-        const isTecsidel = headers.some(h =>
-            h.toLowerCase().includes('tecsidel') ||
-            h.toLowerCase().includes('vcr-ime') ||
-            headersLower.includes('duração dias')
-        );
-
-        // Mapeamento de colunas por formato
-        let columnMapping = null;
-        let formatName = 'Padrão';
-
-        if (isKartado) {
-            formatName = 'Kartado';
-            // Buscar colunas pelo nome ou posição
-            columnMapping = {};
-            headers.forEach(h => {
-                const hLower = h.toLowerCase().trim();
-                if (hLower.includes('tarefa') || hLower.includes('nome') || hLower.includes('atividade') || hLower.includes('descrição')) {
-                    columnMapping.taskName = h;
-                }
-                if ((hLower.includes('início') || hLower.includes('inicio')) && !hLower.includes('término') && !hLower.includes('termino')) {
-                    columnMapping.startDate = h;
-                }
-                if (hLower.includes('término') || hLower.includes('termino') || hLower.includes('fim')) {
-                    columnMapping.endDate = h;
-                }
-                if (hLower.includes('duração')) {
-                    columnMapping.duration = h;
-                }
-                if (hLower.includes('status')) {
-                    columnMapping.status = h;
-                }
-                if (hLower.includes('progresso') || hLower.includes('%')) {
-                    columnMapping.progress = h;
-                }
-                if (hLower.includes('responsável') || hLower.includes('atribuído') || hLower.includes('assigned')) {
-                    columnMapping.assigned = h;
-                }
-            });
-        } else if (isTecsidel) {
-            formatName = 'Tecsidel';
-            columnMapping = {};
-            headers.forEach(h => {
-                const hLower = h.toLowerCase().trim();
-                if (hLower.includes('tarefa') || hLower.includes('nome') || hLower.includes('atividade') || hLower.includes('descrição')) {
-                    columnMapping.taskName = h;
-                }
-                if ((hLower.includes('início') || hLower.includes('inicio')) && hLower.includes('data')) {
-                    columnMapping.startDate = h;
-                } else if ((hLower.includes('início') || hLower.includes('inicio')) && !hLower.includes('término') && !hLower.includes('termino')) {
-                    if (!columnMapping.startDate) columnMapping.startDate = h;
-                }
-                if ((hLower.includes('término') || hLower.includes('termino') || hLower.includes('fim')) && hLower.includes('data')) {
-                    columnMapping.endDate = h;
-                } else if (hLower.includes('término') || hLower.includes('termino') || hLower.includes('fim')) {
-                    if (!columnMapping.endDate) columnMapping.endDate = h;
-                }
-                if (hLower.includes('duração')) {
-                    columnMapping.duration = h;
-                }
-                if (hLower.includes('status')) {
-                    columnMapping.status = h;
-                }
-                if (hLower.includes('progresso') || hLower.includes('%') || hLower.includes('concluído')) {
-                    columnMapping.progress = h;
-                }
-                if (hLower.includes('responsável') || hLower.includes('atribuído') || hLower.includes('assigned')) {
-                    columnMapping.assigned = h;
-                }
-            });
-        } else {
-            // Tentar detectar automaticamente pelos nomes das colunas
-            columnMapping = {};
-            headers.forEach(h => {
-                const hLower = h.toLowerCase().trim();
-
-                // Nome da tarefa
-                if (hLower === 'tarefa' || hLower.includes('nome da tarefa') || hLower.includes('atividade')) {
-                    columnMapping.taskName = h;
-                }
-
-                // Data de início
-                if (hLower === 'data início' || hLower === 'data inicio' || hLower === 'início' || hLower === 'inicio') {
-                    columnMapping.startDate = h;
-                }
-
-                // Data de término
-                if (hLower === 'data termino' || hLower === 'data término' || hLower === 'término' || hLower === 'termino' || hLower === 'fim') {
-                    columnMapping.endDate = h;
-                }
-
-                // Status
-                if (hLower === 'status') {
-                    columnMapping.status = h;
-                }
-
-                // Progresso
-                if (hLower.includes('progresso') || hLower === '% concluído') {
-                    columnMapping.progress = h;
-                }
-
-                // Responsável
-                if (hLower.includes('atribuído') || hLower.includes('responsável')) {
-                    columnMapping.assigned = h;
-                }
-
-                // Risco
-                if (hLower.includes('risco')) {
-                    columnMapping.risk = h;
-                }
-
-                // Tarefa Pai
-                if (hLower.includes('tarefa pai') || hLower.includes('pai')) {
-                    columnMapping.parentTask = h;
-                }
-            });
-        }
-
-        console.log(`📋 Formato detectado: ${formatName}`);
-        console.log('🔄 Mapeamento de colunas:', columnMapping);
-
-        // Normalizar os dados para o formato padrão
-        const normalizedData = jsonData.map(row => {
-            const normalizedRow = {};
-
-            // Nome da tarefa
-            if (columnMapping.taskName) {
-                normalizedRow['Tarefa'] = row[columnMapping.taskName];
-            }
-
-            // Data de início
-            if (columnMapping.startDate) {
-                normalizedRow['Data Início'] = row[columnMapping.startDate];
-            }
-
-            // Data de término
-            if (columnMapping.endDate) {
-                normalizedRow['Data Termino'] = row[columnMapping.endDate];
-            }
-
-            // Status (padrão: Não Iniciada)
-            if (columnMapping.status) {
-                normalizedRow['Status'] = row[columnMapping.status];
-            } else {
-                normalizedRow['Status'] = 'Não Iniciada';
-            }
-
-            // Progresso (padrão: 0)
-            if (columnMapping.progress) {
-                const progressValue = row[columnMapping.progress];
-                // Converter de decimal para percentual se necessário
-                if (typeof progressValue === 'number' && progressValue <= 1) {
-                    normalizedRow['Progresso (%)'] = Math.round(progressValue * 100);
-                } else {
-                    normalizedRow['Progresso (%)'] = progressValue || 0;
-                }
-            } else {
-                normalizedRow['Progresso (%)'] = 0;
-            }
-
-            // Prioridade (padrão: Média)
-            if (columnMapping.priority) {
-                normalizedRow['Prioridade'] = row[columnMapping.priority];
-            } else {
-                normalizedRow['Prioridade'] = 'Média';
-            }
-
-            // Responsável
-            if (columnMapping.assigned) {
-                normalizedRow['Atribuído a (Nomes Separados por Vírgula)'] = row[columnMapping.assigned];
-            }
-
-            // Risco
-            if (columnMapping.risk) {
-                normalizedRow['Risco (Sim/Nao)'] = row[columnMapping.risk];
-            }
-
-            // Tarefa Pai
-            if (columnMapping.parentTask) {
-                normalizedRow['Tarefa Pai (Nome)'] = row[columnMapping.parentTask];
-            }
-
-            return normalizedRow;
-        });
-
-        // Filtrar linhas vazias (sem nome de tarefa)
-        const filteredData = normalizedData.filter(row => row['Tarefa'] && row['Tarefa'].toString().trim() !== '');
-
-        console.log(`✅ ${filteredData.length} tarefas encontradas de ${jsonData.length} linhas`);
-
-        return {
-            formatName,
-            columnMapping,
-            normalizedData: filteredData
-        };
-    },
-
-    // NOVA FUNÇÃO: Processar importação com validação detalhada (ATUALIZADA com detecção de formato)
+    // NOVA FUNÇÃO: Processar importação com validação detalhada
     processImportWithValidation: async function (file) {
         try {
             const project = dataService.getCurrentProject();
@@ -1391,15 +1165,6 @@ const dataService = {
                             throw new Error('A planilha está vazia');
                         }
 
-                        // NOVO: Detectar formato e normalizar dados
-                        const { formatName, normalizedData } = this.detectAndNormalizeExcelFormat(jsonData, worksheet);
-
-                        if (normalizedData.length === 0) {
-                            throw new Error('Nenhuma tarefa válida encontrada na planilha. Verifique se as colunas estão corretas.');
-                        }
-
-                        uiService.showToast(`Formato detectado: ${formatName}. Processando ${normalizedData.length} tarefas...`, 'success');
-
                         const importResults = {
                             validTasks: [],
                             invalidTasks: [],
@@ -1412,8 +1177,8 @@ const dataService = {
                             importResults.taskNameMap.set(task.name.trim().toLowerCase(), task.id);
                         });
 
-                        // Validar cada linha normalizada
-                        normalizedData.forEach((row, index) => {
+                        // Validar cada linha
+                        jsonData.forEach((row, index) => {
                             const result = this.validateImportRow(row, index + 2, importResults.taskNameMap, project.startDate);
                             if (result.isValid) {
                                 importResults.validTasks.push(result.task);
@@ -1452,6 +1217,170 @@ const dataService = {
             console.error('Erro na importação:', error);
             throw error;
         }
+    },
+
+    // NOVA FUNÇÃO: Processar importação do MS Project
+    // Mapeamento de colunas:
+    // MS Project: Id, Ativo, Modo da Tarefa, Nome, Duração, Início, Término, Predecessoras, Nível da estrutura de tópicos, Anotações
+    // Sistema: Tarefa, Data Início, Data Termino, Status, Progresso (%), Prioridade, Tarefa Pai
+    processMSProjectImport: async function (file) {
+        try {
+            const project = dataService.getCurrentProject();
+            if (!project) {
+                throw new Error('Nenhum projeto selecionado');
+            }
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = async (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                        if (jsonData.length === 0) {
+                            throw new Error('A planilha está vazia');
+                        }
+
+                        console.log('📊 Importação MS Project iniciada...');
+                        console.log('Colunas encontradas:', Object.keys(jsonData[0]));
+
+                        // Converter dados do MS Project para formato do sistema
+                        const convertedData = this.convertMSProjectToStandardFormat(jsonData);
+
+                        console.log(`✅ ${convertedData.length} tarefas convertidas do MS Project`);
+
+                        const importResults = {
+                            validTasks: [],
+                            invalidTasks: [],
+                            errors: [],
+                            taskNameMap: new Map(),
+                            msProjectIdMap: new Map() // Mapa de ID do MS Project para ID do sistema
+                        };
+
+                        // Mapear tarefas existentes
+                        project.tasks.forEach(task => {
+                            importResults.taskNameMap.set(task.name.trim().toLowerCase(), task.id);
+                        });
+
+                        // Validar cada linha convertida
+                        convertedData.forEach((row, index) => {
+                            const result = this.validateImportRow(row.converted, index + 2, importResults.taskNameMap, project.startDate);
+                            if (result.isValid) {
+                                // Manter referência do ID original do MS Project
+                                result.task.msProjectId = row.originalId;
+                                result.task.msProjectLevel = row.level;
+                                importResults.validTasks.push(result.task);
+                                importResults.taskNameMap.set(result.task.name.trim().toLowerCase(), result.task.id);
+                                importResults.msProjectIdMap.set(row.originalId, result.task.id);
+                            } else {
+                                importResults.invalidTasks.push({
+                                    row: index + 2,
+                                    data: row.converted,
+                                    errors: result.errors,
+                                    task: result.task
+                                });
+                            }
+                        });
+
+                        // Resolver hierarquia (tarefas pai/filho) baseado no nível
+                        this.resolveMSProjectHierarchy(importResults.validTasks);
+
+                        // Se há tarefas inválidas, mostrar modal de ajustes
+                        if (importResults.invalidTasks.length > 0) {
+                            uiService.showImportAdjustmentModal(importResults);
+                            resolve({ needsAdjustment: true, results: importResults });
+                        } else {
+                            // Todas válidas, importar diretamente
+                            await this.finalizeImport(importResults.validTasks, project);
+                            uiService.showToast(`MS Project: ${importResults.validTasks.length} tarefas importadas com sucesso!`, 'success');
+                            resolve({ needsAdjustment: false, count: importResults.validTasks.length });
+                        }
+
+                    } catch (error) {
+                        console.error('Erro na importação do MS Project:', error);
+                        reject(error);
+                    }
+                };
+
+                reader.onerror = (error) => reject(error);
+                reader.readAsArrayBuffer(file);
+            });
+
+        } catch (error) {
+            console.error('Erro na importação do MS Project:', error);
+            throw error;
+        }
+    },
+
+    // FUNÇÃO: Converter dados do MS Project para formato padrão
+    convertMSProjectToStandardFormat: function (jsonData) {
+        return jsonData.map((row, index) => {
+            // Mapeamento de colunas MS Project -> Sistema
+            const converted = {
+                'Tarefa': row['Nome'] || row['Task Name'] || row['name'] || '',
+                'Data Início': row['Início'] || row['Start'] || row['inicio'] || '',
+                'Data Termino': row['Término'] || row['Finish'] || row['termino'] || row['Fim'] || '',
+                'Status': 'Não Iniciada', // MS Project não tem status no mesmo formato
+                'Progresso (%)': row['% Concluída'] || row['% Complete'] || row['Progresso'] || 0,
+                'Prioridade': 'Média',
+                'Atribuído a (Nomes Separados por Vírgula)': row['Nomes'] || row['Resource Names'] || '',
+                'Risco (Sim/Nao)': 'Nao',
+                'Tarefa Pai (Nome)': '' // Será resolvido depois pela hierarquia
+            };
+
+            // Converter progresso para número
+            if (typeof converted['Progresso (%)'] === 'string') {
+                converted['Progresso (%)'] = parseInt(converted['Progresso (%)'].replace('%', '')) || 0;
+            }
+
+            // Determinar status baseado no progresso
+            const progress = converted['Progresso (%)'];
+            if (progress >= 100) {
+                converted['Status'] = 'Concluída';
+            } else if (progress > 0) {
+                converted['Status'] = 'Em Andamento';
+            }
+
+            return {
+                converted: converted,
+                originalId: row['Id'] || row['ID'] || row['id'] || index + 1,
+                level: parseInt(row['Nível da estrutura de tópicos'] || row['Outline Level'] || row['nivel'] || 1),
+                predecessors: row['Predecessoras'] || row['Predecessors'] || ''
+            };
+        }).filter(item => item.converted['Tarefa'] && item.converted['Tarefa'].toString().trim() !== '');
+    },
+
+    // FUNÇÃO: Resolver hierarquia de tarefas do MS Project
+    resolveMSProjectHierarchy: function (tasks) {
+        // Ordenar por nível para processar pais primeiro
+        const sortedTasks = [...tasks].sort((a, b) => (a.msProjectLevel || 1) - (b.msProjectLevel || 1));
+
+        // Stack para rastrear hierarquia
+        const parentStack = [];
+
+        sortedTasks.forEach((task, index) => {
+            const level = task.msProjectLevel || 1;
+
+            // Ajustar stack para o nível atual
+            while (parentStack.length > 0 && parentStack[parentStack.length - 1].level >= level) {
+                parentStack.pop();
+            }
+
+            // Se há um pai no stack, definir parentId
+            if (parentStack.length > 0) {
+                const parent = parentStack[parentStack.length - 1];
+                task.parentId = parent.id;
+            }
+
+            // Adicionar tarefa atual ao stack como potencial pai
+            parentStack.push({ id: task.id, level: level });
+        });
+
+        console.log('🔗 Hierarquia resolvida para', tasks.length, 'tarefas');
     },
 
 
@@ -2404,6 +2333,30 @@ const App = {
         document.getElementById('print-view-btn').addEventListener('click', () => window.print());
         document.getElementById('download-template-btn').addEventListener('click', () => reportService.downloadExcelTemplate());
         document.getElementById('import-excel-btn').addEventListener('click', () => document.getElementById('import-excel-input').click());
+
+        // NOVO: Event listener para importação do MS Project
+        document.getElementById('import-msproject-btn').addEventListener('click', () => document.getElementById('import-msproject-input').click());
+
+        // NOVO: Evento de importação do MS Project
+        document.getElementById('import-msproject-input').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    const result = await dataService.processMSProjectImport(file);
+
+                    if (!result.needsAdjustment) {
+                        uiService.showToast(`MS Project: ${result.count} tarefas importadas com sucesso!`, 'success');
+                    }
+                } catch (error) {
+                    console.error('Erro na importação do MS Project:', error);
+                    uiService.showToast('Erro ao importar arquivo do MS Project: ' + error.message, 'error');
+                } finally {
+                    document.getElementById('loader').style.display = 'none';
+                    event.target.value = '';
+                }
+            }
+        });
 
         // ATUALIZADO: Evento de importação com nova funcionalidade
         document.getElementById('import-excel-input').addEventListener('change', async (event) => {
