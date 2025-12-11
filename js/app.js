@@ -498,7 +498,10 @@ const dataService = {
                 tasks: project.tasks,
                 creatorId: ownerUid,
                 finalized: project.finalized || false,
-                finalizedAt: project.finalizedAt || null
+                finalizedAt: project.finalizedAt || null,
+                // NOVO: Rastrear última atualização para dashboard
+                lastUpdatedAt: new Date().toISOString(),
+                lastUpdatedBy: dataService.userId
             };
 
             await setDoc(projectDocRef, projectData, { merge: true });
@@ -508,6 +511,7 @@ const dataService = {
             uiService.showToast('Falha ao salvar dados. Verifique a conexão.', 'error');
         }
     },
+
 
     // NOVA FUNÇÃO: Calcular datas automáticas do projeto baseado nas tarefas
     calculateProjectDatesFromTasks: function (project) {
