@@ -1519,11 +1519,22 @@ const dataService = {
         };
 
         // Detectar colunas pelos nomes
+        console.log('🔍 Headers encontrados para mapeamento:', headers);
+
         headers.forEach(h => {
             const hLower = h.toLowerCase().trim();
-            if (hLower.includes('tarefa') || hLower.includes('nome') || hLower.includes('atividade') || hLower.includes('descrição')) {
+
+            // IMPORTANTE: Verificar 'tarefa pai' ANTES de verificar 'tarefa'
+            // para que 'Tarefa pai' não seja capturado como nome da tarefa
+            if (hLower.includes('pai') || hLower.includes('parent') || hLower.includes('mãe') || hLower.includes('mae')) {
+                columnMap.parentTask = h;
+                console.log(`  ✓ Coluna de tarefa pai detectada: "${h}"`);
+            }
+            // Só detectar como nome da tarefa se NÃO contiver 'pai'
+            else if ((hLower.includes('tarefa') || hLower.includes('nome') || hLower.includes('atividade') || hLower.includes('descrição')) && !hLower.includes('pai')) {
                 columnMap.taskName = h;
             }
+
             if ((hLower.includes('início') || hLower.includes('inicio')) && !columnMap.startDate) {
                 columnMap.startDate = h;
             }
@@ -1542,11 +1553,8 @@ const dataService = {
             if (hLower.includes('risco')) {
                 columnMap.risk = h;
             }
-            // NOVO: Detectar coluna de tarefa pai
-            if (hLower.includes('pai') || hLower.includes('parent') || hLower.includes('mãe') || hLower.includes('mae')) {
-                columnMap.parentTask = h;
-            }
         });
+
 
         console.log('📋 Mapeamento de colunas detectado:', columnMap);
 
