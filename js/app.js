@@ -1694,16 +1694,20 @@ const dataService = {
         const risk = row['Risco (Sim/Nao)']?.toString().trim().toLowerCase();
         task.risk = risk === 'sim';
 
-        // Processar tarefa pai
+        // Processar tarefa pai (OPCIONAL - não é erro se não encontrada)
         const parentTaskName = row['Tarefa Pai (Nome)']?.toString().trim();
         if (parentTaskName) {
             task.parentId = taskNameMap.get(parentTaskName.toLowerCase());
+            // Se não encontrou ainda, guardar o nome para resolver depois
             if (!task.parentId) {
-                errors.push(`Tarefa pai não encontrada: "${parentTaskName}"`);
+                task.parentTaskName = parentTaskName;
+                // NÃO adicionar erro - será resolvido após todas as tarefas serem processadas
+                console.log(`⚠️ Tarefa pai "${parentTaskName}" será resolvida após importação`);
             }
         } else {
             task.parentId = null;
         }
+
 
         // CORREÇÃO: Gerar ID único usando Math.random() para evitar duplicação
         task.id = Date.now() + Math.random();
@@ -1719,7 +1723,36 @@ const dataService = {
 
     // FUNÇÃO: Finalizar importação
     finalizeImport: async function (validTasks, project) {
+        // Adicionar tarefas ao projeto
         project.tasks = [...project.tasks, ...validTasks];
+
+        // NOVO: Resolver parentIds pendentes (tarefas que referenciam pais pelo nome)
+        const allTasks = project.tasks;
+        const taskNameToId = new Map();
+        allTasks.forEach(t => {
+            if (t.name) {
+                taskNameToId.set(t.name.toLowerCase().trim(), t.id);
+            }
+        });
+
+        let resolvedCount = 0;
+        validTasks.forEach(task => {
+            if (task.parentTaskName && !task.parentId) {
+                const parentId = taskNameToId.get(task.parentTaskName.toLowerCase().trim());
+                if (parentId) {
+                    task.parentId = parentId;
+                    resolvedCount++;
+                    console.log(`✅ Tarefa pai resolvida: "${task.name}" -> "${task.parentTaskName}"`);
+                } else {
+                    console.warn(`⚠️ Tarefa pai não encontrada: "${task.parentTaskName}" para tarefa "${task.name}"`);
+                }
+                delete task.parentTaskName; // Limpar campo temporário
+            }
+        });
+
+        if (resolvedCount > 0) {
+            console.log(`🔗 ${resolvedCount} hierarquias de tarefa pai resolvidas`);
+        }
 
         // ATUALIZAÇÃO AUTOMÁTICA: Atualizar datas do projeto se em modo automático
         dataService.updateProjectDatesIfAuto(project);
@@ -1728,6 +1761,7 @@ const dataService = {
         await dataService.saveProjectDocument(project);
         return validTasks.length;
     },
+
 
     // Função auxiliar para converter datas do Excel
     parseExcelDate: function (excelDate) {
