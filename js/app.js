@@ -1404,12 +1404,13 @@ const dataService = {
 
                         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-                        // Ler a planilha pulando as primeiras 4 linhas (header na linha 5)
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 4 });
+                        // Ler a planilha pulando as primeiras 3 linhas (header na linha 4)
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 3 });
 
                         if (jsonData.length === 0) {
-                            throw new Error('A planilha está vazia ou não tem dados após a linha 5');
+                            throw new Error('A planilha está vazia ou não tem dados após a linha 4');
                         }
+
 
                         console.log('📊 Importação Excel Antigo (Tecsidel) iniciada...');
                         console.log('Colunas encontradas:', Object.keys(jsonData[0]));
