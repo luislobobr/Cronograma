@@ -8,7 +8,8 @@
     <!-- Fonte moderna Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,6 +17,7 @@
     <!-- External CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body class="antialiased">
     <div id="loader" class="no-print">
         <div class="spinner"></div>
@@ -954,7 +956,6 @@
                         class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded hidden">Datas
                         manuais</span>
                 </div>
-                <!-- NOVO: Informação das tarefas de hoje -->
                 <div id="today-tasks-info" class="mt-2"></div>
             </header>
             <div id="kpi-dashboard" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"></div>
@@ -968,6 +969,16 @@
                             Tarefa</button>
                         <button id="import-excel-btn"
                             class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 flex items-center gap-2">Importar</button>
+                        <button id="import-msproject-btn"
+                            class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            MS Project
+                        </button>
+                        <input type="file" id="import-msproject-input" class="hidden" accept=".xlsx, .xls">
                         <button id="download-template-btn" class="text-sm text-blue-500 hover:underline">Baixar
                             Template</button>
                     </div>
@@ -1007,6 +1018,7 @@
                     <div id="assignee-summary-list" class="text-sm space-y-2 max-h-48 overflow-y-auto"></div>
                 </div>
             </div>
+
             <main id="content-area"
                 class="bg-[var(--card-bg)] p-4 rounded-lg shadow-md border border-[var(--border-color)]">
                 <div id="table-view">
