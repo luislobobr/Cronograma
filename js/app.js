@@ -1431,7 +1431,11 @@ const dataService = {
                         }
 
                         // Ler a planilha a partir da linha do header
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: headerRow });
+                        // IMPORTANTE: usar defval para incluir colunas com células vazias
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                            range: headerRow,
+                            defval: '' // Incluir colunas mesmo se tiverem células vazias
+                        });
 
                         if (jsonData.length === 0) {
                             throw new Error('A planilha está vazia ou não foi possível detectar os headers');
