@@ -6293,10 +6293,18 @@ const reportService = {
         sortedTasks.forEach(t => {
             const latestDates = dataService.getLatestDates(t);
             const statusInfo = reportService.getTaskStatusClass(t.status, latestDates.endDate);
-            const indent = t.level > 0 ? '  '.repeat(t.level) + '↳ ' : '';
+
+            // Tarefas pai em MAIÚSCULAS, subtarefas com indentação
+            let taskName;
+            if (t.level === 0) {
+                taskName = t.name.toUpperCase(); // Tarefa pai em maiúsculas
+            } else {
+                taskName = '  '.repeat(t.level) + '↳ ' + t.name; // Subtarefa com indent
+            }
 
             excelData.push([
-                indent + t.name,
+                taskName,
+
                 latestDates.startDate || '',
                 latestDates.endDate || '',
                 reportService.calculateDuration(latestDates.startDate, latestDates.endDate),
