@@ -6198,28 +6198,138 @@ const reportService = {
     },
     exportExcel: (project) => {
         if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
+
         const tasks = project.tasks || [];
-        const data = tasks.map(t => {
-            const latestDates = dataService.getLatestDates(t);
-            return {
-                'Tarefa': t.name,
-                'Data Início': latestDates.startDate,
-                'Data Termino': latestDates.endDate,
-                'Duração (dias)': reportService.calculateDuration(latestDates.startDate, latestDates.endDate),
-                'Status': t.status,
-                'Progresso (%)': t.progress,
-                'Prioridade': t.priority,
-                'Responsável': dataService.getAssignedUserNames(t.assignedUsers),
-                'Risco': t.risk ? 'Sim' : 'Não',
-                'Tarefa Pai': tasks.find(pt => pt.id === t.parentId)?.name || ''
+        const today = new Date().toLocaleDateString('pt-BR');
+
+        // Calcular estatísticas (igual ao PDF)
+        const stats = {
+            total: tasks.length,
+            concluidas: tasks.filter(t => t.status === 'Concluída').length,
+            emAndamento: tasks.filter(t => t.status === 'Em Andamento').length,
+            naoIniciadas: tasks.filter(t => t.status === 'Não Iniciada').length,
+            atrasadas: tasks.filter(t => {
+                const latestDates = dataService.getLatestDates(t);
+                return t.status !== 'Concluída' && new Date(latestDates.endDate) < new Date();
+            }).length,
+            emRisco: tasks.filter(t => t.risk).length
+        };
+        const progressoGeral = dataService.getProjectProgress(tasks);
+
+        // Função para construir hierarquia (igual ao PDF)
+        const buildHierarchicalTasks = (tasksArray) => {
+            const result = [];
+            const processedIds = new Set();
+            const normalizeId = (id) => (id === null || id === undefined || id === '') ? null : String(id);
+            const isRootTask = (task) => task.parentId === null || task.parentId === undefined || task.parentId === '';
+            const sortByDate = (a, b) => {
+                const dateA = new Date(dataService.getLatestDates(a).startDate);
+                const dateB = new Date(dataService.getLatestDates(b).startDate);
+                return dateA - dateB;
             };
+            const addTaskWithChildren = (task, level = 0) => {
+                const taskIdStr = normalizeId(task.id);
+                if (taskIdStr !== null && processedIds.has(taskIdStr)) return;
+                if (taskIdStr !== null) processedIds.add(taskIdStr);
+                result.push({ ...task, level });
+                const children = tasksArray.filter(t => {
+                    const parentIdStr = normalizeId(t.parentId);
+                    return parentIdStr !== null && taskIdStr !== null && parentIdStr === taskIdStr;
+                });
+                children.sort(sortByDate);
+                children.forEach(child => addTaskWithChildren(child, level + 1));
+            };
+            const rootTasks = tasksArray.filter(isRootTask);
+            rootTasks.sort(sortByDate);
+            rootTasks.forEach(parent => addTaskWithChildren(parent, 0));
+            return result;
+        };
+
+        const sortedTasks = buildHierarchicalTasks(tasks);
+
+        // Criar dados do Excel com cabeçalho igual ao PDF
+        const excelData = [];
+
+        // Linha 1: Título do projeto
+        excelData.push(['', project.name, '', '', '', '', '', '', '']);
+        excelData.push(['', `Gerado em: ${today}`, '', '', '', '', '', '', '']);
+        excelData.push([]); // Linha vazia
+
+        // Linha 4: Resumo de estatísticas (igual ao PDF)
+        excelData.push([
+            'Total',
+            'Concluídas',
+            'Em Andamento',
+            'Atrasadas',
+            'Em Risco',
+            'Progresso Geral',
+            '', '', ''
+        ]);
+        excelData.push([
+            stats.total,
+            stats.concluidas,
+            stats.emAndamento,
+            stats.atrasadas,
+            stats.emRisco,
+            `${progressoGeral}%`,
+            '', '', ''
+        ]);
+        excelData.push([]); // Linha vazia
+
+        // Linha 7: Cabeçalho da tabela de tarefas
+        excelData.push([
+            'Tarefa',
+            'Data Início',
+            'Data Término',
+            'Duração (dias)',
+            'Status',
+            'Progresso (%)',
+            'Prioridade',
+            'Responsável',
+            'Risco'
+        ]);
+
+        // Tarefas ordenadas hierarquicamente
+        sortedTasks.forEach(t => {
+            const latestDates = dataService.getLatestDates(t);
+            const statusInfo = reportService.getTaskStatusClass(t.status, latestDates.endDate);
+            const indent = t.level > 0 ? '  '.repeat(t.level) + '↳ ' : '';
+
+            excelData.push([
+                indent + t.name,
+                latestDates.startDate || '',
+                latestDates.endDate || '',
+                reportService.calculateDuration(latestDates.startDate, latestDates.endDate),
+                statusInfo.name,
+                t.progress || 0,
+                t.priority || 'Média',
+                dataService.getAssignedUserNames(t.assignedUsers),
+                t.risk ? 'Sim' : 'Não'
+            ]);
         });
-        const worksheet = XLSX.utils.json_to_sheet(data);
+
+        // Criar worksheet
+        const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+        // Definir largura das colunas
+        worksheet['!cols'] = [
+            { wch: 40 },  // Tarefa
+            { wch: 12 },  // Data Início
+            { wch: 12 },  // Data Término
+            { wch: 12 },  // Duração
+            { wch: 14 },  // Status
+            { wch: 12 },  // Progresso
+            { wch: 10 },  // Prioridade
+            { wch: 25 },  // Responsável
+            { wch: 8 }    // Risco
+        ];
+
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Tarefas');
-        XLSX.writeFile(workbook, `${project.name}_tarefas.xlsx`);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Relatório');
+        XLSX.writeFile(workbook, `${project.name}_relatorio.xlsx`);
         uiService.showToast('Exportado para Excel com sucesso!');
     },
+
     generatePdf: (project) => {
         if (!project) return uiService.showToast('Nenhum projeto selecionado.', 'error');
 
