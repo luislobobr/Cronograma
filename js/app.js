@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+﻿import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, setDoc, doc, collection, onSnapshot, addDoc, deleteDoc, query, collectionGroup, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
@@ -1126,11 +1126,11 @@ const dataService = {
     },
     getProjectProgress: (tasks) => {
         if (!tasks || tasks.length === 0) return 0;
-        const topLevelTasks = tasks.filter(t => t.parentId === null);
-        if (topLevelTasks.length === 0) return 0;
-        const totalProgress = topLevelTasks.reduce((sum, task) => sum + task.progress, 0);
-        return Math.round(totalProgress / topLevelTasks.length);
+        // ATUALIZADO: Calcular média de TODAS as tarefas (incluindo subtarefas)
+        const totalProgress = tasks.reduce((sum, task) => sum + (task.progress || 0), 0);
+        return Math.round(totalProgress / tasks.length);
     },
+
     // NOVA FUNÇÃO: Obter nome do responsável pelo UID
     getManagerName: (managerUid) => {
         if (!managerUid) return 'Não definido';
@@ -6238,7 +6238,8 @@ const reportService = {
             emRisco: tasks.filter(t => t.risk).length
         };
 
-        const progressoGeral = stats.total > 0 ? Math.round((stats.concluidas / stats.total) * 100) : 0;
+        // CORREÇÃO: Usar o mesmo cálculo de progresso da UI
+        const progressoGeral = dataService.getProjectProgress(tasks);
 
         // Função auxiliar para construir hierarquia (presente no Cronograma.html)
         const buildHierarchicalTasks = (tasksArray) => {
