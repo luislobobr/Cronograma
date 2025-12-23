@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR" class="">
 
 <head>
@@ -87,6 +87,8 @@
                         class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2">
                         <option value="Usuario">Usuário</option>
                         <option value="Gestor">Gestor</option>
+                        <option value="admin" id="new-user-role-admin-option" class="hidden">Admin (Acesso Total)
+                        </option>
                     </select>
                 </div>
                 <div class="flex justify-end gap-2">
@@ -137,6 +139,84 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal de Gestão de Setores (Admin) -->
+    <div id="sector-management-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-50">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-4xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-[var(--text-color)] flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-purple-500" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path
+                            d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13 0v6h2v-6h-2zm-4 2v4h2v-4h-2zm8 0v4h2v-4h-2z" />
+                    </svg>
+                    Gestão de Setores
+                </h2>
+                <button id="add-sector-btn"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Novo Setor
+                </button>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">
+                Setores organizam projetos e controlam o acesso dos usuários. Gestores só veem projetos do seu setor.
+            </p>
+            <div id="sector-list-container" class="overflow-y-auto max-h-96">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs uppercase bg-gray-700 text-gray-400 sticky top-0">
+                        <tr>
+                            <th class="p-3">Nome do Setor</th>
+                            <th class="p-3">Descrição</th>
+                            <th class="p-3">Projetos</th>
+                            <th class="p-3">Gestores</th>
+                            <th class="p-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sector-management-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button type="button"
+                    class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal de Formulário de Setor -->
+    <div id="sector-form-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-60">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 id="sector-form-title" class="text-2xl font-bold mb-4 text-[var(--text-color)]">Novo Setor</h2>
+            <form id="sector-form">
+                <input type="hidden" id="sector-id">
+                <div class="mb-4">
+                    <label for="sector-name" class="block text-sm font-medium text-gray-400">Nome do Setor</label>
+                    <input type="text" id="sector-name"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent"
+                        required placeholder="Ex: Projetos, Financeiro, RH...">
+                </div>
+                <div class="mb-4">
+                    <label for="sector-description" class="block text-sm font-medium text-gray-400">Descrição</label>
+                    <textarea id="sector-description" rows="3"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent resize-none"
+                        placeholder="Descrição opcional do setor..."></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button"
+                        class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                    <button type="submit"
+                        class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">Salvar
+                        Setor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal de Edição de Utilizador -->
     <div id="edit-user-modal"
         class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-60">
@@ -163,7 +243,10 @@
                         class="mt-1 block w-full border border-[var(--border-color)] bg-[var(--card-bg)] rounded-md shadow-sm p-2">
                         <option value="Usuario">Usuário</option>
                         <option value="Gestor">Gestor</option>
+                        <option value="admin" id="edit-user-role-admin-option" class="hidden">Admin (Acesso Total)
+                        </option>
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">Admins têm controle total do sistema</p>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-400 mb-2">Status da Conta</label>
@@ -255,6 +338,15 @@
                         required>
                         <option value="">Selecione um responsável</option>
                     </select>
+                </div>
+                <!-- NOVO: Dropdown de Setor -->
+                <div class="mb-4" id="project-sector-container">
+                    <label for="project-sector" class="block text-sm font-medium text-gray-400">Setor</label>
+                    <select id="project-sector"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-[var(--card-bg)]">
+                        <option value="">Sem setor específico</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Atribua o projeto a um setor para controle de acesso</p>
                 </div>
                 <!-- NOVO: Campos de data de início e término do projeto -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -780,8 +872,17 @@
                     </path>
                 </svg>
             </button>
+            <!-- NOVO: Botão de Gestão de Setores (Admin) -->
+            <button id="sector-management-btn"
+                class="no-print fixed top-4 right-16 z-50 p-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors hidden"
+                title="Gerir Setores">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13 0v6h2v-6h-2zm-4 2v4h2v-4h-2zm8 0v4h2v-4h-2z" />
+                </svg>
+            </button>
             <button id="user-management-btn"
-                class="no-print fixed top-4 right-16 z-50 p-2 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors hidden"
+                class="no-print fixed top-4 right-28 z-50 p-2 rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-colors hidden"
                 title="Gerir Utilizadores">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
                     <path
@@ -789,7 +890,7 @@
                 </svg>
             </button>
             <button id="logout-btn"
-                class="no-print fixed top-4 right-28 z-50 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                class="no-print fixed top-4 right-40 z-50 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
                 title="Logout">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
                     <path
