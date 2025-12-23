@@ -11,6 +11,7 @@ let storage;
 let unsubscribeProjects = () => { };
 let unsubscribeUsers = () => { };
 let unsubscribeNotifications = () => { };
+let unsubscribeSectors = () => { }; // NOVO: Listener de setores
 
 // --- CONSTANTES E CONFIGURAÇÃO ---
 const ALLOWED_DOMAIN = "@vinci-highways.com.br";
@@ -82,9 +83,11 @@ const taskService = {
 const dataService = {
     projects: [],
     users: [],
+    sectors: [], // NOVO: Array para armazenar setores
     currentProjectId: null,
     userId: null,
     userRole: null,
+    userSectorId: null, // NOVO: ID do setor do usuário
     isAuthReady: false,
     taskService: taskService, // NOVO: Adicionar serviço de tarefas
     notifications: [], // NOVO: Array para armazenar notificações
@@ -114,6 +117,7 @@ const dataService = {
                     dataService.listenToUsers();
                     dataService.listenToProjects();
                     dataService.listenToNotifications(); // NOVO: Iniciar listener de notificações
+                    dataService.listenToSectors(); // NOVO: Iniciar listener de setores
 
                     uiService.updateUserRoleDisplay();
                 } else {
@@ -122,6 +126,8 @@ const dataService = {
                     dataService.isAuthReady = true;
                     dataService.projects = [];
                     dataService.userRole = null;
+                    dataService.userSectorId = null; // NOVO: Limpar setor do usuário
+                    dataService.sectors = []; // NOVO: Limpar setores
                     dataService.notifications = []; // NOVO: Limpar notificações
 
                     document.getElementById('logged-in-container').classList.add('hidden');
@@ -130,6 +136,7 @@ const dataService = {
                     unsubscribeProjects();
                     unsubscribeUsers();
                     unsubscribeNotifications(); // NOVO: Parar listener de notificações
+                    unsubscribeSectors(); // NOVO: Parar listener de setores
                 }
             });
         } catch (error) {
@@ -145,9 +152,13 @@ const dataService = {
         const userSnapshot = await getDoc(userDocRef);
 
         if (userSnapshot.exists()) {
-            dataService.userRole = userSnapshot.data().role;
+            const userData = userSnapshot.data();
+            dataService.userRole = userData.role || 'user';
+            dataService.userSectorId = userData.sectorId || null;
+            console.log(`👤 Perfil carregado: role=${dataService.userRole}, sectorId=${dataService.userSectorId}`);
         } else {
-            dataService.userRole = 'Usuario';
+            dataService.userRole = 'user';
+            dataService.userSectorId = null;
         }
     },
 
@@ -207,6 +218,97 @@ const dataService = {
             console.error("Erro ao atualizar utilizador:", error);
             throw error;
         }
+    },
+
+    // --- GESTÃO DE SETORES (Admin) ---
+    listenToSectors: () => {
+        unsubscribeSectors();
+        if (!dataService.isAuthReady) return;
+
+        const sectorsRef = collection(db, 'sectors');
+
+        unsubscribeSectors = onSnapshot(sectorsRef, (snapshot) => {
+            dataService.sectors = [];
+            snapshot.forEach(doc => {
+                dataService.sectors.push({ id: doc.id, ...doc.data() });
+            });
+            console.log(`📁 Setores carregados: ${dataService.sectors.length}`);
+
+            // Atualizar UI se modal de setores estiver aberto
+            if (document.getElementById('sector-management-modal')?.classList.contains('modal-visible')) {
+                uiService.renderSectorManagementTable();
+            }
+
+            // Atualizar dropdown de setores no formulário de projeto
+            uiService.populateSectorDropdown();
+        }, (error) => {
+            console.error("Erro ao ouvir setores:", error);
+        });
+    },
+
+    addSector: async (sectorData) => {
+        try {
+            const sectorsRef = collection(db, 'sectors');
+            await addDoc(sectorsRef, {
+                name: sectorData.name,
+                description: sectorData.description || '',
+                createdAt: new Date().toISOString(),
+                createdBy: dataService.userId
+            });
+            uiService.showToast(`Setor "${sectorData.name}" criado com sucesso!`);
+        } catch (error) {
+            console.error("Erro ao criar setor:", error);
+            uiService.showToast('Falha ao criar setor.', 'error');
+            throw error;
+        }
+    },
+
+    updateSector: async (sectorId, sectorData) => {
+        try {
+            const sectorRef = doc(db, 'sectors', sectorId);
+            await setDoc(sectorRef, {
+                name: sectorData.name,
+                description: sectorData.description || '',
+                updatedAt: new Date().toISOString(),
+                updatedBy: dataService.userId
+            }, { merge: true });
+            uiService.showToast(`Setor "${sectorData.name}" atualizado com sucesso!`);
+        } catch (error) {
+            console.error("Erro ao atualizar setor:", error);
+            uiService.showToast('Falha ao atualizar setor.', 'error');
+            throw error;
+        }
+    },
+
+    deleteSector: async (sectorId) => {
+        try {
+            // Verificar se existem projetos associados ao setor
+            const projectsWithSector = dataService.projects.filter(p => p.sectorId === sectorId);
+            if (projectsWithSector.length > 0) {
+                uiService.showToast(`Não é possível excluir o setor. Existem ${projectsWithSector.length} projeto(s) associado(s).`, 'error');
+                return false;
+            }
+
+            // Verificar se existem usuários associados ao setor
+            const usersWithSector = dataService.users.filter(u => u.sectorId === sectorId);
+            if (usersWithSector.length > 0) {
+                uiService.showToast(`Não é possível excluir o setor. Existem ${usersWithSector.length} usuário(s) associado(s).`, 'error');
+                return false;
+            }
+
+            const sectorRef = doc(db, 'sectors', sectorId);
+            await deleteDoc(sectorRef);
+            uiService.showToast('Setor excluído com sucesso!');
+            return true;
+        } catch (error) {
+            console.error("Erro ao excluir setor:", error);
+            uiService.showToast('Falha ao excluir setor.', 'error');
+            return false;
+        }
+    },
+
+    getSectorById: (sectorId) => {
+        return dataService.sectors.find(s => s.id === sectorId);
     },
 
     // --- CADASTRO DE USUÁRIOS PELO GESTOR ---
@@ -346,16 +448,31 @@ const dataService = {
                 newProjects.push(project);
             });
 
-            // NOVO: Filtragem automática para usuários comuns
-            if (dataService.userRole === 'Usuario') {
+            // RBAC: Filtragem por role e setor
+            const role = dataService.userRole?.toLowerCase();
+            if (role === 'admin') {
+                // Admin vê TUDO
+                console.log('👑 Admin: acesso completo a todos os projetos');
+            } else if (role === 'gestor') {
+                // Gestor vê projetos do seu setor + legados (sem setor)
                 newProjects = newProjects.filter(project => {
+                    const inSector = !project.sectorId || project.sectorId === dataService.userSectorId;
+                    return inSector;
+                });
+                console.log(`📁 Gestor: filtrando por setor ${dataService.userSectorId}`);
+            } else {
+                // User: vê projetos que criou ou foi atribuído (dentro do setor)
+                newProjects = newProjects.filter(project => {
+                    const inSector = !project.sectorId || !dataService.userSectorId || project.sectorId === dataService.userSectorId;
                     const isCreator = project.creatorId === dataService.userId;
                     const isAssigned = project.tasks.some(task =>
                         (task.assignedUsers || []).includes(dataService.userId)
                     );
-                    return isCreator || isAssigned;
+                    return inSector && (isCreator || isAssigned);
                 });
+                console.log('👤 User: filtrando por criador/atribuído');
             }
+
 
             dataService.projects = newProjects;
             dataService.recalculateAllProgress();
@@ -404,6 +521,7 @@ const dataService = {
                 startDate: projectData.startDate, // NOVO: Salvar data de início
                 endDate: projectData.endDate,     // NOVO: Salvar data de término
                 dateMode: 'manual', // NOVO: Inicialmente manual
+                sectorId: projectData.sectorId || null, // NOVO: ID do setor
                 tasks: [],
                 creatorId: dataService.userId
             };
@@ -2246,6 +2364,43 @@ const App = {
         document.getElementById('logout-btn').addEventListener('click', () => App.logout());
         document.getElementById('user-management-btn').addEventListener('click', () => uiService.openUserManagementModal());
 
+        // NOVO: Event listener para gestão de setores (Admin)
+        document.getElementById('sector-management-btn')?.addEventListener('click', () => {
+            uiService.renderSectorManagementTable();
+            uiService.openModal('sector-management-modal');
+        });
+
+        // NOVO: Event listener para adicionar novo setor
+        document.getElementById('add-sector-btn')?.addEventListener('click', () => {
+            uiService.openSectorFormModal();
+        });
+
+        // NOVO: Event listener para formulário de setor
+        document.getElementById('sector-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const sectorId = document.getElementById('sector-id').value;
+            const sectorData = {
+                name: document.getElementById('sector-name').value.trim(),
+                description: document.getElementById('sector-description').value.trim()
+            };
+
+            if (!sectorData.name) {
+                uiService.showToast('Nome do setor é obrigatório.', 'error');
+                return;
+            }
+
+            try {
+                if (sectorId) {
+                    await dataService.updateSector(sectorId, sectorData);
+                } else {
+                    await dataService.addSector(sectorData);
+                }
+                uiService.closeModal('sector-form-modal');
+            } catch (error) {
+                console.error('Erro ao salvar setor:', error);
+            }
+        });
+
         // NOVO: Event listeners para o sistema de notificações
         document.getElementById('notification-btn').addEventListener('click', () => uiService.toggleNotificationDropdown());
         document.getElementById('mark-all-read-btn').addEventListener('click', () => dataService.markAllNotificationsAsRead());
@@ -2455,6 +2610,7 @@ const App = {
             const manager = document.getElementById('project-manager').value;
             const startDate = document.getElementById('project-start-date').value; // NOVO: Data de início
             const endDate = document.getElementById('project-end-date').value;     // NOVO: Data de término
+            const sectorId = document.getElementById('project-sector')?.value || null; // NOVO: Setor
 
             if (name && manager && startDate && endDate) {
                 if (new Date(startDate) > new Date(endDate)) {
@@ -2462,7 +2618,7 @@ const App = {
                     return;
                 }
 
-                dataService.addProject({ name, manager, startDate, endDate });
+                dataService.addProject({ name, manager, startDate, endDate, sectorId });
                 uiService.closeModal('project-modal');
                 uiService.showToast('Projeto criado com sucesso! Sincronizando...', 'success');
             } else {
@@ -2872,26 +3028,44 @@ const uiService = {
     // --- AUTH UI ---
     updateUserRoleDisplay: () => {
         const roleEl = document.getElementById('user-role-display');
-        const btn = document.getElementById('user-management-btn');
+        const userBtn = document.getElementById('user-management-btn');
+        const sectorBtn = document.getElementById('sector-management-btn');
 
         if (dataService.userRole) {
+            const role = dataService.userRole.toLowerCase();
             roleEl.textContent = `Papel: ${dataService.userRole}`;
-            roleEl.classList.remove('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300', 'bg-green-100', 'dark:bg-green-900', 'text-green-700', 'dark:text-green-300');
 
-            if (dataService.userRole === 'Gestor') {
+            // Resetar classes
+            roleEl.classList.remove(
+                'bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300',
+                'bg-green-100', 'dark:bg-green-900', 'text-green-700', 'dark:text-green-300',
+                'bg-purple-100', 'dark:bg-purple-900', 'text-purple-700', 'dark:text-purple-300'
+            );
+
+            if (role === 'admin') {
+                // Admin: badge roxo, vê botão de setores e usuários
+                roleEl.classList.add('bg-purple-100', 'dark:bg-purple-900', 'text-purple-700', 'dark:text-purple-300');
+                sectorBtn?.classList.remove('hidden');
+                userBtn?.classList.remove('hidden');
+            } else if (role === 'gestor') {
+                // Gestor: badge verde, vê botão de usuários
                 roleEl.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-700', 'dark:text-green-300');
-                btn.classList.remove('hidden');
+                sectorBtn?.classList.add('hidden');
+                userBtn?.classList.remove('hidden');
             } else {
+                // Usuário comum: badge azul, não vê botões de gestão
                 roleEl.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
-                btn.classList.add('hidden');
+                sectorBtn?.classList.add('hidden');
+                userBtn?.classList.add('hidden');
             }
         }
     },
 
-    // --- USER MANAGEMENT UI (Gestor) ---
+    // --- USER MANAGEMENT UI (Gestor/Admin) ---
     openUserManagementModal: () => {
-        if (dataService.userRole !== 'Gestor') {
-            uiService.showToast('Acesso negado: Apenas Gestores podem gerir utilizadores.', 'error');
+        const role = dataService.userRole?.toLowerCase();
+        if (role !== 'gestor' && role !== 'admin') {
+            uiService.showToast('Acesso negado: Apenas Gestores e Admins podem gerir utilizadores.', 'error');
             return;
         }
         uiService.renderUserManagementTable();
@@ -2899,11 +3073,21 @@ const uiService = {
     },
 
     openAddUserModal: () => {
-        if (dataService.userRole !== 'Gestor') {
-            uiService.showToast('Acesso negado: Apenas Gestores podem cadastrar usuários.', 'error');
+        const role = dataService.userRole?.toLowerCase();
+        if (role !== 'gestor' && role !== 'admin') {
+            uiService.showToast('Acesso negado: Apenas Gestores e Admins podem cadastrar usuários.', 'error');
             return;
         }
         document.getElementById('add-user-form').reset();
+
+        // Mostrar opção Admin se usuário atual for Admin
+        const adminOption = document.getElementById('new-user-role-admin-option');
+        if (role === 'admin') {
+            adminOption?.classList.remove('hidden');
+        } else {
+            adminOption?.classList.add('hidden');
+        }
+
         uiService.openModal('add-user-modal');
     },
 
@@ -2935,24 +3119,35 @@ const uiService = {
         const tbody = document.getElementById('user-management-table-body');
         tbody.innerHTML = '';
 
+        const currentUserRole = dataService.userRole?.toLowerCase();
+        const isAdmin = currentUserRole === 'admin';
+
         dataService.users.forEach(user => {
             const row = document.createElement('tr');
             const isActive = user.active !== false;
             row.className = `border-b border-[var(--border-color)] ${!isActive ? 'user-row-inactive' : ''}`;
 
-            const roleOptions = ['Usuario', 'Gestor'].map(role =>
-                `<option value="${role}" ${user.role === role ? 'selected' : ''}>${role}</option>`
+            // Admin pode ver e atribuir todas as roles, Gestor só vê Usuario e Gestor
+            const availableRoles = isAdmin ? ['Usuario', 'Gestor', 'admin'] : ['Usuario', 'Gestor'];
+            const roleOptions = availableRoles.map(role =>
+                `<option value="${role}" ${user.role?.toLowerCase() === role.toLowerCase() ? 'selected' : ''}>${role}</option>`
             ).join('');
 
             const isSelf = user.id === dataService.userId;
+            // Admin pode editar qualquer usuário (exceto a si mesmo para mudar role)
             const isDisabled = isSelf ? 'disabled' : '';
+
+            // Determinar a cor do badge baseado no role
+            const userRole = user.role?.toLowerCase() || 'usuario';
+            const badgeClass = userRole === 'admin' ? 'bg-purple-600 text-white' :
+                userRole === 'gestor' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white';
 
             row.innerHTML = `
                 <td class="p-3 font-medium">${user.name || 'Não informado'}</td>
                 <td class="p-3">${user.email}</td>
                 <td class="p-3">
-                    <span class="px-2 py-1 rounded-full text-xs ${user.role === 'Gestor' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'}">
-                        ${user.role}
+                    <span class="px-2 py-1 rounded-full text-xs ${badgeClass}">
+                        ${user.role || 'Usuario'}
                     </span>
                 </td>
                 <td class="p-3">
@@ -3016,8 +3211,9 @@ const uiService = {
     },
 
     openEditUserModal: (userId) => {
-        if (dataService.userRole !== 'Gestor') {
-            uiService.showToast('Acesso negado: Apenas Gestores podem editar utilizadores.', 'error');
+        const role = dataService.userRole?.toLowerCase();
+        if (role !== 'gestor' && role !== 'admin') {
+            uiService.showToast('Acesso negado: Apenas Gestores e Admins podem editar utilizadores.', 'error');
             return;
         }
         const user = dataService.users.find(u => u.id === userId);
@@ -3028,6 +3224,15 @@ const uiService = {
         document.getElementById('edit-user-id').value = user.id;
         document.getElementById('edit-user-name').value = user.name || '';
         document.getElementById('edit-user-email').value = user.email || '';
+
+        // Mostrar opção Admin se usuário atual for Admin
+        const adminOption = document.getElementById('edit-user-role-admin-option');
+        if (role === 'admin') {
+            adminOption?.classList.remove('hidden');
+        } else {
+            adminOption?.classList.add('hidden');
+        }
+
         document.getElementById('edit-user-role').value = user.role || 'Usuario';
         const isActive = user.active !== false;
         document.getElementById('edit-user-active').checked = isActive;
@@ -3223,6 +3428,140 @@ const uiService = {
             option.textContent = `${user.name || user.email.split('@')[0]} (${user.role})`;
             selectEl.appendChild(option);
         });
+    },
+
+    // NOVA FUNÇÃO: Popula o dropdown de setores no formulário de projeto
+    populateSectorDropdown: function () {
+        const selectEl = document.getElementById('project-sector');
+        const containerEl = document.getElementById('project-sector-container');
+        if (!selectEl) return;
+
+        selectEl.innerHTML = '<option value="">Sem setor específico</option>';
+
+        // Mostrar/ocultar baseado na role
+        const role = dataService.userRole?.toLowerCase();
+        if (role === 'admin') {
+            // Admin vê todos os setores
+            containerEl?.classList.remove('hidden');
+            dataService.sectors.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector.id;
+                option.textContent = sector.name;
+                selectEl.appendChild(option);
+            });
+        } else if (role === 'gestor') {
+            // Gestor só vê seu setor (pré-selecionado)
+            containerEl?.classList.remove('hidden');
+            const userSector = dataService.sectors.find(s => s.id === dataService.userSectorId);
+            if (userSector) {
+                const option = document.createElement('option');
+                option.value = userSector.id;
+                option.textContent = userSector.name;
+                option.selected = true;
+                selectEl.appendChild(option);
+            }
+            selectEl.disabled = true; // Gestor não pode mudar o setor
+        } else {
+            // Usuário comum não vê o dropdown
+            containerEl?.classList.add('hidden');
+        }
+    },
+
+    // NOVA FUNÇÃO: Renderizar tabela de gestão de setores
+    renderSectorManagementTable: function () {
+        const tableBody = document.getElementById('sector-management-table-body');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '';
+
+        if (dataService.sectors.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="p-4 text-center text-gray-500">
+                        Nenhum setor cadastrado. Clique em "Novo Setor" para criar.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        dataService.sectors.forEach(sector => {
+            // Contar projetos do setor
+            const projectCount = dataService.projects.filter(p => p.sectorId === sector.id).length;
+            // Contar gestores do setor
+            const gestorCount = dataService.users.filter(u => u.sectorId === sector.id && u.role?.toLowerCase() === 'gestor').length;
+
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-700 hover:bg-gray-800';
+            row.innerHTML = `
+                <td class="p-3 font-medium text-[var(--text-color)]">${sector.name}</td>
+                <td class="p-3 text-gray-400">${sector.description || '-'}</td>
+                <td class="p-3">
+                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs px-2 py-1 rounded-full">
+                        ${projectCount}
+                    </span>
+                </td>
+                <td class="p-3">
+                    <span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300 text-xs px-2 py-1 rounded-full">
+                        ${gestorCount}
+                    </span>
+                </td>
+                <td class="p-3 text-center">
+                    <div class="flex justify-center gap-2">
+                        <button onclick="uiService.openSectorFormModal('${sector.id}')"
+                            class="text-blue-500 hover:text-blue-400 p-1" title="Editar">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </button>
+                        <button onclick="uiService.confirmDeleteSector('${sector.id}', '${sector.name}')"
+                            class="text-red-500 hover:text-red-400 p-1" title="Excluir">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    },
+
+    // NOVA FUNÇÃO: Abrir modal de formulário de setor
+    openSectorFormModal: function (sectorId = null) {
+        const title = document.getElementById('sector-form-title');
+        const nameInput = document.getElementById('sector-name');
+        const descInput = document.getElementById('sector-description');
+        const idInput = document.getElementById('sector-id');
+
+        if (sectorId) {
+            const sector = dataService.getSectorById(sectorId);
+            if (sector) {
+                title.textContent = 'Editar Setor';
+                nameInput.value = sector.name;
+                descInput.value = sector.description || '';
+                idInput.value = sectorId;
+            }
+        } else {
+            title.textContent = 'Novo Setor';
+            nameInput.value = '';
+            descInput.value = '';
+            idInput.value = '';
+        }
+
+        this.openModal('sector-form-modal');
+    },
+
+    // NOVA FUNÇÃO: Confirmar exclusão de setor
+    confirmDeleteSector: async function (sectorId, sectorName) {
+        const confirmed = await this.showConfirmModalPromise(
+            `Tem certeza que deseja excluir o setor "${sectorName}"?`,
+            'Excluir Setor'
+        );
+
+        if (confirmed) {
+            await dataService.deleteSector(sectorId);
+        }
     },
 
     // NOVA FUNÇÃO: Mostrar modal de confirmação para datas de subtarefas
