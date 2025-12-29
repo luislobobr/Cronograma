@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Projetos - Vinci Highways</title>
+    <title>Vinci Projects - Gerenciador de Projetos</title>
     <!-- Fonte moderna Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,12 +29,27 @@
     <div id="auth-modal"
         class="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 modal-transition modal-visible">
         <div class="bg-[var(--card-bg)] rounded-xl shadow-2xl p-8 w-full max-w-md">
-            <!-- Logo maior e alinhada à esquerda -->
-            <div class="logo-container-login">
-                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                    alt="Vinci Highways" class="logo-login">
+            <!-- Logo Vinci Projects -->
+            <div class="flex items-center gap-3 mb-6">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="48" height="48" rx="10" fill="url(#vinci-gradient)" />
+                    <text x="24" y="30" text-anchor="middle" fill="#2563eb" font-family="Montserrat, sans-serif"
+                        font-weight="800" font-size="22">V</text>
+                    <defs>
+                        <linearGradient id="vinci-gradient" x1="0" y1="0" x2="48" y2="48"
+                            gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#1e1e1e" />
+                            <stop offset="1" stop-color="#2d2d2d" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div>
+                    <h1 class="text-2xl font-bold" style="font-family: 'Montserrat', sans-serif; color: #2563eb;">Vinci
+                        Projects</h1>
+                    <p class="text-xs text-gray-400">Gestão de Projetos</p>
+                </div>
             </div>
-            <h2 class="text-3xl font-bold mb-2 text-blue-600 text-left">Vinci Highways Projects</h2>
+            <h2 class="text-2xl font-bold mb-2" style="color: #2563eb;">Bem-vindo</h2>
             <p class="text-gray-400 mb-6 text-left">Acesso restrito ao domínio @vinci-highways.com.br</p>
 
             <form id="auth-form" class="space-y-4">
@@ -713,7 +728,7 @@
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center">
+                        class="bg-orange-500 text-white px-6 py-3 rounded-md hover:bg-orange-600 transition-colors font-medium flex items-center shadow-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
                             fill="currentColor">
                             <path fill-rule="evenodd"
@@ -820,7 +835,7 @@
 
             <div class="p-4 border-t border-[var(--border-color)] flex justify-end">
                 <button id="alerts-close-btn"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
+                    class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition-colors font-medium shadow-lg">
                     Entendido
                 </button>
             </div>
@@ -831,6 +846,17 @@
     <div class="relative min-h-screen">
         <input type="file" id="import-excel-input" class="hidden" accept=".xlsx, .xls">
         <div id="logged-in-container" class="hidden">
+            <!-- NOVO: Botão de Relatórios (Admin/Gestor only) -->
+            <div id="reports-btn-container" class="no-print fixed top-4 right-96 z-50 hidden">
+                <a href="reports.html"
+                    class="inline-flex items-center gap-2 p-2 px-4 rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+                    </svg>
+                    <span class="text-sm font-medium">Relatórios</span>
+                </a>
+            </div>
+
             <!-- NOVO: Botão de notificações -->
             <div class="notification-bell no-print fixed top-4 right-40 z-50">
                 <button id="notification-btn"
@@ -901,10 +927,11 @@
 
         <!-- Vista de Projetos -->
         <div id="project-view" class="container mx-auto p-4 md:p-8 hidden">
-            <!-- Logo maior e alinhada à esquerda -->
-            <div class="logo-container-login">
-                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                    alt="Vinci Highways" class="logo-login">
+            <!-- Logo Vinci Projects -->
+            <div class="flex items-center gap-3 mb-4">
+                <img src="logo-topo.png" alt="Vinci Logo" class="h-12">
+                <span class="text-xl font-bold" style="font-family: 'Montserrat', sans-serif; color: #2563eb;">Vinci
+                    Projects</span>
             </div>
 
             <header class="mb-8">
@@ -989,10 +1016,21 @@
 
         <!-- Vista do Dashboard do Projeto -->
         <div id="dashboard-view" class="container mx-auto p-4 md:p-8 hidden">
-            <!-- Logo maior e alinhada à esquerda -->
-            <div class="logo-container-login">
-                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                    alt="Vinci Highways" class="logo-login">
+            <!-- Logo Vinci Projects -->
+            <div class="flex items-center gap-3 mb-4">
+                <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="48" height="48" rx="10" fill="url(#vinci-dash)" />
+                    <text x="24" y="30" text-anchor="middle" fill="#2563eb" font-family="Montserrat, sans-serif"
+                        font-weight="800" font-size="22">V</text>
+                    <defs>
+                        <linearGradient id="vinci-dash" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#1e1e1e" />
+                            <stop offset="1" stop-color="#2d2d2d" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span class="text-xl font-bold" style="font-family: 'Montserrat', sans-serif; color: #2563eb;">Vinci
+                    Projects</span>
             </div>
 
             <header class="mb-8">
@@ -1177,6 +1215,102 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- MODAL: User Management -->
+    <div id="user-management-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-60">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Gerenciar Usuários</h2>
+            <p class="text-gray-400 text-sm mb-4">
+                Controle de acesso e permissões de usuários do sistema.
+            </p>
+            <div id="user-list-container" class="overflow-y-auto max-h-96">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs uppercase bg-gray-700 text-gray-400 sticky top-0">
+                        <tr>
+                            <th class="p-3">Nome</th>
+                            <th class="p-3">Email</th>
+                            <th class="p-3">Papel</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-management-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button type="button"
+                    class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Edit User -->
+    <div id="edit-user-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center no-print modal-transition modal-hidden modal-z-70">
+        <div class="bg-[var(--card-bg)] rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--text-color)]">Editar Utilizador</h2>
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-user-id">
+
+                <div class="mb-4">
+                    <label for="edit-user-name" class="block text-sm font-medium text-gray-400">Nome</label>
+                    <input type="text" id="edit-user-name"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent"
+                        required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="edit-user-email" class="block text-sm font-medium text-gray-400">E-mail</label>
+                    <input type="email" id="edit-user-email" disabled
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent opacity-60"
+                        required>
+                    <small class="text-gray-500">Deve terminar com @vinci-highways.com.br</small>
+                </div>
+
+                <div class="mb-4">
+                    <label for="edit-user-role" class="block text-sm font-medium text-gray-400">Papel</label>
+                    <select id="edit-user-role"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent">
+                        <option value="Usuario">Usuário</option>
+                        <option value="Gestor">Gestor</option>
+                        <option id="edit-user-role-admin-option" value="admin" class="hidden">Admin</option>
+                    </select>
+                    <small class="text-gray-500">Admins têm controle total do sistema</small>
+                </div>
+
+                <!-- NOVO: Campo de Setor -->
+                <div class="mb-4">
+                    <label for="edit-user-sector" class="block text-sm font-medium text-gray-400">Setor</label>
+                    <select id="edit-user-sector"
+                        class="mt-1 block w-full border border-[var(--border-color)] rounded-md shadow-sm p-2 bg-transparent">
+                        <option value="">Selecione um setor...</option>
+                    </select>
+                    <small class="text-gray-500">Gestores só veem projetos do seu setor</small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Status da Conta</label>
+                    <div class="flex items-center">
+                        <label class="user-status-toggle">
+                            <input type="checkbox" id="edit-user-active" checked>
+                            <span class="user-status-slider"></span>
+                        </label>
+                        <span id="edit-user-status-label" class="user-status-label active ml-3">Ativo</span>
+                    </div>
+                    <small class="text-gray-500">Utilizadores inativos não podem aceder ao sistema</small>
+                </div>
+
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button"
+                        class="cancel-btn bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
 

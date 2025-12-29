@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios Gerenciais - Vinci Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="antialiased">
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-[var(--card-bg)] border-b border-[var(--border-color)] px-6 py-4 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-gray-400 hover:text-[var(--text-color)] transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <img src="logo-topo.png" alt="Logo" class="h-10">
+                <h1 class="text-2xl font-bold" style="font-family: 'Montserrat', sans-serif; color: #2563eb;">
+                    📊 Relatórios Gerenciais
+                </h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="user-info" class="text-sm text-gray-400"></span>
+                <button id="theme-toggle"
+                    class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8" id="main-content" style="display: none;">
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Projetos -->
+            <div class="dashboard-card card-blue">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-icon icon-blue">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                    </div>
+                    <div class="dashboard-card-info">
+                        <div class="dashboard-card-value" id="kpi-total-projects">0</div>
+                        <div class="dashboard-card-label">Projetos Ativos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Usuários -->
+            <div class="dashboard-card card-green">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-icon icon-green">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <div class="dashboard-card-info">
+                        <div class="dashboard-card-value" id="kpi-total-users">0</div>
+                        <div class="dashboard-card-label">Usuários Cadastrados</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projetos Atrasados -->
+            <div class="dashboard-card card-red">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-icon icon-red">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="dashboard-card-info">
+                        <div class="dashboard-card-value" id="kpi-overdue-projects">0</div>
+                        <div class="dashboard-card-label">Projetos Atrasados</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usuários Inativos -->
+            <div class="dashboard-card card-amber">
+                <div class="dashboard-card-header">
+                    <div class="dashboard-card-icon icon-amber">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div class="dashboard-card-info">
+                        <div class="dashboard-card-value" id="kpi-inactive-users">0</div>
+                        <div class="dashboard-card-label">Usuários Inativos (7+ dias)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6 border-b border-[var(--border-color)]">
+            <nav class="flex gap-6">
+                <button class="tab-btn active" data-tab="projects">
+                    Projetos
+                </button>
+                <button class="tab-btn" data-tab="users">
+                    Usuários
+                </button>
+                <button class="tab-btn" data-tab="activities">
+                    Atividades Recentes
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab: Projetos -->
+        <div id="tab-projects" class="tab-content active">
+            <div class="bg-[var(--card-bg)] rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">Relatório de Projetos</h2>
+                    <div class="flex gap-2">
+                        <button id="export-projects-excel-btn"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L13 1.586A2 2 0 0011.586 1H9z" />
+                            </svg>
+                            Excel
+                        </button>
+                        <button id="export-projects-pdf-btn"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                            </svg>
+                            PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <input type="text" id="filter-project-name" placeholder="Filtrar por nome..."
+                        class="border border-[var(--border-color)] rounded-md p-2 bg-transparent">
+                    <select id="filter-project-status"
+                        class="border border-[var(--border-color)] rounded-md p-2 bg-transparent">
+                        <option value="">Todos os status</option>
+                        <option value="active">Ativos</option>
+                        <option value="overdue">Atrasados</option>
+                        <option value="inactive">Inativos (7+ dias)</option>
+                    </select>
+                    <select id="filter-project-sector"
+                        class="border border-[var(--border-color)] rounded-md p-2 bg-transparent">
+                        <option value="">Todos os setores</option>
+                    </select>
+                </div>
+
+                <!-- Tabela -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Projeto</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Gestor</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Último Update</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Por Quem</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Dias Inativo</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Progresso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Usuários -->
+        <div id="tab-users" class="tab-content">
+            <div class="bg-[var(--card-bg)] rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">Relatório de Usuários</h2>
+                    <div class="flex gap-2">
+                        <button id="export-users-excel-btn"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L13 1.586A2 2 0 0011.586 1H9z" />
+                            </svg>
+                            Excel
+                        </button>
+                        <button id="export-users-pdf-btn"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                            </svg>
+                            PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <input type="text" id="filter-user-name" placeholder="Filtrar por nome..."
+                        class="border border-[var(--border-color)] rounded-md p-2 bg-transparent">
+                    <select id="filter-user-role"
+                        class="border border-[var(--border-color)] rounded-md p-2 bg-transparent">
+                        <option value="">Todas as roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="gestor">Gestor</option>
+                        <option value="user">Usuário</option>
+                    </select>
+                    <select id="filter-user-activity"
+                        class="border border-[var(--border-color)] rounded-md p-2 bg-transparent">
+                        <option value="">Todos</option>
+                        <option value="active">Ativos (< 7 dias)</option>
+                        <option value="inactive">Inativos (7+ dias)</option>
+                    </select>
+                </div>
+
+                <!-- Tabela -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Usuário</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Role</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Setor</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Último Acesso</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Projetos</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Tarefas Pendentes</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Produtividade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Atividades -->
+        <div id="tab-activities" class="tab-content">
+            <div class="bg-[var(--card-bg)] rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold">Timeline de Atividades</h2>
+                    <div class="flex gap-2">
+                        <button class="activity-filter-btn active" data-range="24">24h</button>
+                        <button class="activity-filter-btn" data-range="168">7 dias</button>
+                        <button class="activity-filter-btn" data-range="720">30 dias</button>
+                    </div>
+                </div>
+
+                <div id="activities-timeline" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDB_q9kdQGNiLf34PPZFL2YuBDOj7XdwkA",
+            authDomain: "cronograma-85bf4.firebaseapp.com",
+            projectId: "cronograma-85bf4",
+            storageBucket: "cronograma-85bf4.firebasestorage.app",
+            messagingSenderId: "802190123207",
+            appId: "1:802190123207:web:adaf51b25010f677bbdee2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+
+        let currentUserRole = null;
+        let currentUserSectorId = null;
+        let allProjects = [];
+        let allUsers = [];
+        let sectors = [];
+
+        // Safety timeout for loader (10 seconds)
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader && loader.style.display !== 'none') {
+                console.warn('⚠️ Loader timeout. Redirecting to login...');
+                window.location.href = 'index.html';
+            }
+        }, 10000);
+
+        // RBAC Guard
+        onAuthStateChanged(auth, async (user) => {
+            try {
+                if (!user) {
+                    console.log('❌ No user authenticated. Redirecting to login...');
+                    document.getElementById('loader').style.display = 'none';
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const userDoc = await getDoc(doc(db, 'users_data', user.uid));
+                const userData = userDoc.data();
+                currentUserRole = userData?.role?.toLowerCase() || 'user';
+                currentUserSectorId = userData?.sectorId || null;
+
+                console.log(`👤 User: ${userData?.name}, Role: ${currentUserRole}`);
+
+                // Check permission
+                if (currentUserRole !== 'admin' && currentUserRole !== 'gestor') {
+                    alert('❌ Acesso negado. Apenas Admins e Gestores podem acessar relatórios.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                document.getElementById('user-info').textContent = `${userData?.name || user.email} (${currentUserRole})`;
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+
+                // Load data
+                await loadSectors();
+                await loadProjects();
+                await loadUsers();
+                updateKPIs();
+                renderProjectsTable();
+                renderUsersTable();
+            } catch (error) {
+                console.error('❌ Error loading reports:', error);
+                document.getElementById('loader').style.display = 'none';
+                alert('Erro ao carregar relatórios. Verifique o console.');
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Load Sectors
+        async function loadSectors() {
+            const sectorsSnap = await getDocs(collection(db, 'sectors'));
+            sectors = sectorsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Populate sector filters
+            const sectorSelect = document.getElementById('filter-project-sector');
+            sectors.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector.id;
+                option.textContent = sector.name;
+                sectorSelect.appendChild(option);
+            });
+        }
+
+        // Load Projects (with RBAC)
+        async function loadProjects() {
+            const projectsQuery = collectionGroup(db, 'projects');
+            const snapshot = await getDocs(projectsQuery);
+
+            allProjects = snapshot.docs.map(doc => {
+                const data = doc.data();
+                const creatorId = data.creatorId || doc.ref.parent.parent.id;
+                return {
+                    id: doc.id,
+                    creatorId,
+                    ...data,
+                    tasks: data.tasks || []
+                };
+            });
+
+            // Apply RBAC filtering
+            if (currentUserRole === 'gestor') {
+                allProjects = allProjects.filter(p =>
+                    !p.sectorId || p.sectorId === currentUserSectorId
+                );
+            }
+        }
+
+        // Load Users (with RBAC)
+        async function loadUsers() {
+            const usersSnap = await getDocs(collection(db, 'users_data'));
+            allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Apply RBAC filtering
+            if (currentUserRole === 'gestor') {
+                allUsers = allUsers.filter(u =>
+                    !u.sectorId || u.sectorId === currentUserSectorId
+                );
+            }
+        }
+
+        // Update KPIs
+        function updateKPIs() {
+            document.getElementById('kpi-total-projects').textContent = allProjects.filter(p => !p.finalized).length;
+            document.getElementById('kpi-total-users').textContent = allUsers.length;
+
+            const overdueProjects = allProjects.filter(p => {
+                if (p.finalized) return false;
+                const progress = getProjectProgress(p.tasks);
+                return progress < 100 && p.endDate && new Date(p.endDate) < new Date();
+            });
+            document.getElementById('kpi-overdue-projects').textContent = overdueProjects.length;
+
+            const inactiveUsers = allUsers.filter(u => getDaysInactive(u.lastAccess || u.lastActivity) >= 7);
+            document.getElementById('kpi-inactive-users').textContent = inactiveUsers.length;
+        }
+
+        // Helper: Get days inactive
+        function getDaysInactive(timestamp) {
+            if (!timestamp || timestamp === 'Nunca') return 999;
+            const now = new Date();
+            const last = new Date(timestamp);
+            return Math.floor((now - last) / (1000 * 60 * 60 * 24));
+        }
+
+        // Helper: Format timestamp
+        function formatTimestamp(timestamp) {
+            if (!timestamp || timestamp === 'Nunca') return 'Nunca';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 60) return `${diffMins}min atrás`;
+            if (diffHours < 24) return `${diffHours}h atrás`;
+            if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'} atrás`;
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Helper: Get project progress
+        function getProjectProgress(tasks) {
+            if (!tasks || tasks.length === 0) return 0;
+            const totalProgress = tasks.reduce((sum, task) => sum + (task.progress || 0), 0);
+            return Math.round(totalProgress / tasks.length);
+        }
+
+        // Helper: Inactivity badge class
+        function getInactivityBadgeClass(days) {
+            if (days <= 2) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+            if (days <= 7) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+            if (days <= 14) return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+        }
+
+        // Helper: Role badge class
+        function getRoleBadgeClass(role) {
+            const r = (role || 'user').toLowerCase();
+            if (r === 'admin') return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+            if (r === 'gestor') return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        }
+
+        // Helper: Calculate productivity score
+        function calculateProductivityScore(user, projectsAssigned, pendingTasks) {
+            const lastAccess = getDaysInactive(user.lastAccess || user.lastActivity);
+
+            let score = 5;
+            if (lastAccess > 14) score -= 3;
+            else if (lastAccess > 7) score -= 2;
+            else if (lastAccess > 3) score -= 1;
+
+            if (projectsAssigned === 0) score -= 1;
+            if (pendingTasks > 10) score -= 1;
+
+            return Math.max(1, Math.min(5, score));
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+                btn.classList.add('active');
+                document.getElementById(`tab-${targetTab}`).classList.add('active');
+            });
+        });
+
+        // Theme toggle
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Filtered data
+        let filteredProjects = [];
+        let filteredUsers = [];
+
+        // Update filtered data for projects
+        function applyProjectFilters() {
+            const nameFilter = document.getElementById('filter-project-name').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-project-status').value;
+            const sectorFilter = document.getElementById('filter-project-sector').value;
+
+            filteredProjects = allProjects.filter(project => {
+                if (project.finalized) return false;
+
+                // Name filter
+                if (nameFilter && !project.name.toLowerCase().includes(nameFilter)) return false;
+
+                // Status filter
+                if (statusFilter) {
+                    const progress = getProjectProgress(project.tasks);
+                    const daysInactive = getDaysInactive(project.lastUpdatedAt);
+                    const isOverdue = project.endDate && new Date(project.endDate) < new Date() && progress < 100;
+
+                    if (statusFilter === 'active' && daysInactive >= 7) return false;
+                    if (statusFilter === 'overdue' && !isOverdue) return false;
+                    if (statusFilter === 'inactive' && daysInactive < 7) return false;
+                }
+
+                // Sector filter
+                if (sectorFilter && project.sectorId !== sectorFilter) return false;
+
+                return true;
+            });
+
+            renderProjectsTable();
+        }
+
+        // Update filtered data for users
+        function applyUserFilters() {
+            const nameFilter = document.getElementById('filter-user-name').value.toLowerCase();
+            const roleFilter = document.getElementById('filter-user-role').value;
+            const activityFilter = document.getElementById('filter-user-activity').value;
+
+            filteredUsers = allUsers.filter(user => {
+                // Name filter
+                if (nameFilter) {
+                    const userName = (user.name || user.email || '').toLowerCase();
+                    if (!userName.includes(nameFilter)) return false;
+                }
+
+                // Role filter
+                if (roleFilter && (user.role || 'user').toLowerCase() !== roleFilter) return false;
+
+                // Activity filter
+                if (activityFilter) {
+                    const daysInactive = getDaysInactive(user.lastAccess || user.lastActivity);
+                    if (activityFilter === 'active' && daysInactive >= 7) return false;
+                    if (activityFilter === 'inactive' && daysInactive < 7) return false;
+                }
+
+                return true;
+            });
+
+            renderUsersTable();
+        }
+
+        // Render Projects Table (updated to use filtered data)
+        function renderProjectsTable() {
+            const tbody = document.getElementById('projects-table-body');
+            tbody.innerHTML = '';
+
+            const dataToRender = filteredProjects.length > 0 || document.getElementById('filter-project-name').value ||
+                document.getElementById('filter-project-status').value ||
+                document.getElementById('filter-project-sector').value
+                ? filteredProjects
+                : allProjects.filter(p => !p.finalized);
+
+            dataToRender.forEach(project => {
+                const lastUpdate = project.lastUpdatedAt || 'Nunca';
+                const lastUpdatedBy = allUsers.find(u => u.id === project.lastUpdatedBy);
+                const daysInactive = getDaysInactive(project.lastUpdatedAt);
+                const progress = getProjectProgress(project.tasks);
+                const isOverdue = project.endDate && new Date(project.endDate) < new Date() && progress < 100;
+
+                // FIXED: Get manager name from users array instead of showing ID
+                const manager = allUsers.find(u => u.id === project.manager);
+                const managerName = manager?.name || manager?.email?.split('@')[0] || project.manager || 'N/A';
+
+                const row = document.createElement('tr');
+                row.className = 'border-b border-[var(--border-color)] hover:bg-gray-50 dark:hover:bg-gray-800';
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-medium">${project.name}</td>
+                    <td class="px-4 py-3 text-sm">${managerName}</td>
+                    <td class="px-4 py-3 text-sm">${formatTimestamp(lastUpdate)}</td>
+                    <td class="px-4 py-3 text-sm">${lastUpdatedBy?.name || lastUpdatedBy?.email?.split('@')[0] || '-'}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getInactivityBadgeClass(daysInactive)}">
+                            ${daysInactive} ${daysInactive === 1 ? 'dia' : 'dias'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-2xl">${isOverdue ? '🔴' : progress === 100 ? '🟢' : '🟡'}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${progress}%"></div>
+                            </div>
+                            <span class="text-sm font-medium">${progress}%</span>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render Users Table (updated to use filtered data)
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+
+            const dataToRender = filteredUsers.length > 0 || document.getElementById('filter-user-name').value ||
+                document.getElementById('filter-user-role').value ||
+                document.getElementById('filter-user-activity').value
+                ? filteredUsers
+                : allUsers;
+
+            dataToRender.forEach(user => {
+                const lastAccess = user.lastAccess || user.lastActivity || 'Nunca';
+                const daysInactive = getDaysInactive(lastAccess);
+                const sector = sectors.find(s => s.id === user.sectorId);
+
+                // Count projects assigned
+                const projectsAssigned = allProjects.filter(p =>
+                    p.tasks.some(t => t.assignedUsers?.includes(user.id))
+                ).length;
+
+                // Count pending tasks
+                const pendingTasks = allProjects.reduce((count, p) => {
+                    return count + p.tasks.filter(t =>
+                        t.assignedUsers?.includes(user.id) && t.status !== 'Concluída'
+                    ).length;
+                }, 0);
+
+                const prodScore = calculateProductivityScore(user, projectsAssigned, pendingTasks);
+
+                const row = document.createElement('tr');
+                row.className = 'border-b border-[var(--border-color)] hover:bg-gray-50 dark:hover:bg-gray-800';
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-medium">${user.name || user.email?.split('@')[0]}</td>
+                    <td class="px-4 py-3 text-sm">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(user.role)}">
+                            ${user.role || 'user'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm">${sector?.name || '-'}</td>
+                    <td class="px-4 py-3 text-sm">
+                        <div>${formatTimestamp(lastAccess)}</div>
+                        <div class="text-xs text-gray-500">(${daysInactive} ${daysInactive === 1 ? 'dia' : 'dias'})</div>
+                    </td>
+                    <td class="px-4 py-3 text-center">${projectsAssigned}</td>
+                    <td class="px-4 py-3 text-center">${pendingTasks}</td>
+                    <td class="px-4 py-3">${'⭐'.repeat(prodScore)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Export Projects to Excel
+        function exportProjectsExcel() {
+            const dataToExport = filteredProjects.length > 0 || document.getElementById('filter-project-name').value
+                ? filteredProjects
+                : allProjects.filter(p => !p.finalized);
+
+            const rows = dataToExport.map(project => {
+                const lastUpdate = project.lastUpdatedAt || 'Nunca';
+                const lastUpdatedBy = allUsers.find(u => u.id === project.lastUpdatedBy);
+                const daysInactive = getDaysInactive(project.lastUpdatedAt);
+                const progress = getProjectProgress(project.tasks);
+                const sector = sectors.find(s => s.id === project.sectorId);
+
+                // FIXED: Get manager name from users array
+                const manager = allUsers.find(u => u.id === project.manager);
+                const managerName = manager?.name || manager?.email?.split('@')[0] || project.manager || 'N/A';
+
+                return {
+                    'Projeto': project.name,
+                    'Gestor': managerName,
+                    'Setor': sector?.name || '-',
+                    'Último Update': lastUpdate !== 'Nunca' ? new Date(lastUpdate).toLocaleDateString('pt-BR') : 'Nunca',
+                    'Atualizado Por': lastUpdatedBy?.name || lastUpdatedBy?.email?.split('@')[0] || '-',
+                    'Dias Inativo': daysInactive,
+                    'Progresso': `${progress}%`,
+                    'Total Tarefas': project.tasks.length,
+                    'Tarefas Concluídas': project.tasks.filter(t => t.status === 'Concluída').length
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Projetos');
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 30 }, // Projeto
+                { wch: 20 }, // Gestor
+                { wch: 15 }, // Setor
+                { wch: 15 }, // Último Update
+                { wch: 20 }, // Atualizado Por
+                { wch: 12 }, // Dias Inativo
+                { wch: 10 }, // Progresso
+                { wch: 12 }, // Total Tarefas
+                { wch: 15 }  // Concluídas
+            ];
+
+            const fileName = `relatorio_projetos_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Export Users to Excel
+        function exportUsersExcel() {
+            const dataToExport = filteredUsers.length > 0 || document.getElementById('filter-user-name').value
+                ? filteredUsers
+                : allUsers;
+
+            const rows = dataToExport.map(user => {
+                const lastAccess = user.lastAccess || user.lastActivity || 'Nunca';
+                const daysInactive = getDaysInactive(lastAccess);
+                const sector = sectors.find(s => s.id === user.sectorId);
+
+                const projectsAssigned = allProjects.filter(p =>
+                    p.tasks.some(t => t.assignedUsers?.includes(user.id))
+                ).length;
+
+                const pendingTasks = allProjects.reduce((count, p) => {
+                    return count + p.tasks.filter(t =>
+                        t.assignedUsers?.includes(user.id) && t.status !== 'Concluída'
+                    ).length;
+                }, 0);
+
+                const prodScore = calculateProductivityScore(user, projectsAssigned, pendingTasks);
+
+                return {
+                    'Usuário': user.name || user.email?.split('@')[0],
+                    'Email': user.email || '',
+                    'Role': user.role || 'user',
+                    'Setor': sector?.name || '-',
+                    'Último Acesso': lastAccess !== 'Nunca' ? new Date(lastAccess).toLocaleDateString('pt-BR') : 'Nunca',
+                    'Dias Inativo': daysInactive,
+                    'Projetos Atribuídos': projectsAssigned,
+                    'Tarefas Pendentes': pendingTasks,
+                    'Score Produtividade': prodScore
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Usuários');
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 25 }, // Usuário
+                { wch: 30 }, // Email
+                { wch: 10 }, // Role
+                { wch: 15 }, // Setor
+                { wch: 15 }, // Último Acesso
+                { wch: 12 }, // Dias Inativo
+                { wch: 15 }, // Projetos
+                { wch: 15 }, // Tarefas Pendentes
+                { wch: 18 }  // Score
+            ];
+
+            const fileName = `relatorio_usuarios_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // Export Projects to PDF
+        function exportProjectsPDF() {
+            const dataToExport = filteredProjects.length > 0 || document.getElementById('filter-project-name').value
+                ? filteredProjects
+                : allProjects.filter(p => !p.finalized);
+
+            let htmlContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                        <img src="logo-topo.png" alt="Logo" style="height: 40px;">
+                        <div>
+                            <h1 style="color: #2563eb; margin: 0;">📊 Relatório de Projetos</h1>
+                            <p style="color: #666; margin: 5px 0 0 0; font-size: 12px;">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                        </div>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <thead>
+                            <tr style="background-color: #f3f4f6;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Projeto</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Gestor</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Último Update</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Por Quem</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Dias Inativo</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Progresso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            dataToExport.forEach(project => {
+                const lastUpdate = project.lastUpdatedAt || 'Nunca';
+                const lastUpdatedBy = allUsers.find(u => u.id === project.lastUpdatedBy);
+                const daysInactive = getDaysInactive(project.lastUpdatedAt);
+                const progress = getProjectProgress(project.tasks);
+
+                // FIXED: Get manager name from users array
+                const manager = allUsers.find(u => u.id === project.manager);
+                const managerName = manager?.name || manager?.email?.split('@')[0] || project.manager || 'N/A';
+
+                htmlContent += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${project.name}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${managerName}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${lastUpdate !== 'Nunca' ? new Date(lastUpdate).toLocaleDateString('pt-BR') : 'Nunca'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${lastUpdatedBy?.name || lastUpdatedBy?.email?.split('@')[0] || '-'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; background-color: ${daysInactive <= 2 ? '#d1fae5' : daysInactive <= 7 ? '#fef3c7' : '#fee2e2'};">${daysInactive} dias</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${progress}%</td>
+                    </tr>
+                `;
+            });
+
+            htmlContent += `
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 20px; color: #666; font-size: 12px;">Total de projetos: ${dataToExport.length}</p>
+                </div>
+            `;
+
+            const element = document.createElement('div');
+            element.innerHTML = htmlContent;
+
+            const opt = {
+                margin: 10,
+                filename: `relatorio_projetos_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Export Users to PDF
+        function exportUsersPDF() {
+            const dataToExport = filteredUsers.length > 0 || document.getElementById('filter-user-name').value
+                ? filteredUsers
+                : allUsers;
+
+            let htmlContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                        <img src="logo-topo.png" alt="Logo" style="height: 40px;">
+                        <div>
+                            <h1 style="color: #2563eb; margin: 0;">👥 Relatório de Usuários</h1>
+                            <p style="color: #666; margin: 5px 0 0 0; font-size: 12px;">Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                        </div>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <thead>
+                            <tr style="background-color: #f3f4f6;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Usuário</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Role</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Setor</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Último Acesso</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Projetos</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Tarefas Pendentes</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Produtividade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            dataToExport.forEach(user => {
+                const lastAccess = user.lastAccess || user.lastActivity || 'Nunca';
+                const daysInactive = getDaysInactive(lastAccess);
+                const sector = sectors.find(s => s.id === user.sectorId);
+
+                const projectsAssigned = allProjects.filter(p =>
+                    p.tasks.some(t => t.assignedUsers?.includes(user.id))
+                ).length;
+
+                const pendingTasks = allProjects.reduce((count, p) => {
+                    return count + p.tasks.filter(t =>
+                        t.assignedUsers?.includes(user.id) && t.status !== 'Concluída'
+                    ).length;
+                }, 0);
+
+                const prodScore = calculateProductivityScore(user, projectsAssigned, pendingTasks);
+
+                htmlContent += `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${user.name || user.email?.split('@')[0]}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${user.role || 'user'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${sector?.name || '-'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${lastAccess !== 'Nunca' ? new Date(lastAccess).toLocaleDateString('pt-BR') : 'Nunca'} <small>(${daysInactive} dias)</small></td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${projectsAssigned}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${pendingTasks}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${'⭐'.repeat(prodScore)}</td>
+                    </tr>
+                `;
+            });
+
+            htmlContent += `
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 20px; color: #666; font-size: 12px;">Total de usuários: ${dataToExport.length}</p>
+                </div>
+            `;
+
+            const element = document.createElement('div');
+            element.innerHTML = htmlContent;
+
+            const opt = {
+                margin: 10,
+                filename: `relatorio_usuarios_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Theme toggle with persistence
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // Export buttons - Excel
+        document.getElementById('export-projects-excel-btn').addEventListener('click', exportProjectsExcel);
+        document.getElementById('export-users-excel-btn').addEventListener('click', exportUsersExcel);
+
+        // Export buttons - PDF
+        document.getElementById('export-projects-pdf-btn').addEventListener('click', exportProjectsPDF);
+        document.getElementById('export-users-pdf-btn').addEventListener('click', exportUsersPDF);
+
+        // Apply filters
+        document.getElementById('filter-project-name').addEventListener('input', applyProjectFilters);
+        document.getElementById('filter-project-status').addEventListener('change', applyProjectFilters);
+        document.getElementById('filter-project-sector').addEventListener('change', applyProjectFilters);
+
+        document.getElementById('filter-user-name').addEventListener('input', applyUserFilters);
+        document.getElementById('filter-user-role').addEventListener('change', applyUserFilters);
+        document.getElementById('filter-user-activity').addEventListener('change', applyUserFilters);
+
+        // Render Activities Timeline
+        let currentRange = 24; // Default 24 hours
+
+        function renderActivitiesTimeline(rangeHours = 24) {
+            const timeline = document.getElementById('activities-timeline');
+            timeline.innerHTML = '';
+
+            const now = new Date();
+            const rangeMs = rangeHours * 60 * 60 * 1000;
+            const cutoffTime = new Date(now - rangeMs);
+
+            // Gather activities from projects
+            const activities = [];
+
+            allProjects.forEach(project => {
+                if (project.lastUpdatedAt && new Date(project.lastUpdatedAt) > cutoffTime) {
+                    const updatedBy = allUsers.find(u => u.id === project.lastUpdatedBy);
+                    const manager = allUsers.find(u => u.id === project.manager);
+
+                    activities.push({
+                        type: 'project',
+                        timestamp: new Date(project.lastUpdatedAt),
+                        projectName: project.name,
+                        userName: updatedBy?.name || updatedBy?.email?.split('@')[0] || 'Desconhecido',
+                        managerName: manager?.name || manager?.email?.split('@')[0] || 'N/A',
+                        action: 'atualizou projeto'
+                    });
+                }
+            });
+
+            // Gather activities from users (last access)
+            allUsers.forEach(user => {
+                if (user.lastAccess && new Date(user.lastAccess) > cutoffTime) {
+                    activities.push({
+                        type: 'user',
+                        timestamp: new Date(user.lastAccess),
+                        userName: user.name || user.email?.split('@')[0],
+                        action: 'acessou sistema'
+                    });
+                }
+            });
+
+            // Sort by timestamp descending
+            activities.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (activities.length === 0) {
+                timeline.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p>Nenhuma atividade registrada nas últimas ${rangeHours}h</p>
+                    </div>
+                `;
+                return;
+            }
+
+            activities.forEach(activity => {
+                const timeAgo = getTimeAgo(activity.timestamp);
+                const icon = activity.type === 'project' ? '📁' : '👤';
+
+                const activityHtml = `
+                    <div class="flex gap-4 border-l-4 border-blue-500 pl-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-r-lg">
+                        <div class="text-2xl">${icon}</div>
+                        <div class="flex-1">
+                            <div class="font-medium">
+                                ${activity.userName} ${activity.action}
+                                ${activity.projectName ? `"${activity.projectName}"` : ''}
+                            </div>
+                            ${activity.managerName ? `<div class="text-sm text-gray-500">Gestor: ${activity.managerName}</div>` : ''}
+                            <div class="text-xs text-gray-400 mt-1">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+
+                timeline.insertAdjacentHTML('beforeend', activityHtml);
+            });
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            const intervals = {
+                'ano': 31536000,
+                'mês': 2592000,
+                'semana': 604800,
+                'dia': 86400,
+                'hora': 3600,
+                'minuto': 60
+            };
+
+            for (const [name, value] of Object.entries(intervals)) {
+                const interval = Math.floor(seconds / value);
+                if (interval >= 1) {
+                    return `há ${interval} ${name}${interval > 1 && name !== 'mês' ? 's' : name === 'mês' && interval > 1 ? 'es' : ''}`;
+                }
+            }
+            return 'agora mesmo';
+        }
+
+        // Activity filter buttons
+        document.querySelectorAll('.activity-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.activity-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentRange = parseInt(btn.dataset.range);
+                renderActivitiesTimeline(currentRange);
+            });
+        });
+
+        // Initial render of activities
+        renderActivitiesTimeline(currentRange);
+    </script>
+
+    <style>
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .activity-filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .activity-filter-btn.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+    </style>
+</body>
+
+</html>
