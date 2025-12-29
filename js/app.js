@@ -156,9 +156,24 @@ const dataService = {
             dataService.userRole = userData.role || 'user';
             dataService.userSectorId = userData.sectorId || null;
             console.log(`👤 Perfil carregado: role=${dataService.userRole}, sectorId=${dataService.userSectorId}`);
+
+            // NOVO: Atualizar último acesso
+            await dataService.updateLastAccess(uid);
         } else {
             dataService.userRole = 'user';
             dataService.userSectorId = null;
+        }
+    },
+
+    // NOVO: Atualizar timestamp de último acesso
+    updateLastAccess: async (uid) => {
+        try {
+            await setDoc(doc(db, 'users_data', uid), {
+                lastAccess: new Date().toISOString(),
+                lastActivity: new Date().toISOString()
+            }, { merge: true });
+        } catch (error) {
+            console.warn('Erro ao atualizar lastAccess:', error);
         }
     },
 
@@ -3030,6 +3045,7 @@ const uiService = {
         const roleEl = document.getElementById('user-role-display');
         const userBtn = document.getElementById('user-management-btn');
         const sectorBtn = document.getElementById('sector-management-btn');
+        const reportsBtn = document.getElementById('reports-btn-container'); // NOVO: Botão de relatórios
 
         if (dataService.userRole) {
             const role = dataService.userRole.toLowerCase();
@@ -3043,20 +3059,23 @@ const uiService = {
             );
 
             if (role === 'admin') {
-                // Admin: badge roxo, vê botão de setores e usuários
+                // Admin: badge roxo, vê botão de setores, usuários e relatórios
                 roleEl.classList.add('bg-purple-100', 'dark:bg-purple-900', 'text-purple-700', 'dark:text-purple-300');
                 sectorBtn?.classList.remove('hidden');
                 userBtn?.classList.remove('hidden');
+                reportsBtn?.classList.remove('hidden'); // NOVO: Mostrar relatórios para admin
             } else if (role === 'gestor') {
-                // Gestor: badge verde, vê botão de usuários
+                // Gestor: badge verde, vê botão de usuários e relatórios
                 roleEl.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-700', 'dark:text-green-300');
                 sectorBtn?.classList.add('hidden');
                 userBtn?.classList.remove('hidden');
+                reportsBtn?.classList.remove('hidden'); // NOVO: Mostrar relatórios para gestor
             } else {
                 // Usuário comum: badge azul, não vê botões de gestão
                 roleEl.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
                 sectorBtn?.classList.add('hidden');
                 userBtn?.classList.add('hidden');
+                reportsBtn?.classList.add('hidden'); // NOVO: Esconder relatórios de usuários comuns
             }
         }
     },
@@ -3234,6 +3253,20 @@ const uiService = {
         }
 
         document.getElementById('edit-user-role').value = user.role || 'Usuario';
+
+        // NOVO: Carregar setores no dropdown
+        const sectorSelect = document.getElementById('edit-user-sector');
+        sectorSelect.innerHTML = '<option value="">Nenhum setor</option>';
+        dataService.sectors.forEach(sector => {
+            const option = document.createElement('option');
+            option.value = sector.id;
+            option.textContent = sector.name;
+            if (user.sectorId === sector.id) {
+                option.selected = true;
+            }
+            sectorSelect.appendChild(option);
+        });
+
         const isActive = user.active !== false;
         document.getElementById('edit-user-active').checked = isActive;
         const statusLabel = document.getElementById('edit-user-status-label');
@@ -3248,6 +3281,7 @@ const uiService = {
         const email = document.getElementById('edit-user-email').value.trim();
         const role = document.getElementById('edit-user-role').value;
         const active = document.getElementById('edit-user-active').checked;
+        const sectorId = document.getElementById('edit-user-sector').value || null; // NOVO: Capturar setor
 
         if (!email.endsWith('@vinci-highways.com.br')) {
             uiService.showToast('O e-mail deve terminar com @vinci-highways.com.br', 'error');
@@ -3256,7 +3290,7 @@ const uiService = {
 
         document.getElementById('loader').style.display = 'flex';
         try {
-            await dataService.updateUser(userId, { name, email, role, active });
+            await dataService.updateUser(userId, { name, email, role, active, sectorId }); // NOVO: Salvar setor
             uiService.showToast('Utilizador atualizado com sucesso!', 'success');
             uiService.closeModal('edit-user-modal');
             uiService.renderUserManagementTable();
