@@ -1,41 +1,72 @@
 /* ======================================================
    Cronograma App - Stylesheet
    Vinci Highways Project Management System
+   CORPORATE GRAPHITE THEME - Maximum Seriousness
    ====================================================== */
 
-/* Importar fonte Inter para gráficos */
-@import url('https://rsms.me/inter/inter.css');
+/* Importar fontes profissionais */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap');
 
 /* ==============================================
-   CSS VARIABLES
+   CSS VARIABLES - CORPORATE GRAPHITE PALETTE
    ============================================== */
 :root {
-    --background-color: #f3f4f6;
-    --text-color: #374151;
+    /* Light Mode */
+    --background-color: #f5f5f5;
+    --text-color: #171717;
+    --text-secondary: #525252;
     --card-bg: #ffffff;
     --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --border-color: #e5e7eb;
+    --border-color: #e5e5e5;
+
+    /* Corporate Graphite Colors */
+    --primary-dark: #1e1e1e;
+    --primary-dark-light: #2d2d2d;
+    --accent-blue: #2563eb;
+    --accent-blue-light: #3b82f6;
+    --success: #84cc16;
+    --warning: #ea580c;
+    --danger: #ef4444;
 }
 
-html.dark {
-    --background-color: #111827;
-    --text-color: #d1d5db;
-    --card-bg: #1f2937;
-    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-    --border-color: #374151;
+:root.dark {
+    --background-color: #1a1a2e;
+    /* Changed from --background to --background-color for consistency */
+    --card-bg: #2d3436;
+    --text-color: #f8f9fa;
+    --text-secondary: #b2bec3;
+    --border-color: #4a4a5e;
+    --accent-primary: #00b894;
+    /* New variable, consider if it replaces an existing one or is new */
+    --hover-bg: #3a3a4e;
+    /* New variable */
+    --success: #55efc4;
+    --warning: #ffeaa7;
+    --danger: #ff7675;
+    /* Removed old dark mode specific variables like --card-shadow as they were not in the provided snippet */
 }
 
 /* ==============================================
-   BASE STYLES
+   BASE STYLES - EXECUTIVE TYPOGRAPHY
    ============================================== */
 body {
     background-color: var(--background-color);
     color: var(--text-color);
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-feature-settings: 'kern' 1, 'liga' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Títulos com fonte impactante */
+h1,
+h2,
+h3,
+.heading-executive {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
 }
 
 /* ==============================================
@@ -728,7 +759,8 @@ html.dark .dashboard-progress-bar-label {
 }
 
 html.dark .dashboard-progress-bar-track {
-    background: #374151;
+    background: #4a5568;
+    /* Changed from #374151 for better visibility */
 }
 
 .dashboard-progress-bar-fill {
@@ -1565,4 +1597,219 @@ html.dark .mention-highlight {
 
 html.dark .user-row-inactive {
     background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ==============================================
+   EXECUTIVE BLUE THEME - CUSTOM STYLES
+   ============================================== */
+
+/* Botões Accent Dourado */
+.btn-gold {
+    background: linear-gradient(135deg, #d4af37, #e4c657);
+    color: #0a1929;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.btn-gold:hover {
+    background: linear-gradient(135deg, #e4c657, #f4d667);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+/* Botões Navy */
+.btn-navy {
+    background: linear-gradient(135deg, #1e3a5f, #2d4a6f);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-navy:hover {
+    background: linear-gradient(135deg, #2d4a6f, #3d5a7f);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 58, 95, 0.4);
+}
+
+/* Cards no tema escuro */
+html.dark .bg-gray-800 {
+    background-color: var(--card-bg) !important;
+}
+
+html.dark .bg-gray-900 {
+    background-color: var(--background-color) !important;
+}
+
+/* Headers e títulos com mais peso */
+.text-executive {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+/* Badges personalizados */
+.badge-gold {
+    background: linear-gradient(135deg, #d4af37, #e4c657);
+    color: #0a1929;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-navy {
+    background: linear-gradient(135deg, #1e3a5f, #2d4a6f);
+    color: #ffffff;
+}
+
+/* Links com cor dourada no hover */
+html.dark a:hover {
+    color: var(--accent-gold);
+}
+
+/* Bordas com cor navy */
+html.dark .border-gray-600,
+html.dark .border-gray-700 {
+    border-color: var(--border-color) !important;
+}
+
+/* Spinner atualizado */
+html.dark .spinner {
+    border-color: var(--card-bg);
+    border-top-color: var(--accent-gold);
+}
+
+/* Seleção de texto */
+::selection {
+    background: rgba(212, 175, 55, 0.3);
+    color: #ffffff;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-navy);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-navy-light);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #2d4a6f;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #3d5a7f;
+}
+
+/* Focus states com dourado */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--accent-gold) !important;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* Botão primário override para dourado */
+html.dark .bg-blue-600 {
+    background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light)) !important;
+    color: #0a1929 !important;
+}
+
+html.dark .bg-blue-600:hover {
+    background: linear-gradient(135deg, var(--accent-gold-light), #f4d667) !important;
+}
+
+/* Card de projeto com borda dourada no hover */
+html.dark .project-card-link:hover {
+    border-color: var(--accent-gold);
+    box-shadow: 0 20px 40px -12px rgba(212, 175, 55, 0.3),
+        0 8px 16px -8px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .project-card-link:hover h3 {
+    color: var(--accent-gold);
+}
+
+/* Gradiente de progresso com dourado */
+html.dark .project-card-link:hover .bg-blue-600 {
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light)) !important;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+}
+
+/* ============================================== 
+   DARK MODE VISIBILITY IMPROVEMENTS
+   ============================================== */
+
+/* Better button visibility in dark mode */
+html.dark button {
+    border-width: 1px;
+}
+
+html.dark button.bg-blue-500,
+html.dark button.bg-blue-600 {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+html.dark button.bg-green-500,
+html.dark button.bg-green-600 {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+html.dark button.bg-red-500,
+html.dark button.bg-red-600 {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
+
+html.dark button.bg-orange-500,
+html.dark button.bg-orange-600 {
+    background-color: #f97316 !important;
+    color: white !important;
+}
+
+/* Improve selected/active button states */
+html.dark button.active,
+html.dark button[aria-selected="true"] {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-color: #3b82f6 !important;
+}
+
+/* Card progress bars more visible */
+html.dark progress {
+    background-color: #4a5568;
+}
+
+/* Better input visibility */
+html.dark input,
+html.dark textarea,
+html.dark select {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    color: #f8f9fa;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+    border-color: #3b82f6;
+    outline: none;
+    ring: 2px;
+    ring-color: #3b82f6;
 }
