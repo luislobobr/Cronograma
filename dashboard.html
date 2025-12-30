@@ -155,8 +155,7 @@
     <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50 hidden">
         <div class="card max-w-md w-full mx-4">
             <div class="mb-6">
-                <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                    alt="Vinci Highways" class="h-12 mb-4">
+                <img src="logo-topo.png" alt="Vinci Highways" class="h-12 mb-4">
                 <h2 class="text-2xl font-bold text-blue-500">Dashboard de Monitoramento</h2>
                 <p class="text-gray-400 text-sm">Faça login para acessar</p>
             </div>
@@ -181,8 +180,7 @@
         <header class="border-b border-gray-700 bg-gray-800/50 backdrop-blur-sm sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <img src="https://viacristais.com.br/wp-content/themes/viacristais/resources/images/logo-topo.png"
-                        alt="Logo" class="h-8">
+                    <img src="logo-topo.png" alt="Logo" class="h-8">
                     <div>
                         <h1 class="text-xl font-bold">Dashboard de Monitoramento</h1>
                         <p class="text-sm text-gray-400">Visão geral de todos os projetos</p>
@@ -370,21 +368,29 @@
             }
         });
 
-        // Load Users
+        // Load Users from users_data collection
         async function loadUsers() {
             try {
-                const usersRef = collection(db, 'users');
+                // CORREÇÃO: Usar 'users_data' ao invés de 'users' para corresponder ao app principal
+                const usersRef = collection(db, 'users_data');
                 onSnapshot(usersRef, (snapshot) => {
                     users = {};
                     snapshot.forEach(doc => {
-                        users[doc.id] = doc.data();
+                        const userData = doc.data();
+                        users[doc.id] = userData;
+                        console.log('👤 Usuário carregado:', doc.id, userData.name || userData.email);
                     });
-                    console.log('📋 Usuários carregados:', Object.keys(users).length);
+                    console.log('📋 Total de usuários carregados:', Object.keys(users).length);
+                    // Re-render table after users load to update names
+                    if (projects.length > 0) {
+                        renderProjectsTable();
+                    }
                 });
             } catch (error) {
                 console.error('Erro ao carregar usuários:', error);
             }
         }
+
 
         // Listen to Projects (Real-time) - using collectionGroup to get all projects
         function listenToProjects() {
