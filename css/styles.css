@@ -1,49 +1,83 @@
 /* ======================================================
    Cronograma App - Stylesheet
    Vinci Highways Project Management System
-   CORPORATE GRAPHITE THEME - Maximum Seriousness
+   VINCI CORPORATE THEME - Option 3
    ====================================================== */
 
 /* Importar fontes profissionais */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap');
 
 /* ==============================================
-   CSS VARIABLES - CORPORATE GRAPHITE PALETTE
+   CSS VARIABLES - VINCI CORPORATE PALETTE
+   Option 3: Navy + Lime Green + Orange/Yellow
    ============================================== */
 :root {
-    /* Light Mode */
-    --background-color: #f5f5f5;
-    --text-color: #171717;
-    --text-secondary: #525252;
+    /* Light Mode - Vinci Corporate */
+    --background-color: #f8fafc;
+    --text-color: #0d3050;
+    --text-secondary: #475569;
     --card-bg: #ffffff;
     --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --border-color: #e5e5e5;
+    --border-color: #e2e8f0;
 
-    /* Corporate Graphite Colors */
-    --primary-dark: #1e1e1e;
-    --primary-dark-light: #2d2d2d;
-    --accent-blue: #2563eb;
-    --accent-blue-light: #3b82f6;
-    --success: #84cc16;
-    --warning: #ea580c;
-    --danger: #ef4444;
+    /* Vinci Corporate Colors */
+    --vinci-navy: #0d3050;
+    --vinci-navy-light: #1a4a6e;
+    --vinci-green: #7cb342;
+    --vinci-green-light: #9ccc65;
+    --vinci-accent: #f9a825;
+    --vinci-accent-light: #ffc107;
+
+    /* Functional Colors */
+    --primary: #0d3050;
+    --primary-light: #1a4a6e;
+    --secondary: #7cb342;
+    --accent: #f9a825;
+    --success: #7cb342;
+    --warning: #f9a825;
+    --danger: #e53935;
 }
 
 :root.dark {
-    --background-color: #1a1a2e;
-    /* Changed from --background to --background-color for consistency */
-    --card-bg: #2d3436;
-    --text-color: #f8f9fa;
-    --text-secondary: #b2bec3;
-    --border-color: #4a4a5e;
-    --accent-primary: #00b894;
-    /* New variable, consider if it replaces an existing one or is new */
-    --hover-bg: #3a3a4e;
-    /* New variable */
-    --success: #55efc4;
-    --warning: #ffeaa7;
-    --danger: #ff7675;
-    /* Removed old dark mode specific variables like --card-shadow as they were not in the provided snippet */
+    /* Dark Mode - Vinci Corporate */
+    --background-color: #0d3050;
+    --card-bg: #1a4a6e;
+    --text-color: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #2d5a7b;
+
+    /* Vinci Corporate Colors (Dark Mode) */
+    --vinci-navy: #0d3050;
+    --vinci-navy-light: #1a4a6e;
+    --vinci-green: #7cb342;
+    --vinci-green-light: #9ccc65;
+    --vinci-accent: #f9a825;
+    --vinci-accent-light: #ffc107;
+
+    /* Functional Colors */
+    --primary: #7cb342;
+    --primary-light: #9ccc65;
+    --secondary: #4fc3f7;
+    --accent: #f9a825;
+    --accent-primary: #7cb342;
+    --hover-bg: #2d5a7b;
+    --success: #7cb342;
+    --warning: #f9a825;
+    --danger: #e53935;
+
+    /* Custom colors */
+    --kpi-bg: #1a4a6e;
+    --progress-track: #2d5a7b;
+    --blue-accent: #4fc3f7;
+    --orange-accent: #f9a825;
+    --red-accent: #e53935;
+}
+
+/* FORCE dark mode colors on body */
+html.dark,
+html.dark body {
+    background-color: #0d3050 !important;
+    color: #f8fafc !important;
 }
 
 /* ==============================================
@@ -271,6 +305,10 @@ html.dark #loader {
     z-index: 9100;
 }
 
+.modal-z-70 {
+    z-index: 9200;
+}
+
 /* ==============================================
    TOAST NOTIFICATIONS
    ============================================== */
@@ -349,6 +387,26 @@ html.dark #loader {
 
     .bg-gray-500 {
         background-color: #6b7280 !important;
+    }
+
+    /* Logo header for PDF export */
+    .print-header {
+        display: flex !important;
+        align-items: center;
+        gap: 15px;
+        padding: 20px;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 20px;
+    }
+
+    .print-header img {
+        height: 40px;
+    }
+
+    .print-header h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #1a1f2e;
     }
 }
 
@@ -759,8 +817,7 @@ html.dark .dashboard-progress-bar-label {
 }
 
 html.dark .dashboard-progress-bar-track {
-    background: #4a5568;
-    /* Changed from #374151 for better visibility */
+    background: var(--progress-track);
 }
 
 .dashboard-progress-bar-fill {
@@ -1812,4 +1869,65 @@ html.dark select:focus {
     outline: none;
     ring: 2px;
     ring-color: #3b82f6;
+}
+
+/* ============================================== 
+   PROJECT CARD PROGRESS BAR - HIGH VISIBILITY
+   ============================================== */
+
+/* Progress bar track - light/white for visibility on any background */
+html.dark .rounded-full.bg-gray-200,
+html.dark .rounded-full.bg-gray-700,
+html.dark .bg-gray-200.rounded-full,
+html.dark .bg-gray-700.rounded-full {
+    background-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Progress bar fill - Vinci green for visibility */
+html.dark .rounded-full.bg-blue-600,
+html.dark .rounded-full.bg-blue-500,
+html.dark .bg-blue-600.rounded-full,
+html.dark .bg-blue-500.rounded-full {
+    background-color: #7cb342 !important;
+}
+
+/* Green progress bars - Vinci green */
+html.dark .rounded-full.bg-green-500,
+html.dark .rounded-full.bg-green-600,
+html.dark .bg-green-500.rounded-full,
+html.dark .bg-green-600.rounded-full {
+    background-color: #7cb342 !important;
+}
+
+/* General bg-gray overrides for card elements */
+html.dark .bg-gray-200 {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Percentage text visibility */
+html.dark .text-gray-500 {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ==============================================
+   VINCI CORPORATE BUTTON STYLES
+   ============================================== */
+
+/* Primary action buttons - Vinci Green */
+html.dark .bg-blue-600 {
+    background-color: #7cb342 !important;
+}
+
+html.dark .bg-blue-600:hover {
+    background-color: #689f38 !important;
+}
+
+/* Links in Vinci green */
+html.dark .text-blue-500 {
+    color: #9ccc65 !important;
+}
+
+/* Accent color for badges */
+html.dark .bg-purple-600 {
+    background-color: #2d5a7b !important;
 }

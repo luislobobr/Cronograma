@@ -1,0 +1,76 @@
+/* ==============================================
+   TABLE ROW HOVER FIX - LIGHT & DARK MODE
+   For Reports Page
+   ============================================== */
+
+/* Light mode - subtle gray hover */
+tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Dark mode - subtle white hover */
+html.dark tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Keep text legible on hover */
+tbody tr:hover td,
+tbody tr:hover th {
+    color: inherit;
+}
+
+/* ==============================================
+   TABLE HEADER TEXT - WHITE ON DARK BACKGROUND
+   ============================================== */
+
+/* Force white text on ALL table headers */
+thead,
+thead tr,
+thead th,
+thead td {
+    color: #ffffff !important;
+}
+
+/* Dark background table rows need white text */
+tbody tr.bg-gray-800,
+tbody tr.bg-gray-700,
+.bg-gray-800,
+.bg-gray-700 {
+    color: #ffffff !important;
+}
+
+/* Ensure all th/td in dark rows are white */
+.bg-gray-800 th,
+.bg-gray-800 td,
+.bg-gray-700 th,
+.bg-gray-700 td {
+    color: #ffffff !important;
+}
+
+/* ==============================================
+   LOGO VISIBILITY FIX - DARK MODE
+   ============================================== */
+
+/* Add white background behind logo in dark mode */
+html.dark header img[src="logo-topo.png"],
+html.dark header img[alt="Logo"] {
+    background-color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+/* ==============================================
+   TASK ASSIGNEE INDICATORS - LIGHT MODE FIX
+   ============================================== */
+
+/* Light mode - use bright blue for visibility against white background */
+#assignee-summary-list span.inline-block {
+    background-color: #3b82f6 !important;
+    border: 2px solid #1e40af !important;
+}
+
+/* Dark mode - use Vinci green */
+html.dark #assignee-summary-list span.inline-block {
+    background-color: #7cb342 !important;
+    border: 2px solid #558b2f !important;
+}
