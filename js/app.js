@@ -2684,11 +2684,12 @@ const App = {
         document.getElementById('project-date-form').addEventListener('submit', async (event) => {
             event.preventDefault();
             const projectId = document.getElementById('edit-project-id').value;
+            const projectName = document.getElementById('edit-project-name').value;
             const startDate = document.getElementById('edit-project-start-date').value;
             const endDate = document.getElementById('edit-project-end-date').value;
 
-            if (!startDate || !endDate) {
-                uiService.showToast('Preencha ambas as datas.', 'error');
+            if (!projectName || !startDate || !endDate) {
+                uiService.showToast('Preencha todos os campos.', 'error');
                 return;
             }
 
@@ -2699,12 +2700,19 @@ const App = {
 
             document.getElementById('loader').style.display = 'flex';
             try {
-                await dataService.updateProjectDates(projectId, startDate, endDate, 'manual');
-                uiService.closeModal('project-date-modal');
-                uiService.showToast('Datas do projeto atualizadas com sucesso!', 'success');
+                const project = dataService.getProjectById(projectId);
+                if (project) {
+                    project.name = projectName;
+                    project.startDate = startDate;
+                    project.endDate = endDate;
+                    project.dateMode = 'manual';
+                    await dataService.saveProjectDocument(project);
+                    uiService.closeModal('project-date-modal');
+                    uiService.showToast('Projeto atualizado com sucesso!', 'success');
+                }
             } catch (error) {
-                console.error('Erro ao atualizar datas do projeto:', error);
-                uiService.showToast('Erro ao atualizar datas do projeto.', 'error');
+                console.error('Erro ao atualizar projeto:', error);
+                uiService.showToast('Erro ao atualizar projeto.', 'error');
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
@@ -3063,13 +3071,19 @@ const uiService = {
                 roleEl.classList.add('bg-purple-100', 'dark:bg-purple-900', 'text-purple-700', 'dark:text-purple-300');
                 sectorBtn?.classList.remove('hidden');
                 userBtn?.classList.remove('hidden');
-                reportsBtn?.classList.remove('hidden'); // NOVO: Mostrar relatórios para admin
+                if (reportsBtn) {
+                    reportsBtn.classList.remove('hidden');
+                    console.log('Reports button shown for admin');
+                }
             } else if (role === 'gestor') {
                 // Gestor: badge verde, vê botão de usuários e relatórios
                 roleEl.classList.add('bg-green-100', 'dark:bg-green-900', 'text-green-700', 'dark:text-green-300');
                 sectorBtn?.classList.add('hidden');
                 userBtn?.classList.remove('hidden');
-                reportsBtn?.classList.remove('hidden'); // NOVO: Mostrar relatórios para gestor
+                if (reportsBtn) {
+                    reportsBtn.classList.remove('hidden');
+                    console.log('Reports button shown for gestor');
+                }
             } else {
                 // Usuário comum: badge azul, não vê botões de gestão
                 roleEl.classList.add('bg-blue-100', 'dark:bg-blue-900', 'text-blue-700', 'dark:text-blue-300');
@@ -3116,6 +3130,7 @@ const uiService = {
         if (!project) return;
 
         document.getElementById('edit-project-id').value = project.id;
+        document.getElementById('edit-project-name').value = project.name || '';
         document.getElementById('edit-project-start-date').value = project.startDate;
         document.getElementById('edit-project-end-date').value = project.endDate;
 
@@ -7185,6 +7200,10 @@ const reportService = {
         uiService.showToast('Template baixado com sucesso!');
     }
 };
+
+// EXPOSE SERVICES TO WINDOW for onclick handlers in dynamically generated HTML
+window.uiService = uiService;
+window.dataService = dataService;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => App.init());
